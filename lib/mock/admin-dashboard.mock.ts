@@ -1,0 +1,237 @@
+// DEMO ONLY — replace with API data
+import type { AdminDashboardData } from "@/types/admin"
+
+export const mockAdminDashboardData: AdminDashboardData = {
+  // DEMO ONLY — replace with API data
+  stats: {
+    programmes: 6,
+    appels_a_candidatures: 3,
+    candidatures: 48,
+    actualites: 12,
+    talents: 18,
+    temoignages: 8,
+    partenaires: 14,
+    messages_contact: 15,
+    indicateurs_impact: 6,
+    utilisateurs: 5,
+  },
+  // DEMO ONLY — replace with API data
+  actionsRequises: {
+    candidaturesNouvelles: 7,
+    messagesNonLus: 4,
+    adhesionsEnAttente: 6,
+    appelsEnCours: 2,
+  },
+  // DEMO ONLY — replace with API data
+  candidaturesRecentes: [
+    {
+      id: 101,
+      reference: "APP-2026-0048",
+      candidat: "Fatou Bintou Diatta",
+      appelTitre: "Incubateur Agri-Business Casamance (Cohorte 2)",
+      region: "Ziguinchor",
+      date: "2026-08-28T14:32:00Z",
+      statut: "nouvelle",
+    },
+    {
+      id: 102,
+      reference: "APP-2026-0047",
+      candidat: "Moussa Sané",
+      appelTitre: "Académie Leadership & Engagement Territorial",
+      region: "Kolda",
+      date: "2026-08-28T11:15:00Z",
+      statut: "nouvelle",
+    },
+    {
+      id: 103,
+      reference: "APP-2026-0046",
+      candidat: "Aïssatou Mané",
+      appelTitre: "Bourse Créateurs & Métiers de l'Artisanat",
+      region: "Sédhiou",
+      date: "2026-08-27T18:40:00Z",
+      statut: "en_cours_etude",
+    },
+    {
+      id: 104,
+      reference: "APP-2026-0045",
+      candidat: "Ousmane Sonko (GIE Bio-Casamance)",
+      appelTitre: "Incubateur Agri-Business Casamance (Cohorte 2)",
+      region: "Ziguinchor",
+      date: "2026-08-27T09:20:00Z",
+      statut: "preselectionnee",
+    },
+  ],
+  // DEMO ONLY — replace with API data
+  messagesRecents: [
+    {
+      id: 201,
+      nom: "Amadou Diallo",
+      email: "amadou.diallo@invest-sn.org",
+      categorie: "partenariat",
+      sujet: "Proposition de partenariat technique — Formation Numérique",
+      message:
+        "Bonjour l'équipe Casa Impact, nous souhaitons explorer une convention pour équiper les jeunes des 3 pôles...",
+      statut: "nouveau",
+      created_at: "2026-08-28T13:45:00Z",
+    },
+    {
+      id: 202,
+      nom: "Mariama Cissé",
+      email: "cisse.mariama@diaspora-paris.fr",
+      categorie: "diaspora",
+      sujet: "Mobilisation diaspora Casamance en France",
+      message:
+        "Félicitations pour le lancement. Comment pouvons-nous structurer un point relais à Paris ?",
+      statut: "nouveau",
+      created_at: "2026-08-28T08:12:00Z",
+    },
+    {
+      id: 203,
+      nom: "Dr. Lamine Ba",
+      email: "l.ba@univ-zig.sn",
+      categorie: "projet",
+      sujet: "Contribution à la commission scientifique",
+      message:
+        "Je me tiens à votre disposition pour participer aux comités d'évaluation des bourses.",
+      statut: "nouveau",
+      created_at: "2026-08-27T16:20:00Z",
+    },
+  ],
+  // DEMO ONLY — replace with API data
+  adhesionsRecentes: [
+    {
+      id: 301,
+      nom_complet: "Cheikh Tidiane Diédhiou",
+      email: "cheikh.diedhiou@gmail.com",
+      telephone: "+221 77 654 32 10",
+      profession: "Ingénieur Agronome",
+      region: "ziguinchor",
+      domaine_contribution: "pole_economie_agriculture_attractivite",
+      type_contribution: "expert_conseiller_technique",
+      statut: "en_attente_paiement",
+      reference: "ADH-2026-0182",
+    },
+    {
+      id: 302,
+      nom_complet: "Khadija Badji",
+      email: "k.badji@tech-sedhiou.sn",
+      telephone: "+221 78 123 45 67",
+      profession: "Développeuse Web & Formatrice",
+      region: "sedhiou",
+      domaine_contribution: "pole_capital_humain",
+      type_contribution: "membre_actif",
+      statut: "en_attente_paiement",
+      reference: "ADH-2026-0181",
+    },
+    {
+      id: 303,
+      nom_complet: "Ibrahima Gassama",
+      email: "i.gassama@kolda-culture.org",
+      telephone: "+221 76 987 65 43",
+      profession: "Acteur Culturel",
+      region: "kolda",
+      domaine_contribution: "pole_culture_communication",
+      type_contribution: "membre_actif",
+      statut: "validee",
+      reference: "ADH-2026-0180",
+    },
+  ],
+  // DEMO ONLY — replace with API data
+  activiteRecente: [
+    {
+      id: "act-1",
+      type: "candidature",
+      titre: "Nouvelle candidature reçue",
+      description: "Fatou Bintou Diatta a postulé à l'Incubateur Agri-Business (Ziguinchor)",
+      date: "2026-08-28T14:32:00Z",
+      statut: "nouvelle",
+      lien: "/admin/candidatures",
+    },
+    {
+      id: "act-2",
+      type: "message",
+      titre: "Nouveau message de partenariat",
+      description: "Amadou Diallo (invest-sn.org) a envoyé une proposition de partenariat",
+      date: "2026-08-28T13:45:00Z",
+      statut: "nouveau",
+      lien: "/admin/messages",
+    },
+    {
+      id: "act-3",
+      type: "adhesion",
+      titre: "Demande d'adhésion enregistrée",
+      description: "Cheikh Tidiane Diédhiou (Pôle Économie & Agriculture)",
+      date: "2026-08-28T12:10:00Z",
+      statut: "en_attente_paiement",
+      lien: "/admin/adhesions",
+    },
+    {
+      id: "act-4",
+      type: "actualite",
+      titre: "Actualité publiée sur le site",
+      description: "Lancement de la plateforme Casa Impact : 3 Régions, 1 Vision",
+      date: "2026-08-27T10:00:00Z",
+      statut: "publie",
+      auteur: "Équipe Communication",
+      lien: "/admin/actualites",
+    },
+  ],
+}
+
+// DEMO ONLY — replace with API data
+export const mockAdminUsers = [
+  {
+    id: 1,
+    nom: "Amadou Lamine Sané",
+    email: "admin@casaimpact.org",
+    role: {
+      id: 1,
+      nom: "Administrateur Principal",
+      slug: "administrateur-principal",
+      permissions: ["*"],
+    },
+  },
+  {
+    id: 2,
+    nom: "Mariama Sonko",
+    email: "communication@casaimpact.org",
+    role: {
+      id: 2,
+      nom: "Responsable Communication",
+      slug: "communication",
+      permissions: [
+        "pages:read",
+        "pages:write",
+        "actualites:read",
+        "actualites:write",
+        "talents:read",
+        "talents:write",
+        "temoignages:read",
+        "temoignages:write",
+        "partenaires:read",
+        "partenaires:write",
+        "mediatheque:read",
+        "mediatheque:write",
+      ],
+    },
+  },
+  {
+    id: 3,
+    nom: "Boubacar Diatta",
+    email: "candidatures@casaimpact.org",
+    role: {
+      id: 3,
+      nom: "Gestionnaire des Candidatures",
+      slug: "gestionnaire-candidatures",
+      permissions: [
+        "appels:read",
+        "appels:write",
+        "candidatures:read",
+        "candidatures:write",
+        "programmes:read",
+        "adhesions:read",
+        "adhesions:write",
+      ],
+    },
+  },
+]

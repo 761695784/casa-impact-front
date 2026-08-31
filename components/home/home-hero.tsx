@@ -161,14 +161,14 @@ export function HomeHero() {
       <div className="relative mx-auto flex min-h-[calc(100dvh-4.5rem)] max-w-7xl flex-col justify-between px-4 pb-12 pt-20 sm:px-6 sm:pb-16 sm:pt-24 lg:px-8 lg:pt-28">
         
         {/* Top Badges: Regions & Live Indicator */}
-        {/* <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/90 backdrop-blur-md">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/90 backdrop-blur-md">
             <span className="flex size-2 rounded-full bg-accent animate-pulse" aria-hidden />
             <span>3 Régions • 1 Vision • 1 Impact</span>
-          </div>
+          </div> */}
 
-          Region Tabs / Navigation
-          <div className="hidden sm:flex items-center gap-2 rounded-full border border-white/10 bg-black/20 p-1 backdrop-blur-md">
+          {/* Region Tabs / Navigation */}
+          {/* <div className="hidden sm:flex items-center gap-2 rounded-full border border-white/10 bg-black/20 p-1 backdrop-blur-md">
             {siteConfig.regions.map((r, i) => (
               <span
                 key={r}
@@ -178,15 +178,15 @@ export function HomeHero() {
                 {r}
               </span>
             ))}
-          </div>
-        </div> */}
+          </div> */}
+        </div>
 
         {/* Center Hero Message */}
         <div className="my-auto max-w-3xl pt-8 pb-10">
-          {/* <div className="inline-flex items-center gap-2 rounded-lg bg-accent/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-accent backdrop-blur-sm border border-accent/30">
+          <div className="inline-flex items-center gap-2 rounded-lg bg-accent/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-accent backdrop-blur-sm border border-accent/30">
             <Sparkles className="size-3.5" />
             <span>Plateforme d'action & de transformation</span>
-          </div> */}
+          </div>
 
           <h1 className="mt-6 text-balance font-display text-4xl font-bold leading-[1.02] sm:text-6xl lg:text-7xl text-white drop-shadow-sm">
             La Casamance se construit avec{" "}
@@ -200,9 +200,9 @@ export function HomeHero() {
             Casa Impact fédère les énergies de <strong>Ziguinchor</strong>, <strong>Kolda</strong> et <strong>Sédhiou</strong> pour former les talents, encourager l'entrepreneuriat et accélérer la transformation durable de notre territoire.
           </p>
 
-          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.24em] text-accent/90">
+          {/* <p className="mt-4 text-xs font-semibold uppercase tracking-[0.24em] text-accent/90">
             {siteConfig.signature}
-          </p>
+          </p> */}
 
           {/* Action CTAs */}
           <div className="mt-8 flex flex-wrap items-center gap-4">

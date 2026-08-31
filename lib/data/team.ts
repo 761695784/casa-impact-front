@@ -97,7 +97,7 @@ export const teamMembers: TeamMember[] = [
     fonction: 'Responsable Jeunesse & Leadership',
     pole: 'Jeunesse & Leadership',
     categorie: 'pole_capital_humain',
-    image: PLACEHOLDER,
+    image: '/assets/team/mamadou-sabane-diallo.jpeg',
     ordre: 2,
   },
   {
@@ -125,7 +125,7 @@ export const teamMembers: TeamMember[] = [
     fonction: 'Responsable Tourisme & Attractivité',
     pole: 'Tourisme & Attractivité',
     categorie: 'pole_economie',
-    image: PLACEHOLDER,
+    image: '/assets/team/samsidine-diatta.jpeg',
     ordre: 2,
   },
   {

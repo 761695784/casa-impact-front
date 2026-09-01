@@ -19,7 +19,7 @@ export function MembershipCardShowcase() {
   return (
     <Section className="py-16 sm:py-24 border-b border-border">
       <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr] items-center">
-        
+
         {/* Left Column: Official Member Card Visual */}
         <div className="relative">
           {/* Glowing Ambient Backdrop */}
@@ -43,7 +43,7 @@ export function MembershipCardShowcase() {
             {/* Official Member Card Image */}
             <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-secondary shadow-lg transition-transform duration-500 hover:scale-[1.02]">
               <Image
-                src="/assets/Cartes-Membre.png"
+                src="/assets/Carte-membres.png"
                 alt="Modèle officiel de la Carte de Membre Casa Impact"
                 fill
                 sizes="(max-width: 1024px) 100vw, 550px"

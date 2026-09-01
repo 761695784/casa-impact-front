@@ -12,6 +12,7 @@ import {
   Phone,
   MapPin,
   Coins,
+  User,
 } from "lucide-react"
 import {
   Table,
@@ -100,30 +101,49 @@ export function AdhesionsTable({
                   </div>
                 </TableCell>
 
-                {/* 2. Nom, Profession & Contact */}
+                {/* 2. Photo, Nom, Profession & Contact */}
                 <TableCell>
-                  <div className="space-y-0.5">
+                  <div className="flex items-center gap-3">
                     <Link
                       href={`/admin/adhesions/${m.id}`}
-                      className="font-bold text-foreground hover:text-primary transition-colors text-sm line-clamp-1"
+                      className="relative size-10 rounded-xl overflow-hidden bg-secondary shrink-0 border border-border group"
                     >
-                      {m.nom_complet}
+                      {m.photo ? (
+                        <img
+                          src={m.photo}
+                          alt={m.nom_complet}
+                          className="size-full object-cover transition-transform group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="size-full flex items-center justify-center bg-primary/10 text-primary">
+                          <User className="size-5 opacity-60" />
+                        </div>
+                      )}
                     </Link>
-                    {m.profession && (
-                      <span className="text-xs text-muted-foreground block line-clamp-1">
-                        {m.profession}
-                      </span>
-                    )}
-                    <div className="flex items-center gap-2 pt-0.5 text-[11px] text-muted-foreground">
-                      <span className="inline-flex items-center gap-1">
-                        <Mail className="size-3" />
-                        <span className="truncate max-w-[120px]">{m.email}</span>
-                      </span>
-                      <span>•</span>
-                      <span className="inline-flex items-center gap-1">
-                        <Phone className="size-3" />
-                        <span>{m.telephone}</span>
-                      </span>
+
+                    <div className="space-y-0.5 min-w-0">
+                      <Link
+                        href={`/admin/adhesions/${m.id}`}
+                        className="font-bold text-foreground hover:text-primary transition-colors text-sm line-clamp-1"
+                      >
+                        {m.nom_complet}
+                      </Link>
+                      {m.profession && (
+                        <span className="text-xs text-muted-foreground block line-clamp-1">
+                          {m.profession}
+                        </span>
+                      )}
+                      <div className="flex items-center gap-2 pt-0.5 text-[11px] text-muted-foreground">
+                        <span className="inline-flex items-center gap-1">
+                          <Mail className="size-3" />
+                          <span className="truncate max-w-[120px]">{m.email}</span>
+                        </span>
+                        <span>•</span>
+                        <span className="inline-flex items-center gap-1">
+                          <Phone className="size-3" />
+                          <span>{m.telephone}</span>
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </TableCell>

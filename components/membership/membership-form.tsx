@@ -18,8 +18,12 @@ import {
   CreditCard,
   ArrowRight,
   Sparkles,
+  Camera,
+  UploadCloud,
+  X,
 } from "lucide-react"
 import { toast } from "sonner"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -54,12 +58,30 @@ function makeRef() {
 export function MembershipForm() {
   const [reference, setReference] = useState<string | null>(null)
   const [submittedValues, setSubmittedValues] = useState<FormValues | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La photo ne doit pas dépasser 5 Mo.")
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      setPhotoPreview(reader.result as string)
+      toast.success("Photo d'identité chargée avec succès !")
+    }
+    reader.readAsDataURL(file)
+  }
 
   async function onSubmit(values: FormValues) {
     // Simulated submit delay
@@ -97,6 +119,45 @@ export function MembershipForm() {
         {/* Reference Badge */}
         <div className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-primary/30 bg-primary/10 px-6 py-3 font-mono text-xl font-bold text-primary shadow-inner">
           <span>{reference}</span>
+        </div>
+
+        {/* Official Card Preview Mockup */}
+        <div className="mx-auto mt-8 max-w-md rounded-2xl border border-border bg-card p-5 text-left shadow-sm">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+            <Sparkles className="size-3.5 text-accent" />
+            <span>Votre Carte de Membre Numérique Officielle :</span>
+          </h4>
+
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-secondary shadow-md border border-border">
+            <Image
+              src="/assets/Carte-membres.png"
+              alt="Carte de membre Casa Impact"
+              fill
+              className="object-cover"
+            />
+            {/* Dynamic member overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent p-3.5 flex flex-col justify-end text-white">
+              <div className="flex items-center gap-3">
+                <div className="relative size-11 rounded-lg overflow-hidden border border-white/80 bg-black/40 shrink-0">
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Portrait" className="size-full object-cover" />
+                  ) : (
+                    <div className="size-full flex items-center justify-center bg-white/20">
+                      <User className="size-5 text-white" />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-white truncate drop-shadow">
+                    {submittedValues.nom_complet}
+                  </p>
+                  <p className="text-[10px] text-white/80 font-mono">
+                    N° {reference} • {MEMBERSHIP_REGION_LABELS[submittedValues.region as MembershipRegion] || submittedValues.region}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Next Steps Checklist Box */}
@@ -157,6 +218,7 @@ export function MembershipForm() {
               onClick={() => {
                 setReference(null)
                 setSubmittedValues(null)
+                setPhotoPreview(null)
               }}
               className="w-full sm:w-auto rounded-full"
             >
@@ -179,49 +241,69 @@ export function MembershipForm() {
           label="Nom complet"
           icon={User}
           error={errors.nom_complet?.message}
-          className="sm:col-span-2"
         >
           <Input
             {...register("nom_complet")}
-            placeholder="Ex : Ousmane Diédhiou"
+            placeholder="Prénom et Nom"
             aria-invalid={!!errors.nom_complet}
-            className="h-11 rounded-xl"
+            className="h-11 rounded-xl bg-background text-sm"
           />
         </Field>
 
-        {/* E-mail */}
-        <Field label="Adresse e-mail" icon={Mail} error={errors.email?.message}>
+        {/* Adresse e-mail */}
+        <Field
+          label="Adresse e-mail"
+          icon={Mail}
+          error={errors.email?.message}
+        >
           <Input
-            type="email"
             {...register("email")}
-            placeholder="vous@exemple.com"
+            type="email"
+            placeholder="nom@exemple.com"
             aria-invalid={!!errors.email}
-            className="h-11 rounded-xl"
+            className="h-11 rounded-xl bg-background text-sm"
           />
         </Field>
 
-        {/* Téléphone */}
-        <Field label="Numéro de téléphone (WhatsApp)" icon={Phone} error={errors.telephone?.message}>
+        {/* Téléphone (WhatsApp) */}
+        <Field
+          label="Numéro WhatsApp"
+          icon={Phone}
+          error={errors.telephone?.message}
+        >
           <Input
             {...register("telephone")}
-            placeholder="+221 78 ... .. .."
+            type="tel"
+            placeholder="+221 78 123 45 67"
             aria-invalid={!!errors.telephone}
-            className="h-11 rounded-xl"
+            className="h-11 rounded-xl bg-background text-sm"
           />
         </Field>
 
         {/* Profession */}
-        <Field label="Profession / Activité (facultatif)" icon={Briefcase} error={errors.profession?.message}>
+        <Field
+          label="Profession / Statut"
+          icon={Briefcase}
+          error={errors.profession?.message}
+        >
           <Input
             {...register("profession")}
-            placeholder="Ex : Étudiant, Entrepreneur, Enseignant..."
-            className="h-11 rounded-xl"
+            placeholder="ex. Étudiant, Entrepreneur, Enseignant..."
+            className="h-11 rounded-xl bg-background text-sm"
           />
         </Field>
 
         {/* Région */}
-        <Field label="Région ou Localisation" icon={MapPin} error={errors.region?.message}>
-          <SelectField {...register("region")} aria-invalid={!!errors.region} defaultValue="">
+        <Field
+          label="Région / Localisation"
+          icon={MapPin}
+          error={errors.region?.message}
+        >
+          <SelectField
+            {...register("region")}
+            aria-invalid={!!errors.region}
+            defaultValue=""
+          >
             <option value="" disabled>
               Sélectionnez votre région
             </option>
@@ -233,20 +315,68 @@ export function MembershipForm() {
           </SelectField>
         </Field>
 
-        {/* Département */}
-        <Field label="Département / Ville (facultatif)" icon={MapPin} error={errors.departement?.message}>
+        {/* Département / Ville */}
+        <Field
+          label="Département ou Ville"
+          icon={MapPin}
+          error={errors.departement?.message}
+        >
           <Input
             {...register("departement")}
-            placeholder="Ex : Bignona, Oussouye, Vélingara, Bounkiling..."
-            className="h-11 rounded-xl"
+            placeholder="ex. Oussouye, Bignona, Vélingara, Paris..."
+            className="h-11 rounded-xl bg-background text-sm"
           />
         </Field>
 
+        {/* Photo d'Identité pour la Carte de Membre (Optionnel) */}
+        <div className="sm:col-span-2 space-y-2 rounded-2xl border border-dashed border-border bg-secondary/20 p-4">
+          <Label className="flex items-center gap-1.5 text-xs font-semibold text-foreground uppercase tracking-wide">
+            <Camera className="size-3.5 text-forest" />
+            <span>Photo d'identité pour votre carte de membre (Facultatif)</span>
+          </Label>
+
+          <div className="flex flex-col sm:flex-row items-center gap-4 pt-1">
+            {photoPreview ? (
+              <div className="relative size-16 rounded-2xl overflow-hidden border-2 border-forest shadow-xs shrink-0">
+                <img src={photoPreview} alt="Aperçu portrait" className="size-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setPhotoPreview(null)}
+                  className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-destructive text-white shadow-xs"
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-secondary text-muted-foreground shrink-0 border border-border">
+                <User className="size-6 opacity-40" />
+              </div>
+            )}
+
+            <div className="flex-1 text-center sm:text-left">
+              <label className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition-colors cursor-pointer">
+                <UploadCloud className="size-4" />
+                <span>{photoPreview ? "Changer la photo" : "Téléverser votre photo d'identité"}</span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                />
+              </label>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Formats acceptés : JPG, PNG, WEBP (Max. 5 Mo). Cette photo figurera sur votre carte de membre.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Domaine de contribution */}
         <Field
-          label="Pôle ou Domaine d'intérêt"
+          label="Pôle / Commission de prédilection"
           icon={Layers}
           error={errors.domaine_contribution?.message}
+          className="sm:col-span-2"
         >
           <SelectField
             {...register("domaine_contribution")}

@@ -3,9 +3,9 @@ import type { Membership } from "@/types/models"
 
 /**
  * Données de DÉMONSTRATION pour les Adhésions de Casa Impact.
+ * Chaque membre possède une photo de profil officielle.
  */
 export const mockMemberships: Membership[] = [
-  // DEMO ONLY — replace with API data
   {
     id: 1,
     reference: "ADH-2026-0182",
@@ -17,6 +17,7 @@ export const mockMemberships: Membership[] = [
     departement: "Oussouye",
     domaine_contribution: "pole_economie_agriculture_attractivite",
     type_contribution: "expert_conseiller_technique",
+    photo: "/assets/team/abdou-khadre-djitte.jpg",
     statut: "en_attente_paiement",
     montant: 1000,
     paiement_statut: "en_attente",
@@ -34,6 +35,7 @@ export const mockMemberships: Membership[] = [
     departement: "Goudomp",
     domaine_contribution: "pole_capital_humain",
     type_contribution: "membre_actif",
+    photo: "/assets/team/fatoumata-drame.jpg",
     statut: "en_attente_paiement",
     montant: 1000,
     paiement_statut: "en_attente",
@@ -51,6 +53,7 @@ export const mockMemberships: Membership[] = [
     departement: "Vélingara",
     domaine_contribution: "pole_culture_communication",
     type_contribution: "membre_actif",
+    photo: "/assets/team/saliou-diop.jpg",
     statut: "validee",
     montant: 1000,
     paiement_statut: "paye",
@@ -68,6 +71,7 @@ export const mockMemberships: Membership[] = [
     departement: "Bignona",
     domaine_contribution: "commission_scientifique",
     type_contribution: "expert_conseiller_technique",
+    photo: "/assets/team/pascaline-santos.jpg",
     statut: "validee",
     montant: 1000,
     paiement_statut: "paye",
@@ -80,11 +84,12 @@ export const mockMemberships: Membership[] = [
     nom_complet: "Oumar Sadio",
     email: "oumar.sadio@sedhiou.org",
     telephone: "+221 70 890 12 34",
-    profession: "Enseignant Retraité",
+    profession: "Enseignant & Chercheur",
     region: "sedhiou",
     departement: "Bounkiling",
     domaine_contribution: "commission_scientifique",
     type_contribution: "expert_conseiller_technique",
+    photo: "/assets/hero/DSC08016%20copie.jpg",
     statut: "validee",
     montant: 1000,
     paiement_statut: "paye",
@@ -102,6 +107,7 @@ export const mockMemberships: Membership[] = [
     departement: "Paris (France)",
     domaine_contribution: "coordination_regionale",
     type_contribution: "membre_actif",
+    photo: "/assets/team/fatoumata-drame.jpg",
     statut: "refusee",
     montant: 1000,
     paiement_statut: "echoue",

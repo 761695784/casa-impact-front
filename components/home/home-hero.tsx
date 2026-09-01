@@ -108,7 +108,7 @@ export function HomeHero() {
   const activeSlideData = HERO_SLIDES[currentSlide]
 
   return (
-    <section 
+    <section
       className="relative isolate overflow-hidden bg-forest text-forest-foreground"
       onMouseEnter={() => setIsPlaying(false)}
       onMouseLeave={() => setIsPlaying(true)}
@@ -121,9 +121,8 @@ export function HomeHero() {
           return (
             <div
               key={slide.src}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
-              }`}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                }`}
             >
               <div className={`relative h-full w-full ${isActive ? "animate-ken-burns" : ""}`}>
                 <Image
@@ -141,15 +140,15 @@ export function HomeHero() {
       </div>
 
       {/* Multi-layered Cinematic Gradient & Mesh Overlays for Perfect Contrast & Elegance */}
-      <div 
+      <div
         className="absolute inset-0 -z-10 bg-gradient-to-r from-forest/95 via-forest/80 to-forest/40 md:from-forest/95 md:via-forest/75 md:to-forest/30"
         aria-hidden
       />
-      <div 
+      <div
         className="absolute inset-0 -z-10 bg-gradient-to-t from-forest via-transparent to-black/40"
         aria-hidden
       />
-      
+
       {/* Ambient Baobab Watermark */}
       <BaobabMark
         variant="white"
@@ -159,7 +158,7 @@ export function HomeHero() {
 
       {/* Main Content Container */}
       <div className="relative mx-auto flex min-h-[calc(100dvh-4.5rem)] max-w-7xl flex-col justify-between px-4 pb-12 pt-20 sm:px-6 sm:pb-16 sm:pt-24 lg:px-8 lg:pt-28">
-        
+
         {/* Top Badges: Regions & Live Indicator */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/90 backdrop-blur-md">
@@ -185,7 +184,7 @@ export function HomeHero() {
         <div className="my-auto max-w-3xl pt-8 pb-10">
           <div className="inline-flex items-center gap-2 rounded-lg bg-accent/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-accent backdrop-blur-sm border border-accent/30">
             <Sparkles className="size-3.5" />
-            <span>Plateforme d'action & de transformation</span>
+            <span>Plateforme d'action et de transformation</span>
           </div>
 
           <h1 className="mt-6 text-balance font-display text-4xl font-bold leading-[1.02] sm:text-6xl lg:text-7xl text-white drop-shadow-sm">
@@ -197,7 +196,7 @@ export function HomeHero() {
           </h1>
 
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/90 sm:text-xl font-normal drop-shadow">
-            Casa Impact fédère les énergies de <strong>Ziguinchor</strong>, <strong>Kolda</strong> et <strong>Sédhiou</strong> pour former les talents, encourager l'entrepreneuriat et accélérer la transformation durable de notre territoire.
+            Casa Impact fédère les énergies de <strong>Ziguinchor</strong>, <strong>Sédhiou</strong> et <strong>Kolda</strong> pour former les talents, encourager l'entrepreneuriat et accélérer la transformation durable de notre territoire.
           </p>
 
           {/* <p className="mt-4 text-xs font-semibold uppercase tracking-[0.24em] text-accent/90">
@@ -212,7 +211,7 @@ export function HomeHero() {
               className="h-13 rounded-full bg-accent px-8 font-semibold text-accent-foreground shadow-lg shadow-accent/25 transition-all hover:bg-forest hover:text-white hover:scale-[1.02] active:scale-[0.98]"
             >
               <Link href="/adherer" className="flex items-center gap-2">
-                Rejoindre le mouvement
+                Rejoindre l'organisation
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
@@ -231,7 +230,7 @@ export function HomeHero() {
 
         {/* Bottom Bar: Slide Controls & Pillar Badges */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between border-t border-white/15 pt-6">
-          
+
           {/* Active Slide Info & Indicators */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2 text-xs font-medium text-white/80">

@@ -15,6 +15,7 @@ export interface TeamMember {
   categorie: TeamCategory
   pole?: string
   region?: string
+  telephone?: string
   image?: string
   ordre: number
 }

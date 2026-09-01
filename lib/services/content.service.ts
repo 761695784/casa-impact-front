@@ -53,7 +53,12 @@ export const contentService = {
   listTalents: () => delay<Talent[]>(mockTalents),
 
   // Testimonials
-  listTestimonials: () => delay<Testimonial[]>(mockTestimonials),
+  listTestimonials: () =>
+    delay<Testimonial[]>(
+      mockTestimonials
+        .filter((t) => t.statut === "publie")
+        .sort((a, b) => (a.ordre || a.id) - (b.ordre || b.id))
+    ),
 
   // Partners
   listPartners: () => delay<Partner[]>(mockPartners),

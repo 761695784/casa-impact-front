@@ -1,6 +1,7 @@
 import type React from "react"
 import { SiteHeader } from "@/components/layout/site-header"
 import { SiteFooter } from "@/components/layout/site-footer"
+import { FloatingJoinButton } from "@/components/layout/floating-join-button"
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,6 +17,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         {children}
       </main>
       <SiteFooter />
+      <FloatingJoinButton />
     </div>
   )
 }

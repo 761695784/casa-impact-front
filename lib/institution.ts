@@ -5,9 +5,9 @@
 
 export const institution = {
   intro:
-    "Casa Impact est une organisation engagée pour le développement durable et inclusif de la Casamance. Elle a été créée avec l'ambition de fédérer les énergies positives des trois régions naturelles de la Casamance : Ziguinchor, Kolda et Sédhiou. Casa Impact se veut une plateforme d'action, d'innovation et de transformation sociale au service de la jeunesse et des communautés.",
+    "Casa Impact est une organisation engagée pour le développement durable et inclusif de la Casamance. Elle a été créée avec l'ambition de fédérer les énergies positives des trois régions naturelles de la Casamance : Ziguinchor, Sédhiou et Kolda. Casa Impact se veut une plateforme d'action, d'innovation et de transformation sociale au service de la jeunesse et des communautés.",
   conclusion:
-    "Casa Impact est plus qu'une organisation : c'est une vision, un mouvement et un engagement pour l'avenir de la Casamance.",
+    "Casa Impact est une plateforme d'action, d'engagement citoyen et d'innovation pour l'avenir de la Casamance.",
   vision:
     "Faire de la Casamance un territoire de référence en Afrique en matière de développement territorial, d'entrepreneuriat, de leadership jeune, de culture et d'investissement.",
   mission:
@@ -199,16 +199,16 @@ export const territoires = [
   {
     nom: 'Ziguinchor',
     description:
-      "Porte d'entrée de la Casamance, terre du Président Fondateur, cœur historique du mouvement Casa Impact.",
-  },
-  {
-    nom: 'Kolda',
-    description:
-      "Région à fort potentiel agricole et humain, riche de sa jeunesse et de ses talents.",
+      "Porte d'entrée de la Casamance, terre du Président Fondateur, cœur historique de l'organisation Casa Impact.",
   },
   {
     nom: 'Sédhiou',
     description:
       "Territoire de traditions et d'opportunités, pleinement associé à la dynamique des trois régions.",
+  },
+  {
+    nom: 'Kolda',
+    description:
+      "Région à fort potentiel agricole et humain, riche de sa jeunesse et de ses talents.",
   },
 ] as const

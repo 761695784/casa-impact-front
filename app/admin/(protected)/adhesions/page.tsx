@@ -74,7 +74,7 @@ export default function AdminAdhesionsPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-forest/10 px-3 py-0.5 text-xs font-semibold text-forest">
             <CreditCard className="size-3.5" />
-            <span>Mouvement & Adhérents</span>
+            <span>Membres & Adhérents</span>
           </div>
           <h1 className="mt-2 font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             Gestion des Adhésions

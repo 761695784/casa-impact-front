@@ -5,7 +5,7 @@ import { BaobabMark } from "@/components/brand/baobab-mark"
 
 export function CtaBand({
   title = "Prêt à faire partie du changement en Casamance ?",
-  description = "Rejoignez un mouvement de jeunes, d'entrepreneurs et d'acteurs engagés pour trois régions, une vision, un impact.",
+  description = "Rejoignez une organisation de jeunes, d'entrepreneurs et d'acteurs engagés pour trois régions, une vision, un impact.",
   primary = { label: "Nous rejoindre", href: "/adherer" },
   secondary = { label: "Voir les opportunités", href: "/opportunites" },
 }: {

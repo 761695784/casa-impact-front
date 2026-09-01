@@ -15,12 +15,12 @@ export type AdminRoleSlug =
 export interface AdminActivityItem {
   id: string
   type:
-    | "candidature"
-    | "adhesion"
-    | "message"
-    | "actualite"
-    | "programme"
-    | "appel"
+  | "candidature"
+  | "adhesion"
+  | "message"
+  | "actualite"
+  | "programme"
+  | "appel"
   titre: string
   description: string
   date: string

@@ -7,7 +7,7 @@ import { ProgramsList } from "@/components/programs/programs-list"
 export const metadata: Metadata = {
   title: "Programmes & activités",
   description:
-    "Découvrez les programmes, formations et événements de Casa Impact déployés à Ziguinchor, Kolda et Sédhiou.",
+    "Découvrez les programmes, formations et événements de Casa Impact déployés à Ziguinchor, Sédhiou et Kolda.",
 }
 
 export default function ProgrammesPage() {

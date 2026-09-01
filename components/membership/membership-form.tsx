@@ -71,7 +71,7 @@ export function MembershipForm() {
   }
 
   if (reference && submittedValues) {
-    const whatsappUrl = `https://wa.me/221782643438?text=${encodeURIComponent(
+    const whatsappUrl = `https://wa.me/221781033063?text=${encodeURIComponent(
       `Bonjour Casa Impact, je viens de soumettre ma demande d'adhésion au nom de ${submittedValues.nom_complet} (Réf : ${reference}). Voici ma capture de paiement de 1 000 FCFA.`
     )}`
 

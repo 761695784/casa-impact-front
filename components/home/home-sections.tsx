@@ -132,15 +132,6 @@ const territoryMeta = [
     accentBg: "bg-forest",
   },
   {
-    nom: "Kolda",
-    tag: "Agro-écologie & Jeunesse",
-    gradient: "from-accent/15 via-accent/5 to-transparent",
-    border: "border-accent/30 hover:border-accent",
-    badgeBg: "bg-accent/15 text-accent-foreground",
-    numColor: "text-accent/35",
-    accentBg: "bg-accent",
-  },
-  {
     nom: "Sédhiou",
     tag: "Traditions & Terroirs d'avenir",
     gradient: "from-earth/10 via-earth/5 to-transparent",
@@ -149,6 +140,15 @@ const territoryMeta = [
     numColor: "text-earth/30",
     accentBg: "bg-earth",
   },
+  {
+    nom: "Kolda",
+    tag: "Agro-écologie & Jeunesse",
+    gradient: "from-accent/15 via-accent/5 to-transparent",
+    border: "border-accent/30 hover:border-accent",
+    badgeBg: "bg-accent/15 text-accent-foreground",
+    numColor: "text-accent/35",
+    accentBg: "bg-accent",
+  },
 ]
 
 export function HomeTerritories() {
@@ -156,7 +156,7 @@ export function HomeTerritories() {
     <Section tone="muted" className="relative">
       <SectionHeading
         eyebrow="Trois régions, une vision"
-        title="Un mouvement solidement ancré dans les terroirs"
+        title="Une organisation solidement ancrée dans les terroirs"
         description="Casa Impact fédère les forces vives de toute la Casamance naturelle pour créer des synergies économiques et humaines uniques."
       />
 

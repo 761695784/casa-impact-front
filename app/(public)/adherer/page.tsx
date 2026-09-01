@@ -7,7 +7,7 @@ import { Section, SectionHeading } from "@/components/layout/section"
 import { CtaBand } from "@/components/layout/cta-band"
 
 export const metadata: Metadata = {
-  title: "Adhérer — Rejoindre le Mouvement Casa Impact",
+  title: "Adhérer — Rejoindre l'Organisation Casa Impact",
   description:
     "Rejoignez Casa Impact : obtenez votre carte de membre officielle (1 000 FCFA), intégrez le groupe WhatsApp et participez activement à la transformation de la Casamance.",
 }

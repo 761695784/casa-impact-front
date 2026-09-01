@@ -65,7 +65,7 @@ export const mockPrograms: Program[] = [
     resume:
       "Un parcours d'excellence au leadership, au développement personnel et à l'engagement citoyen pour les jeunes des trois régions.",
     description:
-      "L'Académie du Leadership Jeune accompagne des promotions de jeunes de Ziguinchor, Kolda et Sédhiou dans le développement de leurs compétences de leadership, de prise de parole en public et de conduite de projets à fort impact territorial.",
+      "L'Académie du Leadership Jeune accompagne des promotions de jeunes de Ziguinchor, Sédhiou et Kolda dans le développement de leurs compétences de leadership, de prise de parole en public et de conduite de projets à fort impact territorial.",
     domaine_id: 1,
     domaine: mockDomains[0],
     type_id: 1,

@@ -354,20 +354,20 @@ export function AboutTerritories() {
       border: "hover:border-forest",
     },
     {
-      nom: "Kolda",
-      role: "Pôle Agro-économique & Jeunesse",
-      desc: "Région au potentiel agricole exceptionnel, riche de sa jeunesse talentueuse et de ses opportunités d'entrepreneuriat.",
-      accent: "bg-accent",
-      badge: "bg-accent/25 text-accent-foreground",
-      border: "hover:border-accent",
-    },
-    {
       nom: "Sédhiou",
       role: "Traditions & Terroirs d'Avenir",
       desc: "Territoire d'histoire, de culture et de ressources, pleinement engagé dans la vision partagée des trois régions.",
       accent: "bg-earth",
       badge: "bg-earth/15 text-earth",
       border: "hover:border-earth",
+    },
+    {
+      nom: "Kolda",
+      role: "Pôle Agro-économique & Jeunesse",
+      desc: "Région au potentiel agricole exceptionnel, riche de sa jeunesse talentueuse et de ses opportunités d'entrepreneuriat.",
+      accent: "bg-accent",
+      badge: "bg-accent/25 text-accent-foreground",
+      border: "hover:border-accent",
     },
   ]
 
@@ -383,7 +383,7 @@ export function AboutTerritories() {
         invert
         eyebrow="Ancrage territorial"
         title="Trois Régions, Une Vision, Un Impact"
-        description="Casa Impact bâtit des passerelles solides entre Ziguinchor, Kolda et Sédhiou pour unir les forces vives."
+        description="Casa Impact bâtit des passerelles solides entre Ziguinchor, Sédhiou et Kolda pour unir les forces vives."
         align="center"
       />
 

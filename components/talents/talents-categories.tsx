@@ -29,7 +29,7 @@ const talentCategories = [
   {
     title: "Champions Sportifs",
     tag: "Performance & Valeurs",
-    desc: "Athlètes, footballeurs, lutteurs, basketteurs et encadreurs qui hissent haut les couleurs de Ziguinchor, Kolda et Sédhiou.",
+    desc: "Athlètes, footballeurs, lutteurs, basketteurs et encadreurs qui hissent haut les couleurs de Ziguinchor, Sédhiou et Kolda.",
     icon: Trophy,
     border: "border-earth/30 hover:border-earth",
     gradient: "from-earth/10 via-background to-background",

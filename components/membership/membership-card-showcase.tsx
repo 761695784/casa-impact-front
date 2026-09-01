@@ -11,7 +11,7 @@ const memberPrivileges = [
   "Intégration immédiate au Groupe WhatsApp officiel des membres actifs de la Casamance",
   "Droit de vote et participation aux Assemblées Générales et consultations citoyennes",
   "Accès privilégié aux événements de networking, forums économiques et masterclasses",
-  "Mise en relation directe avec les mentors, la diaspora et les partenaires du mouvement",
+  "Mise en relation directe avec les mentors, la diaspora et les partenaires de l'organisation",
   "Carte physique et numérique nominative avec identifiant unique vérifié",
 ]
 

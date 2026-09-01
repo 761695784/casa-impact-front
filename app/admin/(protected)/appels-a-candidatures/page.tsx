@@ -85,7 +85,7 @@ export default function AppelsListPage() {
             Appels à Candidatures
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-            Publiez, pilotez et clôturez les opportunités d'accompagnement et d'incubation du mouvement.
+            Publiez, pilotez et clôturez les opportunités d'accompagnement et d'incubation de l'organisation.
           </p>
         </div>
 

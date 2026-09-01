@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { MapPin, User } from "lucide-react"
+import { MapPin, User, Phone } from "lucide-react"
 import { BaobabMark } from "@/components/brand/baobab-mark"
 import type { TeamMember } from "@/types/team"
 
@@ -83,6 +83,19 @@ export function TeamMemberCard({
             <span className="inline-block rounded-md bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
               {member.pole}
             </span>
+          </div>
+        )}
+
+        {member.telephone && (
+          <div className="mt-3 pt-2.5 border-t border-border/60">
+            <a
+              href={`tel:${member.telephone.replace(/[^+\d]/g, "")}`}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-forest transition-colors"
+              title={`Appeler ${member.nom} (${member.region || ""})`}
+            >
+              <Phone className="size-3.5 text-forest" />
+              <span>{member.telephone}</span>
+            </a>
           </div>
         )}
       </figcaption>

@@ -88,7 +88,7 @@ export function MembershipHero({
 
         {/* Description */}
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/90 sm:text-xl font-normal drop-shadow">
-          Chaque énergie compte. Que vous soyez de <strong>Ziguinchor</strong>, <strong>Kolda</strong>, <strong>Sédhiou</strong>, de Dakar ou de la diaspora, rejoignez un mouvement collectif pour transformer durablement la Casamance.
+          Chaque énergie compte. Que vous soyez de <strong>Ziguinchor</strong>, <strong>Sédhiou</strong>, <strong>Kolda</strong>, de Dakar ou de la diaspora, rejoignez une organisation collective pour transformer durablement la Casamance.
         </p>
 
         {/* Quick Membership Highlights */}

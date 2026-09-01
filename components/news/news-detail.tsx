@@ -18,12 +18,15 @@ import { Section, SectionHeading } from "@/components/layout/section"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
+import { NewsGallery } from "@/components/news/news-gallery"
 import { Badge } from "@/components/ui/badge"
 import { NEWS_TYPE_LABELS } from "@/types/enums"
 import { formatDate } from "@/lib/format"
 import { NewsCard } from "@/components/cards/news-card"
 import { BaobabMark } from "@/components/brand/baobab-mark"
 import { toast } from "sonner"
+
+import { mockNews } from "@/lib/mock/news.mock"
 
 const newsTypeBadgeColors: Record<string, string> = {
   article: "bg-forest text-white",
@@ -33,29 +36,15 @@ const newsTypeBadgeColors: Record<string, string> = {
 }
 
 export function NewsDetail({ slug }: { slug: string }) {
-  const { data: article, isLoading, isError } = useNewsArticle(slug)
+  const { data: article } = useNewsArticle(slug)
   const { data: allNews } = useNews()
 
-  const otherArticles = (allNews ?? []).filter((n) => n.slug !== slug).slice(0, 3)
+  // Dynamic or instant fallback
+  const currentArticle = article || mockNews.find((n) => n.slug === slug)
+  const rawAllNews = allNews && allNews.length > 0 ? allNews : mockNews
+  const otherArticles = rawAllNews.filter((n) => n.slug !== slug).slice(0, 3)
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6 py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Skeleton className="h-6 w-40" />
-          <Skeleton className="mt-6 h-12 w-3/4" />
-          <Skeleton className="mt-8 aspect-[21/9] w-full rounded-3xl" />
-          <div className="mt-10 space-y-4 max-w-3xl mx-auto">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-4 w-4/6" />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (isError || !article) {
+  if (!currentArticle) {
     return (
       <Section className="py-24">
         <EmptyState
@@ -71,12 +60,12 @@ export function NewsDetail({ slug }: { slug: string }) {
     )
   }
 
-  const cover = article.image || "/assets/hero/DSC08016%20copie.jpg"
+  const cover = currentArticle.image || "/assets/hero/DSC08016%20copie.jpg"
 
   const shareOnSocial = (platform: string) => {
     if (typeof window === "undefined") return
     const url = encodeURIComponent(window.location.href)
-    const title = encodeURIComponent(article.titre)
+    const title = encodeURIComponent(currentArticle.titre)
 
     let shareUrl = ""
     if (platform === "whatsapp") {
@@ -105,7 +94,7 @@ export function NewsDetail({ slug }: { slug: string }) {
           <div className="relative h-full w-full animate-ken-burns">
             <Image
               src={cover}
-              alt={article.titre}
+              alt={currentArticle.titre}
               fill
               priority
               sizes="100vw"
@@ -161,7 +150,7 @@ export function NewsDetail({ slug }: { slug: string }) {
                   <ChevronRight className="size-3 text-white/40" />
                 </li>
                 <li className="text-white font-medium truncate max-w-[200px]">
-                  {article.titre}
+                  {currentArticle.titre}
                 </li>
               </ol>
             </nav>
@@ -171,16 +160,16 @@ export function NewsDetail({ slug }: { slug: string }) {
           <div className="flex flex-wrap items-center gap-3">
             <span
               className={`rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-wider shadow-sm ${
-                newsTypeBadgeColors[article.type] || "bg-primary text-white"
+                newsTypeBadgeColors[currentArticle.type] || "bg-primary text-white"
               }`}
             >
-              {NEWS_TYPE_LABELS[article.type]}
+              {NEWS_TYPE_LABELS[currentArticle.type]}
             </span>
 
-            {article.date_publication && (
+            {currentArticle.date_publication && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm border border-white/15">
                 <Calendar className="size-3 text-accent" />
-                <time>{formatDate(article.date_publication)}</time>
+                <time>{formatDate(currentArticle.date_publication)}</time>
               </span>
             )}
 
@@ -192,13 +181,13 @@ export function NewsDetail({ slug }: { slug: string }) {
 
           {/* Headline */}
           <h1 className="mt-6 text-balance font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl drop-shadow-sm">
-            {article.titre}
+            {currentArticle.titre}
           </h1>
 
           {/* Excerpt Lead */}
-          {article.extrait && (
+          {currentArticle.extrait && (
             <p className="mt-6 text-lg sm:text-xl leading-relaxed text-white/90 font-normal drop-shadow">
-              {article.extrait}
+              {currentArticle.extrait}
             </p>
           )}
         </div>
@@ -213,7 +202,7 @@ export function NewsDetail({ slug }: { slug: string }) {
             <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-secondary shadow-md mb-8">
               <Image
                 src={cover}
-                alt={article.titre}
+                alt={currentArticle.titre}
                 fill
                 sizes="(max-width: 1024px) 100vw, 896px"
                 className="object-cover"
@@ -221,11 +210,18 @@ export function NewsDetail({ slug }: { slug: string }) {
             </div>
 
             {/* Editorial Body Text */}
-            <div className="prose prose-lg prose-neutral max-w-none dark:prose-invert">
-              <p className="text-lg leading-relaxed text-foreground/90 font-normal">
-                {article.contenu}
-              </p>
+            <div className="prose prose-lg prose-neutral max-w-none dark:prose-invert space-y-4">
+              {currentArticle.contenu?.split("\n\n").map((para, idx) => (
+                <p key={idx} className="text-base sm:text-lg leading-relaxed text-foreground/90 font-normal">
+                  {para}
+                </p>
+              ))}
             </div>
+
+            {/* Photo Gallery with Lightbox if available */}
+            {currentArticle.medias && currentArticle.medias.length > 0 && (
+              <NewsGallery medias={currentArticle.medias} />
+            )}
 
             {/* Author / Publisher Footnote */}
             <div className="mt-10 pt-6 border-t border-border flex flex-wrap items-center justify-between gap-4">

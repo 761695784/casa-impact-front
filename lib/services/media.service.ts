@@ -166,6 +166,48 @@ export const mediaService = {
   },
 
   /**
+   * Création / Upload d'un média dans la médiathèque
+   * Endpoint : POST /api/admin/media
+   */
+  createMedia: async (payload: Omit<Media, "id">): Promise<Media> => {
+    if (DATA_SOURCE === "mock") {
+      const newId = Math.max(0, ...mockMediaItems.map((m) => m.id)) + 1
+      const newMedia: Media = {
+        ...payload,
+        id: newId,
+        statut: payload.statut || "actif",
+        type: payload.type || "image",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+
+      mockMediaItems.unshift(newMedia)
+      return delay<Media>(newMedia)
+    }
+
+    const res = await fetch(`${API_URL}/api/admin/media`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(payload),
+    })
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => null)
+      throw new Error(
+        err?.message ||
+          `Erreur lors de l'ajout du média (HTTP ${res.status})`
+      )
+    }
+
+    const json = await res.json()
+    return json.data || json
+  },
+
+  /**
    * Suppression d'un média
    * Endpoint : DELETE /api/admin/media/{id}
    */

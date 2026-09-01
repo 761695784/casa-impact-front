@@ -8,7 +8,7 @@ import { territoires } from "@/lib/institution"
 export const metadata: Metadata = {
   title: "Carte des actions",
   description:
-    "Découvrez les programmes, appels à candidatures et actions de Casa Impact à travers les trois régions de la Casamance : Ziguinchor, Kolda et Sédhiou.",
+    "Découvrez les programmes, appels à candidatures et actions de Casa Impact à travers les trois régions de la Casamance : Ziguinchor, Sédhiou et Kolda.",
 }
 
 const legend = [

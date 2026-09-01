@@ -9,7 +9,7 @@ import { CtaBand } from "@/components/layout/cta-band"
 export const metadata: Metadata = {
   title: "Mur des Talents — Champions & Créateurs de Casamance",
   description:
-    "Découvrez le Mur des Talents de Casa Impact : entrepreneurs, artistes, sportifs et leaders qui bâtissent l'avenir de Ziguinchor, Kolda et Sédhiou.",
+    "Découvrez le Mur des Talents de Casa Impact : entrepreneurs, artistes, sportifs et leaders qui bâtissent l'avenir de Ziguinchor, Sédhiou et Kolda.",
 }
 
 export default function TalentsPage() {

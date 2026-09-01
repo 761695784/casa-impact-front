@@ -46,7 +46,7 @@ const faqs = [
 ]
 
 export default function ContactPage() {
-  const whatsappUrl = `https://wa.me/221782643438?text=${encodeURIComponent(
+  const whatsappUrl = `https://wa.me/221781033063?text=${encodeURIComponent(
     "Bonjour Casa Impact, je souhaite échanger avec votre équipe concernant une opportunité / demande d'information."
   )}`
 

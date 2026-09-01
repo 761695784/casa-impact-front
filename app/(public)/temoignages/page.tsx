@@ -7,7 +7,7 @@ import { CtaBand } from "@/components/layout/cta-band"
 export const metadata: Metadata = {
   title: "Témoignages",
   description:
-    "Les voix de celles et ceux que Casa Impact accompagne : bénéficiaires, membres et partenaires racontent leur expérience du mouvement.",
+    "Les voix de celles et ceux que Casa Impact accompagne : bénéficiaires, membres et partenaires racontent leur expérience de l'organisation.",
 }
 
 export default function TemoignagesPage() {
@@ -16,7 +16,7 @@ export default function TemoignagesPage() {
       <PageHero
         eyebrow="Ils en parlent"
         title="Témoignages"
-        description="Derrière chaque action, il y a des visages et des parcours. Découvrez ce que représente Casa Impact pour celles et ceux qui vivent le mouvement de l'intérieur."
+        description="Derrière chaque action, il y a des visages et des parcours. Découvrez ce que représente Casa Impact pour celles et ceux qui vivent l'organisation de l'intérieur."
       />
 
       <Section>

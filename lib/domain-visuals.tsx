@@ -50,7 +50,7 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
       },
       {
         title: "Pôles Jeunesse Territoriaux",
-        desc: "Animation de tiers-lieux et d'espaces de rencontre pour la jeunesse à Ziguinchor, Kolda et Sédhiou.",
+        desc: "Animation de tiers-lieux et d'espaces de rencontre pour la jeunesse à Ziguinchor, Sédhiou et Kolda.",
       },
     ],
   },
@@ -138,7 +138,7 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
       },
       {
         title: "Circuits Découverte & Terroirs",
-        desc: "Création de routes touristiques authentiques reliant les richesses naturelles de Ziguinchor, Kolda et Sédhiou.",
+        desc: "Création de routes touristiques authentiques reliant les richesses naturelles de Ziguinchor, Sédhiou et Kolda.",
       },
       {
         title: "Marketing & Image Territoriale",

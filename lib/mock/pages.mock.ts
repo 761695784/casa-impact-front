@@ -12,7 +12,7 @@ export const mockPages: Page[] = [
     slug: "qui-sommes-nous",
     resume: "Découvrez Casa Impact, organisation engagée pour le développement durable et inclusif de la Casamance.",
     contenu:
-      "Casa Impact est née de la volonté d'unir les forces vives, les compétences et les énergies positives de Ziguinchor, Kolda et Sédhiou.\n\nNotre mission est de bâtir des ponts solides entre les initiatives locales, la jeunesse, les institutions et la diaspora afin d'accélérer le développement socio-économique du territoire naturel de la Casamance.\n\nNous portons sept valeurs fondamentales : Solidarité, Intégrité, Innovation, Respect des traditions, Inclusion, Transparence et Impact durable.",
+      "Casa Impact est née de la volonté d'unir les forces vives, les compétences et les énergies positives de Ziguinchor, Sédhiou et Kolda.\n\nNotre mission est de bâtir des ponts solides entre les initiatives locales, la jeunesse, les institutions et la diaspora afin d'accélérer le développement socio-économique du territoire naturel de la Casamance.\n\nNous portons sept valeurs fondamentales : Solidarité, Intégrité, Innovation, Respect des traditions, Inclusion, Transparence et Impact durable.",
     statut: "publie",
     meta_description: "Histoire, vision, valeurs et équipe exécutive de Casa Impact en Casamance.",
     ordre: 1,

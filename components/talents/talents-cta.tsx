@@ -27,7 +27,7 @@ export function TalentsCta() {
   return (
     <Section tone="muted" className="relative overflow-hidden py-20">
       <SectionHeading
-        eyebrow="Rejoindre le mouvement"
+        eyebrow="Rejoindre l'organisation"
         title="Comment intégrer le Mur des Talents ?"
         description="Une opportunité unique pour chaque jeune et créateur de Casamance d'accroître sa visibilité et de rejoindre un réseau d'impact."
         align="center"

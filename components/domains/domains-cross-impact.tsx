@@ -14,7 +14,7 @@ const synergyPillars = [
   },
   {
     title: "Investissement & Mobilisation de la Diaspora",
-    desc: "Connecter les compétences et capitaux de la diaspora avec les opportunités concrètes identifiées sur le terrain à Ziguinchor, Kolda et Sédhiou.",
+    desc: "Connecter les compétences et capitaux de la diaspora avec les opportunités concrètes identifiées sur le terrain à Ziguinchor, Sédhiou et Kolda.",
   },
 ]
 

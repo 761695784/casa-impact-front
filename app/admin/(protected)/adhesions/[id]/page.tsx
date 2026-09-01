@@ -258,7 +258,7 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
             <CardHeader className="border-b border-border/60 pb-4">
               <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
                 <Layers className="size-4 text-earth" />
-                <span>Engagement au sein du Mouvement</span>
+                <span>Engagement au sein de l'Organisation</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-5 space-y-4 text-xs sm:text-sm">

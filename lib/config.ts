@@ -15,8 +15,12 @@ export const siteConfig = {
 
 export const contactInfo = {
   email: 'casaimpactF0rt@gmail.com',
-  phone: '78 264 34 38',
-  phoneHref: 'tel:+221782643438',
+  phone: '78 103 30 63',
+  phoneHref: 'tel:+221781033063',
+  whatsapp: '221781033063',
+  shopPhone: '78 326 73 78',
+  shopPhoneHref: 'tel:+221783267378',
+  shopWhatsapp: '221783267378',
   address: {
     line1: 'Rue 26 Boukot Ouest',
     line2: 'Villa n°268',
@@ -54,6 +58,7 @@ export const mainNav = [
   { label: 'Qui sommes-nous', href: '/qui-sommes-nous' },
   { label: 'Opportunités', href: '/opportunites' },
   { label: 'Talents', href: '/talents' },
+  { label: 'Boutique', href: '/boutique' },
   { label: 'Actualités', href: '/actualites' },
   { label: 'Contact', href: '/contact' },
 ] as const
@@ -67,6 +72,7 @@ export const footerNav = {
     { label: 'Carte des actions', href: '/carte' },
   ],
   participer: [
+    { label: 'Boutique officielle', href: '/boutique' },
     { label: 'Appels à candidatures', href: '/appels-a-candidatures' },
     { label: 'Nous rejoindre', href: '/adherer' },
     { label: 'Talents', href: '/talents' },

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react"
 import { Image as ImageIcon, FileText, HardDrive, Layers } from "lucide-react"
+import { MediaUploadDialog } from "@/components/admin/media/media-upload-dialog"
 import { MediaFilterBar } from "@/components/admin/media/media-filter-bar"
 import { MediaGrid } from "@/components/admin/media/media-grid"
 import { MediaPreviewDialog } from "@/components/admin/media/media-preview-dialog"
@@ -10,6 +11,7 @@ import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog"
 import { ErrorState } from "@/components/admin/ui/error-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 import {
   useMedia,
   useUpdateMedia,
@@ -28,6 +30,7 @@ export default function AdminMediathequePage() {
   const [categorie, setCategorie] = useState("all")
 
   // Modals state
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [previewMedia, setPreviewMedia] = useState<Media | null>(null)
   const [editingMedia, setEditingMedia] = useState<Media | null>(null)
   const [deletingMedia, setDeletingMedia] = useState<Media | null>(null)
@@ -76,6 +79,14 @@ export default function AdminMediathequePage() {
             Gestion centralisée des photos, affiches de programmes, logos partenaires et documents téléchargeables.
           </p>
         </div>
+
+        <Button
+          onClick={() => setIsUploadOpen(true)}
+          className="rounded-full bg-forest text-white hover:bg-forest/90 font-bold gap-2 shadow-sm self-start sm:self-auto"
+        >
+          <Plus className="size-4" />
+          <span>Ajouter un média</span>
+        </Button>
       </div>
 
       {/* 2. KPI Summary */}
@@ -189,6 +200,12 @@ export default function AdminMediathequePage() {
           onDelete={(m) => setDeletingMedia(m)}
         />
       )}
+
+      {/* Upload Dialog */}
+      <MediaUploadDialog
+        open={isUploadOpen}
+        onOpenChange={setIsUploadOpen}
+      />
 
       {/* Preview Dialog */}
       <MediaPreviewDialog

@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowUpRight, Calendar, Clock, Sparkles } from "lucide-react"
+import { ArrowUpRight, Calendar, Clock, Sparkles, Camera } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { NEWS_TYPE_LABELS } from "@/types/enums"
 import { formatDate } from "@/lib/format"
@@ -52,6 +52,13 @@ export function NewsCard({ article, featured = false }: { article: News; feature
           <span className="absolute right-3.5 top-3.5 inline-flex items-center gap-1 rounded-full bg-black/40 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-white border border-white/20">
             <Sparkles className="size-3 text-accent" />
             À la Une
+          </span>
+        )}
+
+        {article.medias && article.medias.length > 0 && (
+          <span className="absolute right-3.5 bottom-3.5 inline-flex items-center gap-1 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
+            <Camera className="size-3 text-accent" />
+            <span>{article.medias.length} photos</span>
           </span>
         )}
       </div>

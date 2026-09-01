@@ -1,11 +1,12 @@
 // DEMO ONLY — replace with API data
 import type { News } from "@/types/models"
+import { mockMediaItems } from "./media.mock"
 
 /**
  * Données de DÉMONSTRATION pour les Actualités de Casa Impact.
+ * Chaque actualité possède une image de couverture principale et une galerie de photos associées issues de la Médiathèque.
  */
 export const mockNews: News[] = [
-  // DEMO ONLY — replace with API data
   {
     id: 1,
     titre: "Lancement officiel de la plateforme Casa Impact",
@@ -13,8 +14,15 @@ export const mockNews: News[] = [
     extrait:
       "Casa Impact réunit les énergies positives des trois régions de la Casamance autour d'une vision commune de transformation territoriale.",
     contenu:
-      "Casa Impact marque le début d'une dynamique nouvelle pour la Casamance : fédérer Ziguinchor, Kolda et Sédhiou autour d'une plateforme d'action, d'innovation et de transformation sociale au service de la jeunesse et des communautés locales.\n\nCe lancement concrétise des mois de concertation avec les acteurs institutionnels, la société civile et les porteurs de projets engagés pour le développement durable du territoire.",
+      "Casa Impact marque le début d'une dynamique nouvelle pour la Casamance : fédérer Ziguinchor, Sédhiou et Kolda autour d'une plateforme d'action, d'innovation et de transformation sociale au service de la jeunesse et des communautés locales.\n\nCe lancement concrétise des mois de concertation avec les acteurs institutionnels, la société civile et les porteurs de projets engagés pour le développement durable du territoire.\n\nPlusieurs centaines de jeunes, d'artisans et d'universitaires se sont réunis pour célébrer cet élan collectif qui positionne résolument notre région comme un carrefour d'opportunités et d'émancipation.",
     type: "annonce",
+    image: "/assets/hero/DSC08016%20copie.jpg",
+    medias: [
+      mockMediaItems[0],
+      mockMediaItems[3],
+      mockMediaItems[5],
+      mockMediaItems[7],
+    ],
     date_publication: "2025-11-15T09:00:00Z",
     a_la_une: true,
     statut: "publie",
@@ -30,8 +38,14 @@ export const mockNews: News[] = [
     extrait:
       "Un temps fort d'échange autour du leadership, de l'entrepreneuriat et de l'engagement citoyen avec plus de 150 jeunes participants.",
     contenu:
-      "L'équipe de Casa Impact est allée à la rencontre des jeunes leaders et étudiants de Ziguinchor pour écouter leurs aspirations concrètes et co-construire les priorités des prochains parcours d'accompagnement.\n\nLes débats ont notamment porté sur la valorisation des compétences locales, l'accès aux opportunités numériques et la gouvernance citoyenne.",
+      "L'équipe de Casa Impact est allée à la rencontre des jeunes leaders et étudiants de Ziguinchor pour écouter leurs aspirations concrètes et co-construire les priorités des prochains parcours d'accompagnement.\n\nLes débats ont notamment porté sur la valorisation des compétences locales, l'accès aux opportunités numériques et la gouvernance citoyenne.\n\nDes ateliers participatifs ont permis d'identifier les défis majeurs de l'insertion professionnelle et de définir un plan d'action immédiat pour la région.",
     type: "compte-rendu",
+    image: "/assets/hero/DSC07982%20copie.jpg",
+    medias: [
+      mockMediaItems[3],
+      mockMediaItems[0],
+      mockMediaItems[6],
+    ],
     date_publication: "2025-12-02T14:30:00Z",
     a_la_une: false,
     statut: "publie",
@@ -47,8 +61,14 @@ export const mockNews: News[] = [
     extrait:
       "Les candidatures pour la première promotion 2026 de l'Académie du Leadership Jeune sont désormais ouvertes sur la plateforme.",
     contenu:
-      "Casa Impact lance son appel à candidatures à destination des jeunes femmes et hommes âgés de 18 à 35 ans résidant à Ziguinchor, Kolda ou Sédhiou.\n\nCe parcours immersif de six mois permettra aux bénéficiaires de structurer leurs initiatives, d'acquérir des outils avancés de gestion de projet et d'intégrer un réseau actif de mentors.",
+      "Casa Impact lance son appel à candidatures à destination des jeunes femmes et hommes âgés de 18 à 35 ans résidant à Ziguinchor, Kolda ou Sédhiou.\n\nCe parcours immersif de six mois permettra aux bénéficiaires de structurer leurs initiatives, d'acquérir des outils avancés de gestion de projet et d'intégrer un réseau actif de mentors.\n\nLes dossiers de candidature sont recevables directement en ligne jusqu'au 30 mars 2026.",
     type: "communique",
+    image: "/assets/hero/DSC08058%20copie.jpg",
+    medias: [
+      mockMediaItems[6],
+      mockMediaItems[1],
+      mockMediaItems[7],
+    ],
     date_publication: "2026-01-10T08:00:00Z",
     a_la_une: true,
     statut: "publie",
@@ -66,6 +86,12 @@ export const mockNews: News[] = [
     contenu:
       "Organisé en partenariat avec les acteurs du monde agricole, ce forum a mis en relief le potentiel agro-industriel et environnemental de la région de Kolda.\n\nPlusieurs solutions de valorisation des produits du terroir et d'adoption des énergies solaires ont été présentées par de jeunes entrepreneurs innovants.",
     type: "article",
+    image: "/assets/hero/DSC08011%20copie.jpg",
+    medias: [
+      mockMediaItems[1],
+      mockMediaItems[4],
+      mockMediaItems[2],
+    ],
     date_publication: "2026-01-28T10:00:00Z",
     a_la_une: false,
     statut: "publie",
@@ -83,6 +109,11 @@ export const mockNews: News[] = [
     contenu:
       "Ce projet initié par le Pôle Culture vise à documenter la richesse patrimoniale de Sédhiou, à soutenir les artisans locaux et à promouvoir le tourisme de mémoire respectueux des communautés.",
     type: "article",
+    image: "/assets/hero/DSC08045%20copie.jpg",
+    medias: [
+      mockMediaItems[4],
+      mockMediaItems[7],
+    ],
     statut: "brouillon",
     auteur: "Pôle Culture & Communication",
     vues_count: 0,
@@ -98,6 +129,11 @@ export const mockNews: News[] = [
     contenu:
       "La mobilisation de la diaspora constitue un levier stratégique majeur pour Casa Impact. Cet article détaille les modalités d'adhésion, de mentorat à distance et de co-investissement solidaire.",
     type: "article",
+    image: "/assets/hero/casamance-youth.png",
+    medias: [
+      mockMediaItems[5],
+      mockMediaItems[0],
+    ],
     statut: "previsualisation",
     auteur: "Cellule Diaspora",
     vues_count: 0,

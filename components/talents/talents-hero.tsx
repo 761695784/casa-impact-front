@@ -88,7 +88,7 @@ export function TalentsHero({
 
         {/* Description */}
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/90 sm:text-xl font-normal drop-shadow">
-          Casa Impact révèle et célèbre les champions, créateurs, entrepreneurs et leaders qui font rayonner <strong>Ziguinchor</strong>, <strong>Kolda</strong> et <strong>Sédhiou</strong> au Sénégal et dans le monde.
+          Casa Impact révèle et célèbre les champions, créateurs, entrepreneurs et leaders qui font rayonner <strong>Ziguinchor</strong>, <strong>Sédhiou</strong> et <strong>Kolda</strong> au Sénégal et dans le monde.
         </p>
 
         {/* Quick Talent Categories Indicators */}

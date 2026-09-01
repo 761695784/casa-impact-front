@@ -1,6 +1,6 @@
 /** Valeurs exactes alignées sur l'API Laravel de Casa Impact. */
 
-export type Region = 'ziguinchor' | 'kolda' | 'sedhiou'
+export type Region = 'ziguinchor' | 'sedhiou' | 'kolda'
 
 export type MembershipRegion =
   | 'ziguinchor'
@@ -54,7 +54,6 @@ export type ContributionDomain =
   | 'pole_support'
   | 'commission_scientifique'
   | 'coordination_regionale'
-  | 'comite_des_sages'
 
 export type ContributionType =
   | 'membre_actif'
@@ -65,8 +64,8 @@ export type MembershipStatus = 'en_attente_paiement' | 'validee' | 'refusee'
 
 export const REGION_LABELS: Record<Region, string> = {
   ziguinchor: 'Ziguinchor',
-  kolda: 'Kolda',
   sedhiou: 'Sédhiou',
+  kolda: 'Kolda',
 }
 
 export const MEMBERSHIP_REGION_LABELS: Record<MembershipRegion, string> = {
@@ -108,7 +107,6 @@ export const CONTRIBUTION_DOMAIN_LABELS: Record<ContributionDomain, string> = {
   pole_support: 'Pôle Support',
   commission_scientifique: 'Commission scientifique',
   coordination_regionale: 'Coordination régionale',
-  comite_des_sages: 'Comité des sages',
 }
 
 export const CONTRIBUTION_TYPE_LABELS: Record<ContributionType, string> = {

@@ -83,7 +83,7 @@ export const mockMemberships: Membership[] = [
     profession: "Enseignant Retraité",
     region: "sedhiou",
     departement: "Bounkiling",
-    domaine_contribution: "comite_des_sages",
+    domaine_contribution: "commission_scientifique",
     type_contribution: "expert_conseiller_technique",
     statut: "validee",
     montant: 1000,

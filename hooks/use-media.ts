@@ -27,6 +27,26 @@ export function useMediaItem(id: number | string) {
   })
 }
 
+export function useCreateMedia() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: Omit<Media, "id">) => mediaService.createMedia(payload),
+    onSuccess: (created) => {
+      toast.success("Média ajouté avec succès à la médiathèque", {
+        description: created.nom || created.nom_fichier,
+      })
+      queryClient.invalidateQueries({ queryKey: MEDIA_QUERY_KEY })
+    },
+    onError: (err: unknown) => {
+      toast.error("Erreur lors de l'ajout du média", {
+        description:
+          err instanceof Error ? err.message : "Une erreur est survenue.",
+      })
+    },
+  })
+}
+
 export function useUpdateMedia() {
   const queryClient = useQueryClient()
 

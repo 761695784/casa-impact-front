@@ -23,13 +23,13 @@ export const metadata: Metadata = {
     template: '%s | Casa Impact',
   },
   description:
-    "Casa Impact est une organisation engagée pour le développement durable et inclusif de la Casamance, fédérant les énergies positives de Ziguinchor, Kolda et Sédhiou au service de la jeunesse et des communautés.",
+    "Casa Impact est une organisation engagée pour le développement durable et inclusif de la Casamance, fédérant les énergies positives de Ziguinchor, Sédhiou et Kolda au service de la jeunesse et des communautés.",
   keywords: [
     'Casa Impact',
     'Casamance',
     'Ziguinchor',
-    'Kolda',
     'Sédhiou',
+    'Kolda',
     'jeunesse',
     'entrepreneuriat',
     'développement territorial',

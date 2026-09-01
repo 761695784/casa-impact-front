@@ -31,7 +31,7 @@ export default function OpportunitesPage() {
         <SectionHeading
           eyebrow="Cohortes & Appels"
           title="Appels à Candidatures en Cours"
-          description="Consultez les programmes actuellement ouverts à Ziguinchor, Kolda et Sédhiou et déposez votre dossier en ligne."
+          description="Consultez les programmes actuellement ouverts à Ziguinchor, Sédhiou et Kolda et déposez votre dossier en ligne."
           align="center"
         />
         <div className="mt-12">

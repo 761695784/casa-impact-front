@@ -129,7 +129,7 @@ export default function MentionsLegalesPage() {
 
               <div className="mt-6 space-y-4 text-sm sm:text-base leading-relaxed text-foreground/85">
                 <p>
-                  Le présent site web <strong>casaimpact.org</strong> est édité par l'organisation <strong>Casa Impact</strong>, mouvement citoyen et associatif œuvrant pour le développement socio-économique, culturel et entrepreneurial des trois régions de la Casamance (Ziguinchor, Sédhiou, Kolda).
+                  Le présent site web <strong>casaimpact.org</strong> est édité par l'organisation <strong>Casa Impact</strong>, structure citoyenne et associative œuvrant pour le développement socio-économique, culturel et entrepreneurial des trois régions de la Casamance (Ziguinchor, Sédhiou, Kolda).
                 </p>
 
                 <div className="grid gap-3 rounded-2xl border border-border/80 bg-secondary/40 p-5 text-sm">

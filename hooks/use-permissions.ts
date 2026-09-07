@@ -4,17 +4,18 @@ import { useAuth } from "@/lib/auth/auth-context"
 import type { AdminRoleSlug } from "@/types/admin"
 
 export function usePermissions() {
-  const { user, role } = useAuth()
+  const { user, role, roles, permissions } = useAuth()
 
   /**
-   * Vérifie si l'utilisateur possède une permission spécifique.
-   * L'administrateur principal possède l'accès complet (*).
+   * Vérifie si l'utilisateur possède une permission spécifique
+   * (dot-notation `resource.action`, ex. "programmes.create"). Le rôle
+   * administrateur-principal contourne le check via Gate::before côté
+   * backend — `permissions` contient déjà la liste complète pour lui,
+   * mais on garde aussi le bypass explicite par rôle en filet de sécurité.
    */
   const hasPermission = (permission: string): boolean => {
     if (!user) return false
     if (role === "administrateur-principal") return true
-
-    const permissions = user.role?.permissions || user.permissions || []
     if (permissions.includes("*")) return true
     return permissions.includes(permission)
   }
@@ -30,6 +31,8 @@ export function usePermissions() {
   return {
     user,
     role,
+    roles,
+    permissions,
     isSuperAdmin: role === "administrateur-principal",
     isCommunication: role === "communication",
     isGestionnaireCandidatures: role === "gestionnaire-candidatures",

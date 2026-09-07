@@ -1,52 +1,15 @@
-import type {
-  DashboardStats,
-  User,
-  ApplicationCall,
-  News,
-  ContactMessage,
-  Membership,
-} from "./models"
+import type { DashboardStats } from "./models"
 
 export type AdminRoleSlug =
   | "administrateur-principal"
   | "communication"
   | "gestionnaire-candidatures"
 
-export interface AdminActivityItem {
-  id: string
-  type:
-  | "candidature"
-  | "adhesion"
-  | "message"
-  | "actualite"
-  | "programme"
-  | "appel"
-  titre: string
-  description: string
-  date: string
-  statut?: string
-  auteur?: string
-  lien?: string
-}
-
-export interface AdminDashboardData {
-  stats: DashboardStats
-  actionsRequises: {
-    candidaturesNouvelles: number
-    messagesNonLus: number
-    adhesionsEnAttente: number
-    appelsEnCours: number
-  }
-  candidaturesRecentes: Array<{
-    id: number
-    reference: string
-    candidat: string
-    appelTitre: string
-    region?: string
-    date: string
-    statut: string
-  }>
-  messagesRecents: ContactMessage[]
-  adhesionsRecentes: Membership[]
-  activiteRecente: AdminActivityItem[]
-}
+/**
+ * GET /api/admin/dashboard ne renvoie que des compteurs par ressource
+ * (voir DashboardStats dans models.ts) — pas d'actions requises, de
+ * listes récentes ni de flux d'activité côté backend aujourd'hui. On
+ * réutilise directement DashboardStats plutôt que d'inventer un shape
+ * plus riche côté frontend.
+ */
+export type AdminDashboardData = DashboardStats

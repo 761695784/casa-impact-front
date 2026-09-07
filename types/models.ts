@@ -48,16 +48,19 @@ export interface Role {
   permissions: string[]
 }
 
+/**
+ * Forme réelle de UserResource (App\Http\Resources\Admin\UserResource) :
+ * un seul champ `name` (pas de nom/prenom séparés), `roles` en tableau
+ * de slugs à plat (pas d'objet Role imbriqué). Les permissions ne sont
+ * PAS portées par ce type : elles arrivent en clé racine `permissions`
+ * dans la réponse de GET /api/admin/me (sibling de `data`, pas dedans),
+ * donc gérées séparément dans AuthContext, pas ici.
+ */
 export interface User {
   id: number
-  nom: string
-  prenom?: string
+  name: string
   email: string
-  avatar?: string
-  role: Role
-  statut?: 'actif' | 'inactif' | 'suspendu'
-  permissions?: string[]
-  derniere_connexion?: string
+  roles: string[]
   created_at?: string
   updated_at?: string
 }
@@ -352,17 +355,29 @@ export interface MembershipConfirmation {
   message?: string
 }
 
+/**
+ * Forme réelle de la réponse `data` de GET /api/admin/dashboard
+ * (App\Services\DashboardStatsService::stats()) : uniquement des
+ * compteurs simples par ressource, chacun avec un `total` et parfois un
+ * sous-compteur (publiés/actifs/nouveaux). Pas de wrapper "stats", pas
+ * d'actions requises, de listes récentes ni de flux d'activité — le
+ * backend ne calcule rien de tel aujourd'hui.
+ */
 export interface DashboardStats {
-  programmes: number
-  appels_a_candidatures: number
-  candidatures: number
-  actualites: number
-  talents: number
-  temoignages: number
-  partenaires: number
-  messages_contact: number
-  indicateurs_impact: number
-  utilisateurs: number
+  programmes: { total: number; publies: number }
+  appels_a_candidatures: { total: number; publies: number }
+  candidatures: {
+    total: number
+    par_statut: Record<string, number>
+    en_liste_attente: number
+  }
+  actualites: { total: number; publiees: number }
+  talents: { total: number; publies: number }
+  temoignages: { total: number; publies: number }
+  partenaires: { total: number; actifs: number }
+  messages_contact: { total: number; nouveaux: number }
+  indicateurs_impact: { total: number }
+  utilisateurs: { total: number }
 }
 
 export interface PaginatedResponse<T> {

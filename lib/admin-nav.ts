@@ -31,6 +31,11 @@ export interface AdminNavGroup {
   items: AdminNavItem[]
 }
 
+/**
+ * Permissions dot-notation (`resource.action`) alignées exactement sur
+ * RolesAndPermissionsSeeder.php — resource keys en anglais (application-calls,
+ * news, programs, etc.), pas les libellés français de l'UI.
+ */
 export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     groupTitle: "PRINCIPAL",
@@ -39,6 +44,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         title: "Dashboard",
         href: "/admin/dashboard",
         icon: LayoutDashboard,
+        permission: "dashboard.view",
       },
     ],
   },
@@ -49,47 +55,49 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         title: "Pages",
         href: "/admin/pages",
         icon: FileText,
-        permission: "pages:read",
+        permission: "pages.view",
       },
       {
         title: "Domaines",
         href: "/admin/domaines",
         icon: Layers,
+        permission: "domains.view",
       },
       {
         title: "Programmes",
         href: "/admin/programmes",
         icon: Compass,
-        permission: "programmes:read",
+        permission: "programs.view",
       },
       {
         title: "Types de programme",
         href: "/admin/types-de-programme",
         icon: Tag,
+        permission: "program-types.view",
       },
       {
         title: "Actualités",
         href: "/admin/actualites",
         icon: Newspaper,
-        permission: "actualites:read",
+        permission: "news.view",
       },
       {
         title: "Talents",
         href: "/admin/talents",
         icon: Sparkles,
-        permission: "talents:read",
+        permission: "talents.view",
       },
       {
         title: "Témoignages",
         href: "/admin/temoignages",
         icon: Quote,
-        permission: "temoignages:read",
+        permission: "testimonials.view",
       },
       {
         title: "Partenaires",
         href: "/admin/partenaires",
         icon: Handshake,
-        permission: "partenaires:read",
+        permission: "partners.view",
       },
     ],
   },
@@ -100,13 +108,13 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         title: "Appels à candidatures",
         href: "/admin/appels-a-candidatures",
         icon: Megaphone,
-        permission: "appels:read",
+        permission: "application-calls.view",
       },
       {
         title: "Candidatures",
         href: "/admin/candidatures",
         icon: Inbox,
-        permission: "candidatures:read",
+        permission: "applications.view",
         badgeKey: "candidaturesNouvelles",
       },
     ],
@@ -118,29 +126,32 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         title: "Adhésions",
         href: "/admin/adhesions",
         icon: CreditCard,
-        permission: "adhesions:read",
+        permission: "memberships.view",
         badgeKey: "adhesionsEnAttente",
       },
       {
         title: "Impact",
         href: "/admin/impact",
         icon: BarChart3,
+        permission: "impact.view",
       },
       {
         title: "Cartographie",
         href: "/admin/cartographie",
         icon: MapPin,
+        permission: "locations.manage",
       },
       {
         title: "Médiathèque",
         href: "/admin/mediatheque",
         icon: ImageIcon,
-        permission: "mediatheque:read",
+        permission: "media.manage",
       },
       {
         title: "Messages",
         href: "/admin/messages",
         icon: Mail,
+        permission: "contact-messages.view",
         badgeKey: "messagesNonLus",
       },
     ],
@@ -152,7 +163,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         title: "Utilisateurs",
         href: "/admin/utilisateurs",
         icon: Users,
-        permission: "users:read",
+        permission: "users.view",
       },
     ],
   },

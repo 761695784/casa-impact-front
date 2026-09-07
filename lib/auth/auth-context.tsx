@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { DATA_SOURCE, API_URL } from "@/lib/config"
+import { DATA_SOURCE } from "@/lib/config"
+import { apiFetch, ensureCsrfCookie } from "@/lib/api-client"
 import { mockAdminUsers } from "@/lib/mock/admin-dashboard.mock"
 import type { User } from "@/types/models"
 import type { AdminRoleSlug } from "@/types/admin"
@@ -12,6 +13,10 @@ interface AuthContextType {
   isLoading: boolean
   isAuthenticated: boolean
   role: AdminRoleSlug | null
+  /** Liste complète des rôles (généralement un seul, mais UserResource porte un tableau). */
+  roles: AdminRoleSlug[]
+  /** Permissions dot-notation (`resource.action`) — clé racine de GET /api/admin/me, pas portée par User. */
+  permissions: string[]
   login: (credentials: { email: string; password?: string }) => Promise<void>
   logout: () => Promise<void>
   switchMockRole?: (roleSlug: AdminRoleSlug) => void
@@ -21,37 +26,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [permissions, setPermissions] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const router = useRouter()
   const pathname = usePathname()
 
-  // Initial check : GET /api/admin/me (Sanctum SPA)
+  // Initial check : GET /api/admin/me (Sanctum SPA, cookie de session HttpOnly)
   const checkAuth = useCallback(async () => {
     try {
       setIsLoading(true)
       if (DATA_SOURCE === "mock") {
-        // En mode mock développement : utilisateur administrateur-principal par défaut
         // DEMO ONLY — replace with API data
-        setUser(mockAdminUsers[0])
+        const demo = mockAdminUsers[0]
+        setUser(demo)
+        setPermissions(demo.roles.includes("administrateur-principal") ? ["*"] : [])
         setIsLoading(false)
         return
       }
 
-      // Mode API réel : vérification de session via cookie HttpOnly Sanctum
-      const res = await fetch(`${API_URL}/api/admin/me`, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        credentials: "include",
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        setUser(data.data || data)
-      } else {
-        setUser(null)
-      }
+      // Mode API réel : { data: UserResource, permissions: string[] } — `permissions`
+      // est une clé racine, PAS nichée dans `data`.
+      const res = await apiFetch<{ data: User; permissions: string[] }>("/api/admin/me")
+      setUser(res.data)
+      setPermissions(res.permissions || [])
     } catch {
       setUser(null)
+      setPermissions([])
     } finally {
       setIsLoading(false)
     }
@@ -60,6 +60,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     checkAuth()
   }, [checkAuth])
+
+  // Garde de session : hors mode mock, toute route /admin/* (sauf /admin/login)
+  // redirige vers la connexion tant qu'aucun utilisateur n'est chargé.
+  useEffect(() => {
+    if (DATA_SOURCE === "mock" || isLoading) return
+    const isLoginPage = pathname?.startsWith("/admin/login")
+    if (!user && pathname?.startsWith("/admin") && !isLoginPage) {
+      router.push("/admin/login")
+    }
+  }, [user, isLoading, pathname, router])
 
   const login = async (credentials: { email: string; password?: string }) => {
     setIsLoading(true)
@@ -70,31 +80,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           mockAdminUsers.find((u) => u.email === credentials.email) ||
           mockAdminUsers[0]
         setUser(found)
+        setPermissions(found.roles.includes("administrateur-principal") ? ["*"] : [])
         router.push("/admin/dashboard")
         return
       }
 
       // 1. Initialiser le cookie CSRF Sanctum
-      await fetch(`${API_URL}/sanctum/csrf-cookie`, {
-        method: "GET",
-        credentials: "include",
-      })
+      await ensureCsrfCookie()
 
-      // 2. Authentification POST /api/admin/login
-      const res = await fetch(`${API_URL}/api/admin/login`, {
+      // 2. Authentification POST /api/admin/login — un échec renvoie un vrai
+      // 422 Laravel (ValidationException), pas un 401 : apiFetch le propage
+      // sous forme d'ApiError avec err.errors.email[0] disponible.
+      await apiFetch("/api/admin/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(credentials),
+        body: credentials,
       })
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => null)
-        throw new Error(err?.message || "Identifiants invalides.")
-      }
 
       // 3. Charger le profil utilisateur authentifié
       await checkAuth()
@@ -108,13 +108,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true)
     try {
       if (DATA_SOURCE !== "mock") {
-        await fetch(`${API_URL}/api/admin/logout`, {
-          method: "POST",
-          headers: { Accept: "application/json" },
-          credentials: "include",
-        })
+        await apiFetch("/api/admin/logout", { method: "POST" })
       }
       setUser(null)
+      setPermissions([])
       router.push("/admin/login")
     } finally {
       setIsLoading(false)
@@ -124,14 +121,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Permet en mode mock de tester facilement les vues sous différents rôles
   const switchMockRole = (roleSlug: AdminRoleSlug) => {
     if (DATA_SOURCE === "mock") {
-      const found = mockAdminUsers.find((u) => u.role.slug === roleSlug)
+      const found = mockAdminUsers.find((u) => u.roles.includes(roleSlug))
       if (found) {
         setUser(found)
+        setPermissions(found.roles.includes("administrateur-principal") ? ["*"] : [])
       }
     }
   }
 
-  const role = (user?.role?.slug as AdminRoleSlug) || null
+  const roles = (user?.roles as AdminRoleSlug[]) || []
+  const role = roles[0] || null
 
   return (
     <AuthContext.Provider
@@ -140,6 +139,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         role,
+        roles,
+        permissions,
         login,
         logout,
         switchMockRole: DATA_SOURCE === "mock" ? switchMockRole : undefined,

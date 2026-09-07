@@ -19,6 +19,7 @@ import { DATA_SOURCE } from "@/lib/config"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -47,8 +48,8 @@ export function AdminTopbar({
 }: AdminTopbarProps) {
   const { user, role, logout, switchMockRole } = useAuth()
 
-  const initials = user?.nom
-    ? user.nom
+  const initials = user?.name
+    ? user.name
         .split(" ")
         .map((n) => n[0])
         .slice(0, 2)
@@ -133,7 +134,7 @@ export function AdminTopbar({
             </Avatar>
             <div className="hidden text-left md:block">
               <p className="text-xs font-semibold text-foreground leading-none">
-                {user?.nom || "Administrateur"}
+                {user?.name || "Administrateur"}
               </p>
               <p className="text-[10px] text-muted-foreground leading-none mt-1">
                 {role ? ROLE_LABELS[role] || role : "Accès sécurisé"}
@@ -142,47 +143,51 @@ export function AdminTopbar({
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2 shadow-xl border-border">
-            <DropdownMenuLabel className="p-2">
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-bold text-foreground leading-none">
-                  {user?.nom}
-                </p>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
-                <div className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-forest/10 px-2 py-0.5 text-[10px] font-semibold text-forest w-fit">
-                  <Shield className="size-3" />
-                  <span>{role ? ROLE_LABELS[role] || role : "Rôle"}</span>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="p-2">
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-bold text-foreground leading-none">
+                    {user?.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  <div className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-forest/10 px-2 py-0.5 text-[10px] font-semibold text-forest w-fit">
+                    <Shield className="size-3" />
+                    <span>{role ? ROLE_LABELS[role] || role : "Rôle"}</span>
+                  </div>
                 </div>
-              </div>
-            </DropdownMenuLabel>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
 
             {/* Test Role Switcher (Mock Mode only) */}
             {DATA_SOURCE === "mock" && switchMockRole && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="px-2 py-1 text-[10px] font-bold uppercase text-muted-foreground/70">
-                  Simuler un Rôle (Démo)
-                </DropdownMenuLabel>
-                <DropdownMenuItem
-                  onClick={() => switchMockRole("administrateur-principal")}
-                  className="text-xs flex items-center justify-between cursor-pointer"
-                >
-                  <span>Admin Principal</span>
-                  {role === "administrateur-principal" && <Check className="size-3.5 text-forest" />}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => switchMockRole("communication")}
-                  className="text-xs flex items-center justify-between cursor-pointer"
-                >
-                  <span>Communication</span>
-                  {role === "communication" && <Check className="size-3.5 text-forest" />}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => switchMockRole("gestionnaire-candidatures")}
-                  className="text-xs flex items-center justify-between cursor-pointer"
-                >
-                  <span>Gestionnaire Candidatures</span>
-                  {role === "gestionnaire-candidatures" && <Check className="size-3.5 text-forest" />}
-                </DropdownMenuItem>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="px-2 py-1 text-[10px] font-bold uppercase text-muted-foreground/70">
+                    Simuler un Rôle (Démo)
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={() => switchMockRole("administrateur-principal")}
+                    className="text-xs flex items-center justify-between cursor-pointer"
+                  >
+                    <span>Admin Principal</span>
+                    {role === "administrateur-principal" && <Check className="size-3.5 text-forest" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => switchMockRole("communication")}
+                    className="text-xs flex items-center justify-between cursor-pointer"
+                  >
+                    <span>Communication</span>
+                    {role === "communication" && <Check className="size-3.5 text-forest" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => switchMockRole("gestionnaire-candidatures")}
+                    className="text-xs flex items-center justify-between cursor-pointer"
+                  >
+                    <span>Gestionnaire Candidatures</span>
+                    {role === "gestionnaire-candidatures" && <Check className="size-3.5 text-forest" />}
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
               </>
             )}
 

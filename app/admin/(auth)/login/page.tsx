@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/lib/auth/auth-context"
+import { ApiError } from "@/lib/api-client"
 import { DATA_SOURCE } from "@/lib/config"
-import { AuthProvider } from "@/lib/auth/auth-context"
 
 function LoginForm() {
   const { login, isLoading } = useAuth()
-  const [email, setEmail] = useState("admin@casaimpact.org")
-  const [password, setPassword] = useState("password123")
+  // Pré-remplissage uniquement en mode démo — en mode API réel, champs vides.
+  const [email, setEmail] = useState(DATA_SOURCE === "mock" ? "admin@casaimpact.org" : "")
+  const [password, setPassword] = useState(DATA_SOURCE === "mock" ? "password123" : "")
   const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,7 +24,14 @@ function LoginForm() {
     try {
       await login({ email, password })
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Identifiants invalides.")
+      // Un échec de connexion réel est un 422 Laravel (ValidationException),
+      // pas un 401 — le message de champ (err.errors.email[0]) est plus
+      // précis que le message générique quand il est disponible.
+      if (err instanceof ApiError) {
+        setError(err.errors?.email?.[0] || err.message)
+      } else {
+        setError(err instanceof Error ? err.message : "Identifiants invalides.")
+      }
     }
   }
 
@@ -159,9 +167,5 @@ function LoginForm() {
 }
 
 export default function AdminLoginPage() {
-  return (
-    <AuthProvider>
-      <LoginForm />
-    </AuthProvider>
-  )
+  return <LoginForm />
 }

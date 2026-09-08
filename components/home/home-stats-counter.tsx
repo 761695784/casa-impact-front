@@ -21,12 +21,20 @@ export function HomeStatsCounter() {
   const { data: indicators } = useImpactIndicators()
 
   // Calcul dynamique ou fallback officiel (300 personnes impactées, 130 adhérents)
+  // Le tableau de valeurs réel est `values` (pas `valeurs`), et chaque entrée
+  // est `{valeur, periode?, region?}` — pas de champ `cible` côté API.
+  // NB : `values[]` peut contenir plusieurs entrées par indicateur (par
+  // période et/ou par région) ; l'API ne précise pas si elles doivent être
+  // sommées ou lues individuellement. On conserve ici la somme pour les
+  // compteurs cumulatifs (personnes/adhérents) et la dernière entrée pour
+  // les compteurs "état actuel" (régions/domaines), comme dans le code
+  // existant — à confirmer côté métier si ambigu.
   const impactesCount = (() => {
     const ind = indicators?.find((i) =>
       i.libelle.toLowerCase().includes("impact") || i.id === 1
     )
-    if (ind && ind.valeurs && ind.valeurs.length > 0) {
-      return ind.valeurs.reduce((acc, v) => acc + (v.valeur || 0), 0)
+    if (ind && ind.values && ind.values.length > 0) {
+      return ind.values.reduce((acc, v) => acc + (v.valeur || 0), 0)
     }
     return 300
   })()
@@ -37,24 +45,24 @@ export function HomeStatsCounter() {
       i.libelle.toLowerCase().includes("membre") ||
       i.id === 2
     )
-    if (ind && ind.valeurs && ind.valeurs.length > 0) {
-      return ind.valeurs.reduce((acc, v) => acc + (v.valeur || 0), 0)
+    if (ind && ind.values && ind.values.length > 0) {
+      return ind.values.reduce((acc, v) => acc + (v.valeur || 0), 0)
     }
     return 130
   })()
 
   const regionsCount = (() => {
     const ind = indicators?.find((i) => i.id === 3)
-    if (ind && ind.valeurs && ind.valeurs.length > 0) {
-      return ind.valeurs[ind.valeurs.length - 1].valeur || 3
+    if (ind && ind.values && ind.values.length > 0) {
+      return ind.values[ind.values.length - 1].valeur || 3
     }
     return 3
   })()
 
   const domainesCount = (() => {
     const ind = indicators?.find((i) => i.id === 4)
-    if (ind && ind.valeurs && ind.valeurs.length > 0) {
-      return ind.valeurs[ind.valeurs.length - 1].valeur || 6
+    if (ind && ind.values && ind.values.length > 0) {
+      return ind.values[ind.values.length - 1].valeur || 6
     }
     return 6
   })()

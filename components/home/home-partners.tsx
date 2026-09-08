@@ -7,6 +7,7 @@ import { ExternalLink, Handshake, ArrowRight, Sparkles } from "lucide-react"
 import { Section, SectionHeading } from "@/components/layout/section"
 import { Button } from "@/components/ui/button"
 import { usePartners } from "@/hooks/use-content"
+import { getPartnerLogoUrl } from "@/lib/format"
 import type { Partner } from "@/types/models"
 
 // Partenaires officiels prioritaires garantis
@@ -14,21 +15,19 @@ const DEFAULT_PARTNERS: Partner[] = [
   {
     id: 1,
     nom: "Majeli Connect",
-    slug: "majeli-connect",
     description: "Solutions technologiques & transformation numérique",
     lien: "https://majeliconnect.com",
     type: "technique",
-    logo: "/assets/partners/logo-Majeli-Connect.png",
+    media: [{ id: -1, collection: "logo", url: "/assets/partners/logo-Majeli-Connect.png" }],
     statut: "actif",
   },
   {
     id: 2,
     nom: "Intello Créative",
-    slug: "intello-creative",
     description: "Agence créative, branding & communication d'impact",
     lien: "https://intellocreative.com",
     type: "technique",
-    logo: "/assets/partners/logo-Intello-Creative.webp",
+    media: [{ id: -2, collection: "logo", url: "/assets/partners/logo-Intello-Creative.webp" }],
     statut: "actif",
   },
 ]
@@ -39,7 +38,7 @@ export function HomePartners() {
   // On filtre les partenaires actifs qui disposent d'un logo et d'un lien
   const activePartners =
     partnersData && partnersData.length > 0
-      ? partnersData.filter((p) => p.statut === "actif" && p.logo)
+      ? partnersData.filter((p) => p.statut === "actif" && getPartnerLogoUrl(p))
       : DEFAULT_PARTNERS
 
   // Assurer la présence prioritaire de Majeli Connect & Intello Créative
@@ -100,7 +99,9 @@ export function HomePartners() {
 
         {/* Scrolling Track */}
         <div className="flex w-max items-center gap-6 sm:gap-8 animate-marquee hover:[animation-play-state:paused]">
-          {marqueeList.map((partner, index) => (
+          {marqueeList.map((partner, index) => {
+            const logoUrl = getPartnerLogoUrl(partner)
+            return (
             <a
               key={`${partner.id}-${index}`}
               href={partner.lien || "#"}
@@ -111,9 +112,9 @@ export function HomePartners() {
             >
               {/* Partner Logo */}
               <div className="relative h-12 w-32 sm:h-14 sm:w-36 shrink-0 flex items-center justify-center">
-                {partner.logo ? (
+                {logoUrl ? (
                   <Image
-                    src={partner.logo}
+                    src={logoUrl}
                     alt={`Logo officiel de ${partner.nom}`}
                     fill
                     sizes="(max-width: 768px) 140px, 180px"
@@ -141,7 +142,8 @@ export function HomePartners() {
                 )}
               </div>
             </a>
-          ))}
+            )
+          })}
         </div>
 
       </div>

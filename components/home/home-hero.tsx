@@ -157,7 +157,7 @@ export function HomeHero() {
       />
 
       {/* Main Content Container */}
-      <div className="relative mx-auto flex min-h-[calc(100dvh-4.5rem)] max-w-7xl flex-col justify-between px-4 pb-12 pt-20 sm:px-6 sm:pb-16 sm:pt-24 lg:px-8 lg:pt-28">
+      <div className="relative mx-auto flex min-h-[calc(85vh)] max-w-7xl flex-col justify-between px-4 pb-10 pt-6 sm:px-6 sm:pb-12 sm:pt-8 lg:px-8 lg:pt-10">
 
         {/* Top Badges: Regions & Live Indicator */}
         <div className="flex flex-wrap items-center justify-between gap-4">

@@ -2,15 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
-import {
-  Eye,
-  Edit,
-  Trash2,
-  MoreHorizontal,
-  Compass,
-  Layers,
-  TrendingUp,
-} from "lucide-react"
+import { Eye, Edit, Trash2, MoreHorizontal, BarChart3 } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -27,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { StatusBadge } from "@/components/admin/ui/status-badge"
 import { formatNumber } from "@/lib/format"
 import type { ImpactIndicator } from "@/types/models"
 
@@ -37,14 +28,21 @@ interface ImpactIndicatorsTableProps {
   onDelete: (indicator: ImpactIndicator) => void
 }
 
+/**
+ * Colonnes Catégorie / Progression-Cible / Rattachement / Statut retirées :
+ * l'indicateur d'impact réel (voir types/models.ts) n'a ni `categorie`, ni
+ * `cible`, ni `domaine`/`programme`, ni `statut`. On garde libellé,
+ * description, valeur mesurée (somme des `values`) et le nombre de points
+ * de mesure enregistrés.
+ */
 export function ImpactIndicatorsTable({
   indicators,
   onEdit,
   onDelete,
 }: ImpactIndicatorsTableProps) {
   const getSumOrLatest = (indicator: ImpactIndicator): number => {
-    if (!indicator.valeurs || indicator.valeurs.length === 0) return 0
-    return indicator.valeurs.reduce((acc, v) => acc + (v.valeur || 0), 0)
+    if (!indicator.values || indicator.values.length === 0) return 0
+    return indicator.values.reduce((acc, v) => acc + (v.valeur || 0), 0)
   }
 
   return (
@@ -56,20 +54,11 @@ export function ImpactIndicatorsTable({
               <TableHead className="font-semibold text-foreground min-w-[240px]">
                 Indicateur d'Impact
               </TableHead>
-              <TableHead className="font-semibold text-foreground min-w-[140px]">
-                Catégorie
-              </TableHead>
               <TableHead className="font-semibold text-foreground min-w-[130px]">
                 Valeur Mesurée
               </TableHead>
               <TableHead className="font-semibold text-foreground min-w-[150px]">
-                Progression / Cible
-              </TableHead>
-              <TableHead className="font-semibold text-foreground min-w-[150px]">
-                Rattachement
-              </TableHead>
-              <TableHead className="font-semibold text-foreground min-w-[90px]">
-                Statut
+                Points de Mesure
               </TableHead>
               <TableHead className="font-semibold text-foreground text-right min-w-[90px]">
                 Actions
@@ -79,9 +68,7 @@ export function ImpactIndicatorsTable({
           <TableBody>
             {indicators.map((ind) => {
               const currentVal = getSumOrLatest(ind)
-              const progress = ind.cible
-                ? Math.min(100, Math.round((currentVal / ind.cible) * 100))
-                : null
+              const valuesCount = ind.values?.length || 0
 
               return (
                 <TableRow
@@ -105,14 +92,7 @@ export function ImpactIndicatorsTable({
                     </div>
                   </TableCell>
 
-                  {/* 2. Catégorie */}
-                  <TableCell>
-                    <span className="rounded-md bg-secondary px-2 py-0.5 text-[11px] font-semibold text-foreground">
-                      {ind.categorie || "Général"}
-                    </span>
-                  </TableCell>
-
-                  {/* 3. Valeur Mesurée */}
+                  {/* 2. Valeur Mesurée */}
                   <TableCell>
                     <div className="flex items-baseline gap-1 font-mono font-bold text-sm text-foreground">
                       <span>{formatNumber(currentVal)}</span>
@@ -124,55 +104,21 @@ export function ImpactIndicatorsTable({
                     </div>
                   </TableCell>
 
-                  {/* 4. Cible & Progression */}
+                  {/* 3. Points de mesure enregistrés */}
                   <TableCell>
-                    {progress !== null ? (
-                      <div className="space-y-1 w-32">
-                        <div className="flex items-center justify-between text-[10px] font-mono">
-                          <span className="font-bold text-forest">{progress}%</span>
-                          <span className="text-muted-foreground">
-                            {formatNumber(ind.cible!)}
-                          </span>
-                        </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                          <div
-                            className="h-full rounded-full bg-forest transition-all"
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
-                      </div>
+                    {valuesCount > 0 ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-semibold text-foreground">
+                        <BarChart3 className="size-3 text-forest" />
+                        <span>
+                          {valuesCount} valeur{valuesCount > 1 ? "s" : ""}
+                        </span>
+                      </span>
                     ) : (
-                      <span className="text-muted-foreground text-xs">—</span>
+                      <span className="text-muted-foreground text-xs">Aucune</span>
                     )}
                   </TableCell>
 
-                  {/* 5. Rattachement Domaine / Programme */}
-                  <TableCell>
-                    <div className="space-y-1">
-                      {ind.domaine && (
-                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground truncate max-w-[160px]">
-                          <Layers className="size-3 shrink-0 text-forest" />
-                          <span className="truncate">{ind.domaine.nom}</span>
-                        </div>
-                      )}
-                      {ind.programme && (
-                        <div className="flex items-center gap-1 text-[11px] text-forest font-medium truncate max-w-[160px]">
-                          <Compass className="size-3 shrink-0" />
-                          <span className="truncate">{ind.programme.titre}</span>
-                        </div>
-                      )}
-                      {!ind.domaine && !ind.programme && (
-                        <span className="text-muted-foreground text-xs">Global</span>
-                      )}
-                    </div>
-                  </TableCell>
-
-                  {/* 6. Statut */}
-                  <TableCell>
-                    <StatusBadge status={ind.statut || "actif"} />
-                  </TableCell>
-
-                  {/* 7. Actions */}
+                  {/* 4. Actions */}
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger

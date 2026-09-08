@@ -9,12 +9,11 @@ import {
   Trash2,
   ExternalLink,
   Building2,
-  Mail,
-  Phone,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/admin/ui/status-badge"
 import { PARTNER_TYPE_LABELS } from "@/types/enums"
+import { getPartnerLogoUrl } from "@/lib/format"
 import type { Partner } from "@/types/models"
 
 interface PartenairesGridProps {
@@ -32,7 +31,9 @@ export function PartenairesGrid({
 }: PartenairesGridProps) {
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {partners.map((partner, index) => (
+      {partners.map((partner, index) => {
+        const logoUrl = getPartnerLogoUrl(partner)
+        return (
         <div
           key={partner.id}
           className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-2xs transition-all hover:border-forest/40 hover:shadow-md"
@@ -53,9 +54,9 @@ export function PartenairesGrid({
 
             {/* Logo / Initial & Name */}
             <div className="mt-4 flex items-start gap-3.5">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-secondary/40 text-forest font-bold font-display text-base">
-                {partner.logo ? (
-                  <Building2 className="size-6 text-forest/70" />
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-secondary/40 text-forest font-bold font-display text-base overflow-hidden">
+                {logoUrl ? (
+                  <img src={logoUrl} alt={partner.nom} className="size-full object-contain p-1.5" />
                 ) : (
                   <span>{partner.nom.substring(0, 2).toUpperCase()}</span>
                 )}
@@ -92,23 +93,6 @@ export function PartenairesGrid({
 
           {/* Bottom Meta & Actions */}
           <div className="mt-6 pt-4 border-t border-border/60 space-y-3">
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-              {partner.contact_email ? (
-                <span className="inline-flex items-center gap-1 truncate max-w-[170px]">
-                  <Mail className="size-3 shrink-0" />
-                  <span>{partner.contact_email}</span>
-                </span>
-              ) : (
-                <span>—</span>
-              )}
-              {partner.contact_telephone && (
-                <span className="inline-flex items-center gap-1">
-                  <Phone className="size-3 shrink-0" />
-                  <span>{partner.contact_telephone}</span>
-                </span>
-              )}
-            </div>
-
             <div className="flex items-center gap-2">
               <Button
                 asChild
@@ -158,7 +142,8 @@ export function PartenairesGrid({
             </div>
           </div>
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

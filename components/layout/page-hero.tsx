@@ -28,9 +28,9 @@ export function PageHero({
         size={420}
         className="pointer-events-none absolute -bottom-14 right-0 w-[220px] opacity-[0.1] md:w-[300px]"
       />
-      <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 md:py-24 lg:px-8">
+      <div className="relative mx-auto max-w-7xl px-4 pt-6 pb-12 sm:px-6 sm:pt-8 sm:pb-16 md:pt-10 md:pb-20 lg:px-8">
         {breadcrumbs && breadcrumbs.length > 0 && (
-          <nav aria-label="Fil d'Ariane" className="mb-5">
+          <nav aria-label="Fil d'Ariane" className="mb-3">
             <ol className="flex flex-wrap items-center gap-1 text-sm text-current/70">
               {breadcrumbs.map((c, i) => (
                 <li key={i} className="flex items-center gap-1">

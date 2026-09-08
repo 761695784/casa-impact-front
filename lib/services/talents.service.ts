@@ -1,7 +1,7 @@
-import { DATA_SOURCE, API_URL } from "@/lib/config"
+import { DATA_SOURCE } from "@/lib/config"
+import { apiFetch } from "@/lib/api-client"
 import { mockTalents } from "@/lib/mock/talents.mock"
 import { mockDomains } from "@/lib/mock/domains.mock"
-import { mockPrograms } from "@/lib/mock/programs.mock"
 import type { Talent } from "@/types/models"
 import type { TalentStatus, Region } from "@/types/enums"
 
@@ -9,8 +9,7 @@ export interface ListTalentsParams {
   search?: string
   statut?: TalentStatus | "all" | string
   region?: Region | "all" | string
-  domaine_id?: number | "all" | string
-  programme_id?: number | "all" | string
+  domain_id?: number | "all" | string
 }
 
 function delay<T>(data: T, ms = 100): Promise<T> {
@@ -26,6 +25,14 @@ function generateSlug(nom: string): string {
     .replace(/(^-|-$)+/g, "")
 }
 
+/** Déballe une réponse Laravel qui peut être `{ data: T }` ou `T` directement. */
+function unwrap<T>(payload: T | { data: T }): T {
+  if (payload && typeof payload === "object" && "data" in (payload as Record<string, unknown>)) {
+    return (payload as { data: T }).data
+  }
+  return payload as T
+}
+
 export const talentsService = {
   /**
    * Liste des profils de talents
@@ -36,8 +43,7 @@ export const talentsService = {
       search = "",
       statut = "all",
       region = "all",
-      domaine_id = "all",
-      programme_id = "all",
+      domain_id = "all",
     } = params
 
     if (DATA_SOURCE === "mock") {
@@ -48,9 +54,7 @@ export const talentsService = {
         filtered = filtered.filter(
           (t) =>
             t.nom.toLowerCase().includes(q) ||
-            t.domaine_activite?.toLowerCase().includes(q) ||
-            t.localisation?.toLowerCase().includes(q) ||
-            t.bio?.toLowerCase().includes(q) ||
+            t.presentation?.toLowerCase().includes(q) ||
             t.parcours?.toLowerCase().includes(q)
         )
       }
@@ -63,23 +67,15 @@ export const talentsService = {
         filtered = filtered.filter((t) => t.region === region)
       }
 
-      if (domaine_id && domaine_id !== "all") {
+      if (domain_id && domain_id !== "all") {
         filtered = filtered.filter(
           (t) =>
-            t.domaine_id === Number(domaine_id) ||
-            t.domaine?.id === Number(domaine_id)
+            t.domain_id === Number(domain_id) ||
+            t.domain?.id === Number(domain_id)
         )
       }
 
-      if (programme_id && programme_id !== "all") {
-        filtered = filtered.filter(
-          (t) =>
-            t.programme_id === Number(programme_id) ||
-            t.programme?.id === Number(programme_id)
-        )
-      }
-
-      filtered.sort((a, b) => (a.ordre || a.id) - (b.ordre || b.id))
+      filtered.sort((a, b) => a.id - b.id)
       return delay<Talent[]>(filtered)
     }
 
@@ -88,34 +84,15 @@ export const talentsService = {
     if (search) queryParams.set("search", search)
     if (statut && statut !== "all") queryParams.set("statut", statut)
     if (region && region !== "all") queryParams.set("region", region)
-    if (domaine_id && domaine_id !== "all")
-      queryParams.set("domaine_id", String(domaine_id))
-    if (programme_id && programme_id !== "all")
-      queryParams.set("programme_id", String(programme_id))
+    if (domain_id && domain_id !== "all")
+      queryParams.set("domain_id", String(domain_id))
 
-    const url = `${API_URL}/api/admin/talents${
+    const path = `/api/admin/talents${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`
 
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Laravel Sanctum SPA
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors du chargement des talents (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const result = await apiFetch<Talent[] | { data: Talent[] }>(path)
+    return unwrap(result)
   },
 
   /**
@@ -133,22 +110,10 @@ export const talentsService = {
       return delay<Talent>(found)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/talents/${id}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Impossible de charger le talent #${id} (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const result = await apiFetch<Talent | { data: Talent }>(
+      `/api/admin/talents/${id}`
+    )
+    return unwrap(result)
   },
 
   /**
@@ -158,20 +123,15 @@ export const talentsService = {
   createTalent: async (payload: Omit<Talent, "id">): Promise<Talent> => {
     if (DATA_SOURCE === "mock") {
       const newId = Math.max(0, ...mockTalents.map((t) => t.id)) + 1
-      const domObj = payload.domaine_id
-        ? mockDomains.find((d) => d.id === payload.domaine_id)
-        : payload.domaine
-      const progObj = payload.programme_id
-        ? mockPrograms.find((p) => p.id === payload.programme_id)
-        : payload.programme
+      const domObj = payload.domain_id
+        ? mockDomains.find((d) => d.id === payload.domain_id)
+        : payload.domain
 
       const newTalent: Talent = {
         ...payload,
         id: newId,
         slug: payload.slug || generateSlug(payload.nom),
-        domaine: domObj,
-        programme: progObj,
-        ordre: payload.ordre || newId,
+        domain: domObj,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }
@@ -180,26 +140,11 @@ export const talentsService = {
       return delay<Talent>(newTalent)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/talents`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors de la création du talent (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const result = await apiFetch<Talent | { data: Talent }>(
+      "/api/admin/talents",
+      { method: "POST", body: payload }
+    )
+    return unwrap(result)
   },
 
   /**
@@ -215,24 +160,17 @@ export const talentsService = {
       if (index === -1) throw new Error("Talent introuvable")
 
       const existing = mockTalents[index]
-      const domObj = payload.domaine_id
-        ? mockDomains.find((d) => d.id === payload.domaine_id)
-        : payload.domaine !== undefined
-        ? payload.domaine
-        : existing.domaine
-
-      const progObj = payload.programme_id
-        ? mockPrograms.find((p) => p.id === payload.programme_id)
-        : payload.programme !== undefined
-        ? payload.programme
-        : existing.programme
+      const domObj = payload.domain_id
+        ? mockDomains.find((d) => d.id === payload.domain_id)
+        : payload.domain !== undefined
+        ? payload.domain
+        : existing.domain
 
       const updated: Talent = {
         ...existing,
         ...payload,
         slug: payload.nom ? generateSlug(payload.nom) : existing.slug,
-        domaine: domObj,
-        programme: progObj,
+        domain: domObj,
         updated_at: new Date().toISOString(),
       }
 
@@ -240,26 +178,11 @@ export const talentsService = {
       return delay<Talent>(updated)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/talents/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors de la mise à jour du talent (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const result = await apiFetch<Talent | { data: Talent }>(
+      `/api/admin/talents/${id}`,
+      { method: "PUT", body: payload }
+    )
+    return unwrap(result)
   },
 
   /**
@@ -275,20 +198,7 @@ export const talentsService = {
       return delay<boolean>(true)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/talents/${id}`, {
-      method: "DELETE",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors de la suppression du profil (HTTP ${res.status})`
-      )
-    }
-
+    await apiFetch<void>(`/api/admin/talents/${id}`, { method: "DELETE" })
     return true
   },
 }

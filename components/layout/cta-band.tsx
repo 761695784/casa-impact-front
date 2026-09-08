@@ -3,6 +3,12 @@ import { ArrowRight, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BaobabMark } from "@/components/brand/baobab-mark"
 
+interface CtaAction {
+  label: string
+  href?: string
+  onClick?: () => void
+}
+
 export function CtaBand({
   title = "Prêt à faire partie du changement en Casamance ?",
   description = "Rejoignez une organisation de jeunes, d'entrepreneurs et d'acteurs engagés pour trois régions, une vision, un impact.",
@@ -11,8 +17,8 @@ export function CtaBand({
 }: {
   title?: string
   description?: string
-  primary?: { label: string; href: string }
-  secondary?: { label: string; href: string }
+  primary?: CtaAction
+  secondary?: CtaAction
 }) {
   return (
     <section className="px-4 py-16 sm:px-6 md:py-24 lg:px-8">
@@ -44,24 +50,47 @@ export function CtaBand({
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
-            <Button
-              asChild
-              size="lg"
-              className="h-13 rounded-full bg-accent px-8 font-semibold text-accent-foreground shadow-lg shadow-accent/20 transition-all hover:bg-forest hover:text-white hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Link href={primary.href} className="flex items-center gap-2">
-                {primary.label}
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
+            {primary.onClick ? (
+              <Button
+                onClick={primary.onClick}
+                size="lg"
+                className="h-13 rounded-full bg-accent px-8 font-semibold text-accent-foreground shadow-lg shadow-accent/20 transition-all hover:bg-forest hover:text-white hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <span className="flex items-center gap-2">
+                  {primary.label}
+                  <ArrowRight className="size-4" />
+                </span>
+              </Button>
+            ) : (
+              <Button
+                asChild
+                size="lg"
+                className="h-13 rounded-full bg-accent px-8 font-semibold text-accent-foreground shadow-lg shadow-accent/20 transition-all hover:bg-forest hover:text-white hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Link href={primary.href || "#"} className="flex items-center gap-2">
+                  {primary.label}
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            )}
 
-            <Button
-              asChild
-              size="lg"
-              className="h-13 rounded-full border border-white/40 bg-white/10 px-7 font-medium text-white backdrop-blur-md transition-all hover:bg-white/25 hover:text-white hover:border-white/60"
-            >
-              <Link href={secondary.href}>{secondary.label}</Link>
-            </Button>
+            {secondary.onClick ? (
+              <Button
+                onClick={secondary.onClick}
+                size="lg"
+                className="h-13 rounded-full border border-white/40 bg-white/10 px-7 font-medium text-white backdrop-blur-md transition-all hover:bg-white/25 hover:text-white hover:border-white/60"
+              >
+                {secondary.label}
+              </Button>
+            ) : (
+              <Button
+                asChild
+                size="lg"
+                className="h-13 rounded-full border border-white/40 bg-white/10 px-7 font-medium text-white backdrop-blur-md transition-all hover:bg-white/25 hover:text-white hover:border-white/60"
+              >
+                <Link href={secondary.href || "#"}>{secondary.label}</Link>
+              </Button>
+            )}
           </div>
         </div>
 

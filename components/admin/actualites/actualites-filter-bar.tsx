@@ -62,7 +62,7 @@ export function ActualitesFilterBar({
           <Input
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
-            placeholder="Rechercher par titre, extrait, auteur, mot-clé..."
+            placeholder="Rechercher par titre, contenu, mot-clé..."
             className="h-10 rounded-full pl-9 pr-9 text-xs sm:text-sm bg-background"
           />
           {localSearch && (

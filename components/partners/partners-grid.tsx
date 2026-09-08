@@ -7,6 +7,7 @@ import Link from "next/link"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { Handshake } from "lucide-react"
+import { getPartnerLogoUrl } from "@/lib/format"
 
 export function PartnersGrid() {
   const { data: partners, isLoading } = usePartners()
@@ -40,7 +41,7 @@ export function PartnersGrid() {
         >
           <div className="relative h-16 w-full">
             <Image
-              src={partner.logo || "/placeholder.svg"}
+              src={getPartnerLogoUrl(partner) || "/placeholder.svg"}
               alt={partner.nom}
               fill
               sizes="200px"

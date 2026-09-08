@@ -9,6 +9,16 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { formatDate } from "@/lib/format"
 import { useNews } from "@/hooks/use-content"
 
+// L'API réelle n'expose pas d'extrait dédié (pas de champ `extrait`) : on en
+// dérive un court aperçu à partir du corps de l'article (`corps`), en
+// retirant les balises HTML éventuelles et en tronquant proprement.
+function newsTeaser(corps?: string, maxLength = 140): string | null {
+  if (!corps) return null
+  const text = corps.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
+  if (!text) return null
+  return text.length > maxLength ? `${text.slice(0, maxLength).trimEnd()}…` : text
+}
+
 export function HomeNews() {
   const { data, isLoading } = useNews()
   const items = (data ?? []).slice(0, 3)
@@ -50,7 +60,11 @@ export function HomeNews() {
         <div className="mt-12 grid gap-8 lg:grid-cols-[1.2fr_1fr]">
           {lead && <NewsCard article={lead} featured />}
           <div className="flex flex-col gap-4">
-            {rest.map((a) => (
+            {rest.map((a) => {
+              // Pas de `date_publication` côté API réelle : `created_at` est
+              // le seul horodatage disponible pour l'affichage.
+              const teaser = newsTeaser(a.corps)
+              return (
               <Link
                 key={a.id}
                 href={`/actualites/${a.slug}`}
@@ -59,8 +73,8 @@ export function HomeNews() {
                 <div>
                   <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
                     <Calendar className="size-3.5 text-primary" />
-                    {a.date_publication ? (
-                      <time>{formatDate(a.date_publication)}</time>
+                    {a.created_at ? (
+                      <time>{formatDate(a.created_at)}</time>
                     ) : (
                       <span>Récemment</span>
                     )}
@@ -68,9 +82,9 @@ export function HomeNews() {
                   <h3 className="mt-3 font-display text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
                     {a.titre}
                   </h3>
-                  {a.extrait && (
+                  {teaser && (
                     <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                      {a.extrait}
+                      {teaser}
                     </p>
                   )}
                 </div>
@@ -80,7 +94,8 @@ export function HomeNews() {
                   <ArrowUpRight className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                 </div>
               </Link>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}

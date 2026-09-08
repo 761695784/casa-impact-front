@@ -27,7 +27,7 @@ import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog"
 import { ErrorState } from "@/components/admin/ui/error-state"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { formatDate } from "@/lib/format"
+import { formatDate, resolveMediaUrl } from "@/lib/format"
 import { TESTIMONIAL_STATUS_LABELS } from "@/types/enums"
 
 export default function TemoignageDetailPage() {
@@ -135,9 +135,9 @@ export default function TemoignageDetailPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-4">
             <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-border bg-secondary flex items-center justify-center font-bold text-forest font-display text-lg">
-              {testimonial.photo ? (
+              {testimonial.media?.[0]?.url ? (
                 <Image
-                  src={testimonial.photo}
+                  src={resolveMediaUrl(testimonial.media[0].url) || testimonial.media[0].url}
                   alt={testimonial.auteur}
                   fill
                   sizes="56px"
@@ -151,7 +151,7 @@ export default function TemoignageDetailPage() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-xs text-muted-foreground bg-secondary px-2.5 py-0.5 rounded-md">
-                  Position #{testimonial.ordre || testimonial.id}
+                  Fiche #{testimonial.id}
                 </span>
                 <StatusBadge status={testimonial.statut} />
               </div>
@@ -159,9 +159,11 @@ export default function TemoignageDetailPage() {
               <h1 className="mt-2 font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                 {testimonial.auteur}
               </h1>
-              <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
-                {testimonial.fonction} {testimonial.organisation ? `• ${testimonial.organisation}` : ""}
-              </p>
+              {testimonial.role_organisation && (
+                <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
+                  {testimonial.role_organisation}
+                </p>
+              )}
             </div>
           </div>
 
@@ -219,23 +221,23 @@ export default function TemoignageDetailPage() {
             </div>
 
             <blockquote className="text-sm sm:text-base leading-relaxed text-foreground font-serif italic bg-secondary/30 rounded-2xl p-6 border border-border/50">
-              « {testimonial.contenu} »
+              « {testimonial.citation} »
             </blockquote>
 
             {/* Programme Associé */}
-            {testimonial.programme && (
+            {testimonial.program && (
               <div className="pt-2 border-t border-border/40">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
                   Programme Rattaché
                 </span>
                 <Link
-                  href={`/admin/programmes/${testimonial.programme.id}`}
+                  href={`/admin/programmes/${testimonial.program.id}`}
                   className="inline-flex items-center gap-2 rounded-2xl bg-forest/5 p-4 border border-forest/20 text-xs text-foreground hover:bg-forest/10 transition-colors w-full"
                 >
                   <Compass className="size-5 text-forest shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="font-bold text-forest block truncate">
-                      {testimonial.programme.titre}
+                      {testimonial.program.titre}
                     </span>
                     <span className="text-muted-foreground text-[11px] block truncate">
                       Consulter la fiche programme associée
@@ -268,24 +270,13 @@ export default function TemoignageDetailPage() {
                 </span>
               </div>
 
-              {testimonial.fonction && (
+              {testimonial.role_organisation && (
                 <div>
                   <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
-                    Qualité / Rôle
+                    Rôle / Organisation
                   </span>
                   <span className="font-medium text-foreground mt-0.5 block">
-                    {testimonial.fonction}
-                  </span>
-                </div>
-              )}
-
-              {testimonial.organisation && (
-                <div>
-                  <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
-                    Organisation
-                  </span>
-                  <span className="font-medium text-foreground mt-0.5 block">
-                    {testimonial.organisation}
+                    {testimonial.role_organisation}
                   </span>
                 </div>
               )}
@@ -301,10 +292,10 @@ export default function TemoignageDetailPage() {
             <div className="space-y-3.5 text-xs">
               <div>
                 <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
-                  Ordre d'Apparition
+                  Identifiant
                 </span>
                 <span className="font-bold text-sm text-foreground mt-0.5 block">
-                  Rang #{testimonial.ordre || testimonial.id}
+                  #{testimonial.id}
                 </span>
               </div>
 

@@ -10,10 +10,6 @@ import {
   Trash2,
   ExternalLink,
   Eye,
-  Calendar,
-  User,
-  Sparkles,
-  BarChart2,
 } from "lucide-react"
 import { useNewsItem, useDeleteNews, useUpdateNews } from "@/hooks/use-news"
 import { StatusBadge } from "@/components/admin/ui/status-badge"
@@ -131,12 +127,6 @@ export default function ActualiteDetailPage() {
               <span className="font-mono text-xs text-muted-foreground bg-secondary px-2.5 py-0.5 rounded-md">
                 /{news.slug}
               </span>
-              {news.a_la_une && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-2.5 py-0.5 font-semibold text-foreground text-[10px]">
-                  <Sparkles className="size-3 text-accent" />
-                  <span>À la une</span>
-                </span>
-              )}
               <StatusBadge status={news.statut} />
             </div>
 
@@ -198,24 +188,13 @@ export default function ActualiteDetailPage() {
               </h2>
             </div>
 
-            {news.extrait && (
-              <div className="space-y-1.5">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Extrait / Chapeau
-                </h3>
-                <p className="text-sm sm:text-base leading-relaxed text-foreground font-medium bg-secondary/30 rounded-2xl p-4 border border-border/50 italic">
-                  {news.extrait}
-                </p>
-              </div>
-            )}
-
-            {news.contenu ? (
+            {news.corps ? (
               <div className="space-y-1.5">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Texte Intégral
                 </h3>
                 <div className="text-sm sm:text-base leading-relaxed text-foreground/85 whitespace-pre-line bg-secondary/20 rounded-2xl p-5 border border-border/40 space-y-4">
-                  {news.contenu}
+                  {news.corps}
                 </div>
               </div>
             ) : (
@@ -248,32 +227,12 @@ export default function ActualiteDetailPage() {
 
               <div>
                 <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
-                  Auteur / Pôle Émetteur
+                  Date de Création
                 </span>
                 <span className="font-medium text-foreground mt-0.5 block">
-                  {news.auteur || "Coordination Casa Impact"}
+                  {news.created_at ? formatDate(news.created_at) : "Non renseignée"}
                 </span>
               </div>
-
-              <div>
-                <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
-                  Date de Publication
-                </span>
-                <span className="font-medium text-foreground mt-0.5 block">
-                  {news.date_publication ? formatDate(news.date_publication) : "Non publiée"}
-                </span>
-              </div>
-
-              {news.vues_count !== undefined && (
-                <div>
-                  <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
-                    Audience & Lectures
-                  </span>
-                  <span className="font-bold text-base text-forest mt-0.5 block font-mono">
-                    {news.vues_count} vue{news.vues_count > 1 ? "s" : ""}
-                  </span>
-                </div>
-              )}
 
               {news.updated_at && (
                 <div>

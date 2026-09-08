@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useState } from "react"
-import { BarChart3, Sparkles, Target, Layers, MapPin } from "lucide-react"
+import React from "react"
+import { BarChart3, Layers } from "lucide-react"
 import { useImpactIndicators } from "@/hooks/use-content"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
@@ -9,7 +9,6 @@ import { AnimatedCounter } from "@/components/ui/animated-counter"
 
 export function ImpactIndicators() {
   const { data: indicators, isLoading, isError } = useImpactIndicators()
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
 
   if (isLoading) {
     return (
@@ -36,45 +35,19 @@ export function ImpactIndicators() {
     )
   }
 
-  const categories = ["all", ...Array.from(new Set(indicators.map((i) => i.categorie).filter(Boolean)))] as string[]
-
-  const filteredIndicators =
-    selectedCategory === "all"
-      ? indicators
-      : indicators.filter((i) => i.categorie === selectedCategory)
+  // Pas de champ `categorie` côté backend (ImpactIndicator) : le filtre par
+  // catégorie n'a donc plus lieu d'être, on affiche tous les indicateurs
+  // renvoyés par l'API, dans leur ordre d'origine.
 
   return (
     <div className="space-y-10">
-      {/* Category Filter Pills */}
-      {categories.length > 2 && (
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-                selectedCategory === cat
-                  ? "bg-forest text-white shadow-sm"
-                  : "bg-secondary text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
-              }`}
-            >
-              {cat === "all" ? "Tous les indicateurs" : cat}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Grid of Detailed Indicators */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredIndicators.map((indicator) => {
+        {indicators.map((indicator) => {
           const totalVal =
-            indicator.valeurs && indicator.valeurs.length > 0
-              ? indicator.valeurs.reduce((acc, v) => acc + (v.valeur || 0), 0)
+            indicator.values && indicator.values.length > 0
+              ? indicator.values.reduce((acc, v) => acc + (v.valeur || 0), 0)
               : 0
-
-          const progressPercent = indicator.cible
-            ? Math.min(Math.round((totalVal / indicator.cible) * 100), 100)
-            : null
 
           return (
             <div
@@ -86,7 +59,7 @@ export function ImpactIndicators() {
                 <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-3">
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-forest">
                     <Layers className="size-3 text-forest" />
-                    {indicator.categorie || "Indicateur Clé"}
+                    Indicateur Clé
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-forest">
                     Vérifié
@@ -118,9 +91,9 @@ export function ImpactIndicators() {
                 )}
 
                 {/* Regional Breakdown if available */}
-                {indicator.valeurs && indicator.valeurs.length > 1 && (
+                {indicator.values && indicator.values.length > 1 && (
                   <div className="mt-4 flex flex-wrap gap-1.5 pt-3 border-t border-border/60">
-                    {indicator.valeurs.map((val) => (
+                    {indicator.values.map((val) => (
                       <span
                         key={val.id}
                         className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-[10px] font-medium text-foreground/80"
@@ -132,26 +105,9 @@ export function ImpactIndicators() {
                   </div>
                 )}
               </div>
-
-              {/* Progress Bar towards Target */}
-              {indicator.cible && progressPercent !== null && (
-                <div className="mt-6 pt-4 border-t border-border/60 space-y-2">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Target className="size-3 text-forest" />
-                      <span>Cible : {indicator.cible.toLocaleString("fr-FR")}</span>
-                    </span>
-                    <span className="font-bold text-forest">{progressPercent}%</span>
-                  </div>
-
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                    <div
-                      className="h-full bg-forest transition-all duration-1000 ease-out"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                </div>
-              )}
+              {/* Pas de champ `cible` côté backend (ImpactIndicator) : plus de
+                  barre de progression vers un objectif, on affiche uniquement
+                  la valeur constatée ci-dessus. */}
             </div>
           )
         })}

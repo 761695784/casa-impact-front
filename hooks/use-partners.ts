@@ -65,11 +65,44 @@ export function useUpdatePartner() {
       })
       queryClient.invalidateQueries({ queryKey: PARTNERS_QUERY_KEY })
       queryClient.invalidateQueries({ queryKey: ["admin", "partner", updated.id] })
-      queryClient.invalidateQueries({ queryKey: ["admin", "partner", updated.slug] })
       queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] })
     },
     onError: (err: unknown) => {
       toast.error("Erreur lors de la mise à jour du partenaire", {
+        description: err instanceof Error ? err.message : "Une erreur est survenue.",
+      })
+    },
+  })
+}
+
+export function useUploadPartnerLogo() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ partnerId, file }: { partnerId: number; file: File }) =>
+      partnersService.uploadPartnerLogo(partnerId, file),
+    onSuccess: (_media, variables) => {
+      queryClient.invalidateQueries({ queryKey: PARTNERS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ["admin", "partner", variables.partnerId] })
+    },
+    onError: (err: unknown) => {
+      toast.error("Erreur lors de l'envoi du logo", {
+        description: err instanceof Error ? err.message : "Une erreur est survenue.",
+      })
+    },
+  })
+}
+
+export function useDeletePartnerLogo() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (mediaId: number) => partnersService.deletePartnerLogo(mediaId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PARTNERS_QUERY_KEY })
+    },
+    onError: (err: unknown) => {
+      toast.error("Erreur lors de la suppression du logo", {
         description: err instanceof Error ? err.message : "Une erreur est survenue.",
       })
     },

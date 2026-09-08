@@ -1,13 +1,13 @@
-import { DATA_SOURCE, API_URL } from "@/lib/config"
+import { DATA_SOURCE } from "@/lib/config"
+import { apiFetch } from "@/lib/api-client"
 import { mockNews } from "@/lib/mock/news.mock"
-import type { News, PaginatedResponse } from "@/types/models"
+import type { News, PaginatedResponse, SingleResponse } from "@/types/models"
 import type { NewsStatus, NewsType } from "@/types/enums"
 
 export interface ListNewsParams {
   search?: string
   statut?: NewsStatus | "all" | string
   type?: NewsType | "all" | string
-  a_la_une?: boolean | "all" | string
   page?: number
   per_page?: number
 }
@@ -37,7 +37,6 @@ export const newsService = {
       search = "",
       statut = "all",
       type = "all",
-      a_la_une = "all",
       page = 1,
       per_page = 10,
     } = params
@@ -50,9 +49,7 @@ export const newsService = {
         filtered = filtered.filter(
           (n) =>
             n.titre.toLowerCase().includes(q) ||
-            n.extrait?.toLowerCase().includes(q) ||
-            n.contenu?.toLowerCase().includes(q) ||
-            n.auteur?.toLowerCase().includes(q)
+            n.corps?.toLowerCase().includes(q)
         )
       }
 
@@ -62,11 +59,6 @@ export const newsService = {
 
       if (type && type !== "all") {
         filtered = filtered.filter((n) => n.type === type)
-      }
-
-      if (a_la_une !== "all") {
-        const isFeatured = a_la_une === true || a_la_une === "true"
-        filtered = filtered.filter((n) => n.a_la_une === isFeatured)
       }
 
       const total = filtered.length
@@ -90,28 +82,10 @@ export const newsService = {
     if (search) queryParams.set("search", search)
     if (statut && statut !== "all") queryParams.set("statut", statut)
     if (type && type !== "all") queryParams.set("type", type)
-    if (a_la_une !== "all") queryParams.set("a_la_une", String(a_la_une))
     queryParams.set("page", String(page))
     queryParams.set("per_page", String(per_page))
 
-    const res = await fetch(`${API_URL}/api/admin/news?${queryParams.toString()}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Laravel Sanctum SPA
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors du chargement des actualités (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data ? json : { data: json.data || json, meta: json.meta }
+    return apiFetch<PaginatedResponse<News>>(`/api/admin/news?${queryParams.toString()}`)
   },
 
   /**
@@ -129,21 +103,8 @@ export const newsService = {
       return delay<News>(found)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/news/${id}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Impossible de charger l'actualité #${id} (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const res = await apiFetch<SingleResponse<News>>(`/api/admin/news/${id}`)
+    return res.data
   },
 
   /**
@@ -166,25 +127,11 @@ export const newsService = {
       return delay<News>(newNews)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/news`, {
+    const res = await apiFetch<SingleResponse<News>>(`/api/admin/news`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
+      body: payload,
     })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la création de l'article (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    return res.data
   },
 
   /**
@@ -211,25 +158,11 @@ export const newsService = {
       return delay<News>(updated)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/news/${id}`, {
+    const res = await apiFetch<SingleResponse<News>>(`/api/admin/news/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
+      body: payload,
     })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la mise à jour de l'article (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    return res.data
   },
 
   /**
@@ -245,19 +178,7 @@ export const newsService = {
       return delay<boolean>(true)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/news/${id}`, {
-      method: "DELETE",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la suppression de l'article (HTTP ${res.status})`
-      )
-    }
-
+    await apiFetch<void>(`/api/admin/news/${id}`, { method: "DELETE" })
     return true
   },
 }

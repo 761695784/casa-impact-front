@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/admin/ui/status-badge"
 import { formatDate } from "@/lib/format"
 import { NEWS_TYPE_LABELS } from "@/types/enums"
-import { Calendar, User, Eye, Sparkles } from "lucide-react"
+import { Calendar, Eye } from "lucide-react"
 import type { News } from "@/types/models"
 
 interface ActualitePreviewModalProps {
@@ -50,24 +50,10 @@ export function ActualitePreviewModal({
               {NEWS_TYPE_LABELS[news.type] || news.type}
             </span>
 
-            {news.date_publication && (
+            {news.created_at && (
               <span className="inline-flex items-center gap-1">
                 <Calendar className="size-3.5" />
-                <span>{formatDate(news.date_publication)}</span>
-              </span>
-            )}
-
-            {news.auteur && (
-              <span className="inline-flex items-center gap-1">
-                <User className="size-3.5" />
-                <span>{news.auteur}</span>
-              </span>
-            )}
-
-            {news.a_la_une && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-2.5 py-0.5 font-semibold text-foreground text-[10px]">
-                <Sparkles className="size-3 text-accent" />
-                <span>À la une</span>
+                <span>{formatDate(news.created_at)}</span>
               </span>
             )}
           </div>
@@ -77,17 +63,10 @@ export function ActualitePreviewModal({
             {news.titre}
           </h1>
 
-          {/* Extrait */}
-          {news.extrait && (
-            <p className="text-sm sm:text-base font-medium text-foreground/80 leading-relaxed border-l-2 border-forest pl-4 italic">
-              {news.extrait}
-            </p>
-          )}
-
           {/* Content */}
-          {news.contenu ? (
+          {news.corps ? (
             <div className="prose prose-sm sm:prose-base max-w-none text-foreground/85 leading-relaxed whitespace-pre-line space-y-4 pt-2 border-t border-border/40">
-              {news.contenu}
+              {news.corps}
             </div>
           ) : (
             <p className="text-xs italic text-muted-foreground">

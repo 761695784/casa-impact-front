@@ -10,10 +10,11 @@ import {
   Trash2,
   Quote,
   Compass,
-  Building,
+  User,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/admin/ui/status-badge"
+import { resolveMediaUrl } from "@/lib/format"
 import type { Testimonial } from "@/types/models"
 
 interface TemoignagesGridProps {
@@ -31,7 +32,9 @@ export function TemoignagesGrid({
 }: TemoignagesGridProps) {
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {testimonials.map((t, index) => (
+      {testimonials.map((t, index) => {
+        const photoUrl = resolveMediaUrl(t.media?.[0]?.url)
+        return (
         <div
           key={t.id}
           className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-2xs transition-all hover:border-forest/40 hover:shadow-md"
@@ -41,7 +44,7 @@ export function TemoignagesGrid({
             <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-3.5">
               <div className="flex items-center gap-2">
                 <span className="flex size-7 items-center justify-center rounded-xl bg-forest/10 font-mono text-xs font-bold text-forest">
-                  0{t.ordre || index + 1}
+                  0{index + 1}
                 </span>
                 <Quote className="size-4 text-forest/60" />
               </div>
@@ -51,9 +54,9 @@ export function TemoignagesGrid({
             {/* Author Avatar & Identity */}
             <div className="mt-4 flex items-start gap-3.5">
               <div className="relative size-12 shrink-0 overflow-hidden rounded-full border border-border bg-secondary flex items-center justify-center font-bold text-forest font-display text-sm">
-                {t.photo ? (
+                {photoUrl ? (
                   <Image
-                    src={t.photo}
+                    src={photoUrl}
                     alt={t.auteur}
                     fill
                     sizes="48px"
@@ -71,15 +74,10 @@ export function TemoignagesGrid({
                 >
                   {t.auteur}
                 </Link>
-                {t.fonction && (
-                  <p className="text-xs font-medium text-foreground/80 truncate">
-                    {t.fonction}
-                  </p>
-                )}
-                {t.organisation && (
+                {t.role_organisation && (
                   <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
-                    <Building className="size-3 shrink-0" />
-                    <span>{t.organisation}</span>
+                    <User className="size-3 shrink-0" />
+                    <span>{t.role_organisation}</span>
                   </p>
                 )}
               </div>
@@ -87,14 +85,14 @@ export function TemoignagesGrid({
 
             {/* Quotation text */}
             <blockquote className="mt-4 text-xs text-foreground/85 line-clamp-4 leading-relaxed rounded-2xl bg-secondary/30 p-3.5 border border-border/40 italic">
-              « {t.contenu} »
+              « {t.citation} »
             </blockquote>
 
             {/* Linked Program tag */}
-            {t.programme && (
+            {t.program && (
               <div className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-forest/5 px-2.5 py-1 text-[11px] font-medium text-forest">
                 <Compass className="size-3 shrink-0" />
-                <span className="truncate max-w-[200px]">{t.programme.titre}</span>
+                <span className="truncate max-w-[200px]">{t.program.titre}</span>
               </div>
             )}
           </div>
@@ -150,7 +148,8 @@ export function TemoignagesGrid({
             </div>
           </div>
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

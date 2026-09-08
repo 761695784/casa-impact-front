@@ -41,7 +41,7 @@ export default function TalentsListPage() {
     search,
     statut,
     region,
-    domaine_id: domaineId,
+    domain_id: domaineId,
   })
 
   const deleteMutation = useDeleteTalent()

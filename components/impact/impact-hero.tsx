@@ -17,7 +17,7 @@ export function ImpactHero({
   breadcrumbs?: Crumb[]
 }) {
   return (
-    <section className="relative isolate overflow-hidden bg-forest text-forest-foreground min-h-[500px] sm:min-h-[540px] lg:min-h-[580px] flex items-center">
+    <section className="relative isolate overflow-hidden bg-forest text-forest-foreground min-h-[340px] sm:min-h-[380px] lg:min-h-[420px] flex items-center">
       {/* Background Image with Ken Burns Zoom */}
       <div className="absolute inset-0 -z-20 overflow-hidden">
         <div className="relative h-full w-full animate-ken-burns">
@@ -49,10 +49,10 @@ export function ImpactHero({
         className="pointer-events-none absolute -bottom-24 -right-16 hidden opacity-[0.08] lg:block lg:w-[480px]"
       />
 
-      <div className="relative mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 md:py-24 lg:px-8">
+      <div className="relative mx-auto w-full max-w-7xl px-4 pt-6 pb-12 sm:px-6 sm:pt-8 sm:pb-16 md:pt-10 md:pb-20 lg:px-8">
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
-          <nav aria-label="Fil d'Ariane" className="mb-6">
+          <nav aria-label="Fil d'Ariane" className="mb-4">
             <ol className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-white/75">
               {breadcrumbs.map((c, i) => (
                 <li key={i} className="flex items-center gap-1.5">

@@ -8,7 +8,7 @@ import { SHOP_PHONE_DISPLAY, SHOP_WHATSAPP_NUMBER } from "@/lib/data/collections
 
 export function BoutiqueHero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#024424] via-forest to-[#012d17] text-white pt-28 pb-16 lg:pt-36 lg:pb-24">
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#024424] via-forest to-[#012d17] text-white pt-8 pb-12 sm:pt-10 sm:pb-16 lg:pt-12 lg:pb-20">
       {/* Background Decorative Baobab Watermark */}
       <BaobabMark
         variant="white"
@@ -22,7 +22,7 @@ export function BoutiqueHero() {
 
       <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <nav aria-label="Fil d'Ariane" className="mb-6 flex items-center gap-1.5 text-xs text-white/70">
+        <nav aria-label="Fil d'Ariane" className="mb-4 flex items-center gap-1.5 text-xs text-white/70">
           <Link href="/" className="hover:text-accent transition-colors">
             Accueil
           </Link>

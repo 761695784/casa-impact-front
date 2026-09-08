@@ -7,8 +7,6 @@ import {
   Edit,
   Trash2,
   ExternalLink,
-  Sparkles,
-  User,
   Calendar,
   MoreHorizontal,
 } from "lucide-react"
@@ -58,14 +56,8 @@ export function ActualitesTable({
               <TableHead className="font-semibold text-foreground min-w-[130px]">
                 Format / Type
               </TableHead>
-              <TableHead className="font-semibold text-foreground min-w-[140px]">
-                Auteur / Pôle
-              </TableHead>
               <TableHead className="font-semibold text-foreground min-w-[120px]">
                 Date
-              </TableHead>
-              <TableHead className="font-semibold text-foreground min-w-[90px] text-center">
-                À la une
               </TableHead>
               <TableHead className="font-semibold text-foreground min-w-[100px]">
                 Statut
@@ -81,7 +73,7 @@ export function ActualitesTable({
                 key={item.id}
                 className="transition-colors hover:bg-secondary/20 border-border/60"
               >
-                {/* 1. Titre & Extrait */}
+                {/* 1. Titre & Corps */}
                 <TableCell className="py-4">
                   <div className="space-y-1">
                     <Link
@@ -90,9 +82,9 @@ export function ActualitesTable({
                     >
                       {item.titre}
                     </Link>
-                    {item.extrait && (
+                    {item.corps && (
                       <p className="text-[11px] text-muted-foreground line-clamp-1 max-w-[340px]">
-                        {item.extrait}
+                        {item.corps}
                       </p>
                     )}
                   </div>
@@ -105,32 +97,14 @@ export function ActualitesTable({
                   </span>
                 </TableCell>
 
-                {/* 3. Auteur */}
-                <TableCell>
-                  <span className="text-[11px] text-foreground font-medium">
-                    {item.auteur || "Rédaction"}
-                  </span>
-                </TableCell>
-
-                {/* 4. Date de publication */}
+                {/* 3. Date de création */}
                 <TableCell>
                   <span className="text-[11px] text-muted-foreground">
-                    {item.date_publication ? formatDate(item.date_publication) : "—"}
+                    {item.created_at ? formatDate(item.created_at) : "—"}
                   </span>
                 </TableCell>
 
-                {/* 5. À la une */}
-                <TableCell className="text-center">
-                  {item.a_la_une ? (
-                    <span className="inline-flex items-center justify-center rounded-full bg-accent/20 p-1 text-accent">
-                      <Sparkles className="size-3.5 fill-accent" />
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground text-[11px]">—</span>
-                  )}
-                </TableCell>
-
-                {/* 6. Statut */}
+                {/* 4. Statut */}
                 <TableCell>
                   <StatusBadge status={item.statut} />
                 </TableCell>

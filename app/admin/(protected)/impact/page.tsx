@@ -18,8 +18,6 @@ import type { ImpactIndicator } from "@/types/models"
 
 export default function ImpactDashboardPage() {
   const [search, setSearch] = useState("")
-  const [statut, setStatut] = useState("all")
-  const [domaineId, setDomaineId] = useState("all")
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -36,16 +34,12 @@ export default function ImpactDashboardPage() {
     refetch,
   } = useImpactIndicators({
     search,
-    statut,
-    domaine_id: domaineId,
   })
 
   const deleteMutation = useDeleteImpactIndicator()
 
   const handleResetFilters = () => {
     setSearch("")
-    setStatut("all")
-    setDomaineId("all")
   }
 
   return (
@@ -88,11 +82,7 @@ export default function ImpactDashboardPage() {
       {/* 3. Barre de Filtres */}
       <ImpactFilterBar
         search={search}
-        statut={statut}
-        domaineId={domaineId}
         onSearchChange={setSearch}
-        onStatutChange={setStatut}
-        onDomaineIdChange={setDomaineId}
         onReset={handleResetFilters}
         totalCount={indicators.length}
       />
@@ -131,8 +121,8 @@ export default function ImpactDashboardPage() {
             Aucun indicateur d'impact trouvé
           </h3>
           <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-            {search || statut !== "all" || domaineId !== "all"
-              ? "Aucun indicateur ne correspond à vos filtres actuels."
+            {search
+              ? "Aucun indicateur ne correspond à votre recherche."
               : "Ajoutez le premier indicateur d'impact de Casa Impact."}
           </p>
           <Button

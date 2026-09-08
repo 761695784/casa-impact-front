@@ -1,15 +1,10 @@
-import { DATA_SOURCE, API_URL } from "@/lib/config"
+import { DATA_SOURCE } from "@/lib/config"
+import { apiFetch } from "@/lib/api-client"
 import { mockImpactIndicators } from "@/lib/mock/impact.mock"
-import { mockDomains } from "@/lib/mock/domains.mock"
-import { mockPrograms } from "@/lib/mock/programs.mock"
-import type { ImpactIndicator } from "@/types/models"
+import type { ImpactIndicator, ImpactValue } from "@/types/models"
 
 export interface ListImpactIndicatorsParams {
   search?: string
-  statut?: "actif" | "inactif" | "all" | string
-  categorie?: string
-  domaine_id?: number | "all" | string
-  programme_id?: number | "all" | string
 }
 
 function delay<T>(data: T, ms = 100): Promise<T> {
@@ -19,18 +14,12 @@ function delay<T>(data: T, ms = 100): Promise<T> {
 export const impactService = {
   /**
    * Liste des indicateurs d'impact territorial
-   * Endpoint : GET /api/admin/impact
+   * Endpoint : GET /api/admin/impact-indicators
    */
   listImpactIndicators: async (
     params: ListImpactIndicatorsParams = {}
   ): Promise<ImpactIndicator[]> => {
-    const {
-      search = "",
-      statut = "all",
-      categorie = "all",
-      domaine_id = "all",
-      programme_id = "all",
-    } = params
+    const { search = "" } = params
 
     if (DATA_SOURCE === "mock") {
       let filtered = [...mockImpactIndicators]
@@ -40,77 +29,32 @@ export const impactService = {
         filtered = filtered.filter(
           (ind) =>
             ind.libelle.toLowerCase().includes(q) ||
-            ind.description?.toLowerCase().includes(q) ||
-            ind.categorie?.toLowerCase().includes(q)
+            ind.description?.toLowerCase().includes(q)
         )
       }
 
-      if (statut && statut !== "all") {
-        filtered = filtered.filter((ind) => ind.statut === statut)
-      }
-
-      if (categorie && categorie !== "all") {
-        filtered = filtered.filter((ind) => ind.categorie === categorie)
-      }
-
-      if (domaine_id && domaine_id !== "all") {
-        filtered = filtered.filter(
-          (ind) =>
-            ind.domaine_id === Number(domaine_id) ||
-            ind.domaine?.id === Number(domaine_id)
-        )
-      }
-
-      if (programme_id && programme_id !== "all") {
-        filtered = filtered.filter(
-          (ind) =>
-            ind.programme_id === Number(programme_id) ||
-            ind.programme?.id === Number(programme_id)
-        )
-      }
-
-      filtered.sort((a, b) => (a.ordre || a.id) - (b.ordre || b.id))
+      filtered.sort((a, b) => a.id - b.id)
       return delay<ImpactIndicator[]>(filtered)
     }
 
     // MODE API RÉEL : Aucun fallback silencieux
     const queryParams = new URLSearchParams()
     if (search) queryParams.set("search", search)
-    if (statut && statut !== "all") queryParams.set("statut", statut)
-    if (categorie && categorie !== "all") queryParams.set("categorie", categorie)
-    if (domaine_id && domaine_id !== "all")
-      queryParams.set("domaine_id", String(domaine_id))
-    if (programme_id && programme_id !== "all")
-      queryParams.set("programme_id", String(programme_id))
 
-    const url = `${API_URL}/api/admin/impact${
+    const path = `/api/admin/impact-indicators${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`
 
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Laravel Sanctum SPA
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors du chargement des indicateurs d'impact (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data?: ImpactIndicator[] } | ImpactIndicator[]>(
+      path,
+      { method: "GET" }
+    )
+    return (json as { data?: ImpactIndicator[] })?.data ?? (json as ImpactIndicator[])
   },
 
   /**
    * Détail d'un indicateur d'impact
-   * Endpoint : GET /api/admin/impact/{id}
+   * Endpoint : GET /api/admin/impact-indicators/{id}
    */
   getImpactIndicator: async (
     id: number | string
@@ -123,27 +67,16 @@ export const impactService = {
       return delay<ImpactIndicator>(found)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/impact/${id}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Impossible de charger l'indicateur #${id} (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data?: ImpactIndicator } | ImpactIndicator>(
+      `/api/admin/impact-indicators/${id}`,
+      { method: "GET" }
+    )
+    return (json as { data?: ImpactIndicator })?.data ?? (json as ImpactIndicator)
   },
 
   /**
    * Création d'un indicateur d'impact
-   * Endpoint : POST /api/admin/impact
+   * Endpoint : POST /api/admin/impact-indicators
    */
   createImpactIndicator: async (
     payload: Omit<ImpactIndicator, "id">
@@ -151,21 +84,11 @@ export const impactService = {
     if (DATA_SOURCE === "mock") {
       const newId =
         Math.max(0, ...mockImpactIndicators.map((ind) => ind.id)) + 1
-      const domObj = payload.domaine_id
-        ? mockDomains.find((d) => d.id === payload.domaine_id)
-        : payload.domaine
-      const progObj = payload.programme_id
-        ? mockPrograms.find((p) => p.id === payload.programme_id)
-        : payload.programme
 
       const newIndicator: ImpactIndicator = {
         ...payload,
         id: newId,
-        domaine: domObj,
-        programme: progObj,
-        valeurs: payload.valeurs || [],
-        statut: payload.statut || "actif",
-        ordre: payload.ordre || newId,
+        values: payload.values || [],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }
@@ -174,31 +97,19 @@ export const impactService = {
       return delay<ImpactIndicator>(newIndicator)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/impact`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors de la création de l'indicateur (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data?: ImpactIndicator } | ImpactIndicator>(
+      `/api/admin/impact-indicators`,
+      { method: "POST", body: payload }
+    )
+    return (json as { data?: ImpactIndicator })?.data ?? (json as ImpactIndicator)
   },
 
   /**
-   * Mise à jour d'un indicateur d'impact
-   * Endpoint : PUT /api/admin/impact/{id}
+   * Mise à jour d'un indicateur d'impact (champs propres à l'indicateur
+   * uniquement — libelle/unite/description ; les valeurs se gèrent via
+   * addImpactValue/updateImpactValue/deleteImpactValue, sous-ressource
+   * séparée).
+   * Endpoint : PUT /api/admin/impact-indicators/{id}
    */
   updateImpactIndicator: async (
     id: number,
@@ -209,23 +120,9 @@ export const impactService = {
       if (index === -1) throw new Error("Indicateur d'impact introuvable")
 
       const existing = mockImpactIndicators[index]
-      const domObj = payload.domaine_id
-        ? mockDomains.find((d) => d.id === payload.domaine_id)
-        : payload.domaine !== undefined
-        ? payload.domaine
-        : existing.domaine
-
-      const progObj = payload.programme_id
-        ? mockPrograms.find((p) => p.id === payload.programme_id)
-        : payload.programme !== undefined
-        ? payload.programme
-        : existing.programme
-
       const updated: ImpactIndicator = {
         ...existing,
         ...payload,
-        domaine: domObj,
-        programme: progObj,
         updated_at: new Date().toISOString(),
       }
 
@@ -233,31 +130,16 @@ export const impactService = {
       return delay<ImpactIndicator>(updated)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/impact/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors de la mise à jour de l'indicateur (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data?: ImpactIndicator } | ImpactIndicator>(
+      `/api/admin/impact-indicators/${id}`,
+      { method: "PUT", body: payload }
+    )
+    return (json as { data?: ImpactIndicator })?.data ?? (json as ImpactIndicator)
   },
 
   /**
    * Suppression d'un indicateur d'impact
-   * Endpoint : DELETE /api/admin/impact/{id}
+   * Endpoint : DELETE /api/admin/impact-indicators/{id}
    */
   deleteImpactIndicator: async (id: number): Promise<boolean> => {
     if (DATA_SOURCE === "mock") {
@@ -268,19 +150,106 @@ export const impactService = {
       return delay<boolean>(true)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/impact/${id}`, {
+    await apiFetch<void>(`/api/admin/impact-indicators/${id}`, {
       method: "DELETE",
-      headers: { Accept: "application/json" },
-      credentials: "include",
     })
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors de la suppression de l'indicateur (HTTP ${res.status})`
+    return true
+  },
+
+  /**
+   * Ajout d'une valeur (point de mesure) à un indicateur — sous-ressource
+   * imbriquée : une valeur n'existe jamais hors de son indicateur.
+   * Endpoint : POST /api/admin/impact-indicators/{indicatorId}/values
+   */
+  addImpactValue: async (
+    indicatorId: number,
+    payload: Omit<ImpactValue, "id">
+  ): Promise<ImpactValue> => {
+    if (DATA_SOURCE === "mock") {
+      const index = mockImpactIndicators.findIndex(
+        (ind) => ind.id === Number(indicatorId)
       )
+      if (index === -1) throw new Error("Indicateur d'impact introuvable")
+
+      const existing = mockImpactIndicators[index]
+      const newValueId =
+        Math.max(0, ...(existing.values || []).map((v) => v.id)) + 1
+      const newValue: ImpactValue = {
+        ...payload,
+        id: newValueId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+
+      mockImpactIndicators[index] = {
+        ...existing,
+        values: [...(existing.values || []), newValue],
+        updated_at: new Date().toISOString(),
+      }
+
+      return delay<ImpactValue>(newValue)
     }
+
+    const json = await apiFetch<{ data?: ImpactValue } | ImpactValue>(
+      `/api/admin/impact-indicators/${indicatorId}/values`,
+      { method: "POST", body: payload }
+    )
+    return (json as { data?: ImpactValue })?.data ?? (json as ImpactValue)
+  },
+
+  /**
+   * Mise à jour d'une valeur existante.
+   * Endpoint : PUT /api/admin/impact-values/{valueId}
+   */
+  updateImpactValue: async (
+    valueId: number,
+    payload: Partial<Omit<ImpactValue, "id">>
+  ): Promise<ImpactValue> => {
+    if (DATA_SOURCE === "mock") {
+      for (const ind of mockImpactIndicators) {
+        const vIndex = (ind.values || []).findIndex((v) => v.id === Number(valueId))
+        if (vIndex !== -1 && ind.values) {
+          const updated: ImpactValue = {
+            ...ind.values[vIndex],
+            ...payload,
+            updated_at: new Date().toISOString(),
+          }
+          ind.values[vIndex] = updated
+          ind.updated_at = new Date().toISOString()
+          return delay<ImpactValue>(updated)
+        }
+      }
+      throw new Error("Valeur d'impact introuvable")
+    }
+
+    const json = await apiFetch<{ data?: ImpactValue } | ImpactValue>(
+      `/api/admin/impact-values/${valueId}`,
+      { method: "PUT", body: payload }
+    )
+    return (json as { data?: ImpactValue })?.data ?? (json as ImpactValue)
+  },
+
+  /**
+   * Suppression d'une valeur.
+   * Endpoint : DELETE /api/admin/impact-values/{valueId}
+   */
+  deleteImpactValue: async (valueId: number): Promise<boolean> => {
+    if (DATA_SOURCE === "mock") {
+      for (const ind of mockImpactIndicators) {
+        const vIndex = (ind.values || []).findIndex((v) => v.id === Number(valueId))
+        if (vIndex !== -1 && ind.values) {
+          ind.values.splice(vIndex, 1)
+          ind.updated_at = new Date().toISOString()
+          return delay<boolean>(true)
+        }
+      }
+      return delay<boolean>(false)
+    }
+
+    await apiFetch<void>(`/api/admin/impact-values/${valueId}`, {
+      method: "DELETE",
+    })
 
     return true
   },

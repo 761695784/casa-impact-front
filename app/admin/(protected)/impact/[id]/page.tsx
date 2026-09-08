@@ -5,21 +5,15 @@ import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   ArrowLeft,
-  BarChart3,
   Edit,
   Trash2,
-  TrendingUp,
   ExternalLink,
-  Layers,
-  Compass,
   MapPin,
-  Calendar,
 } from "lucide-react"
 import {
   useImpactIndicator,
   useDeleteImpactIndicator,
 } from "@/hooks/use-impact"
-import { StatusBadge } from "@/components/admin/ui/status-badge"
 import { ImpactIndicatorFormDialog } from "@/components/admin/impact/impact-indicator-form-dialog"
 import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog"
 import { ErrorState } from "@/components/admin/ui/error-state"
@@ -28,6 +22,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { formatNumber, formatDate } from "@/lib/format"
 import { REGION_LABELS } from "@/types/enums"
 
+/**
+ * Fiche indicateur alignée sur la ressource réelle (types/models.ts) :
+ * plus de `categorie`, `ordre`, `statut`, `cible`, `domaine`/`programme` —
+ * aucun de ces champs n'existe côté backend pour ImpactIndicator. Le champ
+ * des points de mesure est `values` (pas `valeurs`).
+ */
 export default function ImpactIndicatorDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -94,16 +94,13 @@ export default function ImpactIndicatorDetailPage() {
   }
 
   const currentVal =
-    indicator.valeurs && indicator.valeurs.length > 0
-      ? indicator.valeurs.reduce((acc, v) => acc + (v.valeur || 0), 0)
+    indicator.values && indicator.values.length > 0
+      ? indicator.values.reduce((acc, v) => acc + (v.valeur || 0), 0)
       : 0
-  const progress = indicator.cible
-    ? Math.min(100, Math.round((currentVal / indicator.cible) * 100))
-    : null
 
   return (
     <div className="space-y-8 animate-in fade-in-50 duration-300">
-      
+
       {/* 1. Top Navigation & Action Header */}
       <div className="space-y-4 border-b border-border/80 pb-6">
         <div className="flex items-center justify-between">
@@ -134,16 +131,6 @@ export default function ImpactIndicatorDetailPage() {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-md bg-forest/10 px-2.5 py-0.5 font-bold text-forest text-xs uppercase tracking-wider">
-                {indicator.categorie || "Indicateur Clé"}
-              </span>
-              <span className="font-mono text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-md">
-                Rang #{indicator.ordre || indicator.id}
-              </span>
-              <StatusBadge status={indicator.statut || "actif"} />
-            </div>
-
             <h1 className="mt-2 font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               {indicator.libelle}
             </h1>
@@ -178,10 +165,10 @@ export default function ImpactIndicatorDetailPage() {
 
       {/* 2. Main Content Grid */}
       <div className="grid gap-8 lg:grid-cols-12">
-        
+
         {/* Left Column (8 cols) : Description & Historique */}
         <div className="space-y-8 lg:col-span-8">
-          
+
           {/* Définition */}
           <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-2xs space-y-6">
             <div className="border-b border-border/80 pb-4">
@@ -210,16 +197,16 @@ export default function ImpactIndicatorDetailPage() {
               Historique des Mesures Enregistrées
             </h3>
 
-            {indicator.valeurs && indicator.valeurs.length > 0 ? (
+            {indicator.values && indicator.values.length > 0 ? (
               <div className="divide-y divide-border/60">
-                {indicator.valeurs.map((val) => (
+                {indicator.values.map((val) => (
                   <div
                     key={val.id}
                     className="py-3 flex items-center justify-between text-xs"
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="font-mono font-semibold text-foreground bg-secondary px-2.5 py-1 rounded-md">
-                        {val.periode}
+                        {val.periode || "—"}
                       </span>
                       {val.region && (
                         <span className="inline-flex items-center gap-1 text-muted-foreground">
@@ -239,104 +226,35 @@ export default function ImpactIndicatorDetailPage() {
                 Aucune mesure enregistrée pour le moment.
               </p>
             )}
+
+            <p className="text-[11px] text-muted-foreground">
+              Ajoutez ou modifiez les points de mesure depuis « Modifier l'indicateur ».
+            </p>
           </div>
-
-          {/* Rattachements Domaine / Programme */}
-          {(indicator.domaine || indicator.programme) && (
-            <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-2xs space-y-4">
-              <h3 className="font-display text-lg font-bold text-foreground border-b border-border/80 pb-3">
-                Rattachement Stratégique
-              </h3>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                {indicator.domaine && (
-                  <Link
-                    href={`/admin/domaines/${indicator.domaine.id}`}
-                    className="rounded-2xl bg-secondary/30 p-4 border border-border/60 hover:bg-forest/5 hover:border-forest/30 transition-all flex items-start gap-3"
-                  >
-                    <Layers className="size-5 text-forest mt-0.5 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
-                        Domaine d'Intervention
-                      </span>
-                      <span className="font-bold text-sm text-foreground block truncate mt-0.5">
-                        {indicator.domaine.nom}
-                      </span>
-                    </div>
-                  </Link>
-                )}
-
-                {indicator.programme && (
-                  <Link
-                    href={`/admin/programmes/${indicator.programme.id}`}
-                    className="rounded-2xl bg-secondary/30 p-4 border border-border/60 hover:bg-forest/5 hover:border-forest/30 transition-all flex items-start gap-3"
-                  >
-                    <Compass className="size-5 text-forest mt-0.5 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
-                        Programme Associé
-                      </span>
-                      <span className="font-bold text-sm text-foreground block truncate mt-0.5">
-                        {indicator.programme.titre}
-                      </span>
-                    </div>
-                  </Link>
-                )}
-              </div>
-            </div>
-          )}
 
         </div>
 
         {/* Right Column (4 cols) : Chiffres Clés & Métadonnées */}
         <div className="space-y-8 lg:col-span-4">
-          
+
           {/* Synthèse Chiffrée */}
           <div className="rounded-3xl border border-border bg-card p-6 shadow-2xs space-y-4">
             <h3 className="font-display text-base font-bold text-foreground border-b border-border/80 pb-3">
-              Mesure & Objectif
+              Mesure
             </h3>
 
-            <div className="space-y-4">
-              <div>
-                <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
-                  Valeur Mesurée
+            <div>
+              <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
+                Valeur Mesurée (somme des points enregistrés)
+              </span>
+              <div className="mt-1 flex items-baseline gap-1.5">
+                <span className="font-display text-3xl font-bold tracking-tight text-foreground">
+                  {formatNumber(currentVal)}
                 </span>
-                <div className="mt-1 flex items-baseline gap-1.5">
-                  <span className="font-display text-3xl font-bold tracking-tight text-foreground">
-                    {formatNumber(currentVal)}
-                  </span>
-                  <span className="text-sm font-semibold text-muted-foreground">
-                    {indicator.unite}
-                  </span>
-                </div>
+                <span className="text-sm font-semibold text-muted-foreground">
+                  {indicator.unite}
+                </span>
               </div>
-
-              {indicator.cible && (
-                <div className="pt-2 border-t border-border/60 space-y-2">
-                  <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-muted-foreground">Objectif Territorial</span>
-                    <span className="font-mono font-bold text-foreground">
-                      {formatNumber(indicator.cible)} {indicator.unite}
-                    </span>
-                  </div>
-
-                  {progress !== null && (
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[11px] font-mono">
-                        <span className="font-bold text-forest">Taux d'atteinte</span>
-                        <span className="font-bold text-forest">{progress}%</span>
-                      </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                        <div
-                          className="h-full rounded-full bg-forest transition-all"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
@@ -347,24 +265,6 @@ export default function ImpactIndicatorDetailPage() {
             </h3>
 
             <div className="space-y-3.5 text-xs">
-              <div>
-                <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
-                  Catégorie
-                </span>
-                <span className="font-medium text-foreground mt-0.5 block">
-                  {indicator.categorie || "Général"}
-                </span>
-              </div>
-
-              <div>
-                <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
-                  Statut
-                </span>
-                <div className="mt-1">
-                  <StatusBadge status={indicator.statut || "actif"} />
-                </div>
-              </div>
-
               {indicator.updated_at && (
                 <div>
                   <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">

@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useTestimonials } from "@/hooks/use-content"
-import { mockTestimonials } from "@/lib/mock/testimonials.mock"
 import { Quote, Sparkles, ChevronLeft, ChevronRight, Star, ArrowRight, CheckCircle2 } from "lucide-react"
 import { BaobabMark } from "@/components/brand/baobab-mark"
 
@@ -14,9 +13,9 @@ export function HomeTestimonials() {
   const [isPaused, setIsPaused] = useState(false)
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Use dynamic testimonials or fallback to mockTestimonials
-  const rawList = testimonials.length > 0 ? testimonials : mockTestimonials
-  const publishedList = rawList.filter((t) => t.statut === "publie")
+  // Pas de repli sur des données mockées : une liste réelle vide reste vide
+  // (on ne substitue jamais du contenu fictif à de vraies données absentes).
+  const publishedList = testimonials.filter((t) => t.statut === "publie")
   const total = publishedList.length
 
   const nextSlide = useCallback(() => {
@@ -38,7 +37,7 @@ export function HomeTestimonials() {
     }
   }, [isPaused, nextSlide, total])
 
-  if (total === 0) return null
+  if (total === 0 || !publishedList[currentIndex]) return null
 
   const currentTestimonial = publishedList[currentIndex] || publishedList[0]
 
@@ -117,7 +116,7 @@ export function HomeTestimonials() {
 
             {/* Testimonial Quote Text */}
             <blockquote className="relative text-base sm:text-xl lg:text-2xl font-display font-medium text-foreground leading-relaxed transition-opacity duration-300">
-              « {currentTestimonial.contenu} »
+              « {currentTestimonial.citation} »
             </blockquote>
 
             {/* Author Profile Footer */}
@@ -126,7 +125,7 @@ export function HomeTestimonials() {
                 {/* Photo with Glowing Ring */}
                 <div className="relative size-14 sm:size-16 rounded-full overflow-hidden bg-secondary ring-2 ring-accent/60 shadow-md shrink-0">
                   <Image
-                    src={currentTestimonial.photo || "/assets/team/placeholder.svg"}
+                    src={currentTestimonial.media?.[0]?.url || "/assets/team/placeholder.svg"}
                     alt={currentTestimonial.auteur}
                     fill
                     sizes="64px"
@@ -141,25 +140,19 @@ export function HomeTestimonials() {
                     </h3>
                     <CheckCircle2 className="size-4 text-primary shrink-0" aria-label="Profil validé" />
                   </div>
-                  {currentTestimonial.fonction && (
+                  {/* `fonction`/`organisation` n'existent pas séparément côté API réelle :
+                      un seul champ combiné `role_organisation`. */}
+                  {currentTestimonial.role_organisation && (
                     <p className="text-xs sm:text-sm font-semibold text-primary">
-                      {currentTestimonial.fonction}
-                    </p>
-                  )}
-                  {currentTestimonial.organisation && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {currentTestimonial.organisation}
+                      {currentTestimonial.role_organisation}
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* Programme / Category Tag */}
-              {currentTestimonial.programme && (
-                <span className="inline-flex items-center self-start sm:self-center rounded-full bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary border border-primary/20">
-                  {currentTestimonial.programme.titre}
-                </span>
-              )}
+              {/* Le badge "programme lié" a été retiré : sur l'index public des
+                  témoignages, la relation `program` n'est jamais chargée par
+                  l'API (toujours null/absente). */}
             </div>
           </div>
 

@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
 import { NEWS_STATUS_LABELS, NEWS_TYPE_LABELS } from "@/types/enums"
 import { useCreateNews, useUpdateNews } from "@/hooks/use-news"
 import { MediaPickerDialog } from "@/components/admin/media/media-picker-dialog"
@@ -32,8 +31,6 @@ import {
   Trash2,
   Star,
   Layers,
-  Sparkles,
-  ExternalLink,
 } from "lucide-react"
 import type { News, Media } from "@/types/models"
 import type { NewsStatus, NewsType } from "@/types/enums"
@@ -57,15 +54,21 @@ export function ActualiteFormDialog({
   const updateMutation = useUpdateNews()
 
   const [titre, setTitre] = useState("")
-  const [extrait, setExtrait] = useState("")
-  const [contenu, setContenu] = useState("")
+  const [corps, setCorps] = useState("")
   const [type, setType] = useState<NewsType>("article")
-  const [auteur, setAuteur] = useState("")
+  const [statut, setStatut] = useState<NewsStatus>("brouillon")
+
+  // NOTE(media) : `image` (couverture) et `galleryMedias` (album) n'ont pas
+  // d'équivalent direct sur la ressource News réelle — les visuels sont
+  // exposés en lecture via `news.media` (PublicMedia[]) et rattachés côté
+  // backend par le module Médiathèque (voir lib/services/media.service.ts),
+  // pas via le payload de création/mise à jour de l'article. On garde cet
+  // état et l'UI de sélection ci-dessous (décision produit à trancher :
+  // brancher ces sélections sur un vrai flux d'attachement média), mais on
+  // ne les envoie plus dans le payload POST/PUT pour éviter de renvoyer des
+  // champs inconnus de l'API (cause du bug initial).
   const [image, setImage] = useState("")
   const [galleryMedias, setGalleryMedias] = useState<Media[]>([])
-  const [aLaUne, setALaUne] = useState(false)
-  const [statut, setStatut] = useState<NewsStatus>("brouillon")
-  const [datePublication, setDatePublication] = useState("")
 
   // Media Picker Dialog states
   const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false)
@@ -74,28 +77,18 @@ export function ActualiteFormDialog({
   useEffect(() => {
     if (news) {
       setTitre(news.titre || "")
-      setExtrait(news.extrait || "")
-      setContenu(news.contenu || "")
+      setCorps(news.corps || "")
       setType(news.type || "article")
-      setAuteur(news.auteur || "")
-      setImage(news.image || "")
-      setGalleryMedias(news.medias || [])
-      setALaUne(!!news.a_la_une)
       setStatut(news.statut || "brouillon")
-      setDatePublication(
-        news.date_publication ? news.date_publication.split("T")[0] : ""
-      )
-    } else {
-      setTitre("")
-      setExtrait("")
-      setContenu("")
-      setType("article")
-      setAuteur("Coordination Générale")
       setImage("")
       setGalleryMedias([])
-      setALaUne(false)
+    } else {
+      setTitre("")
+      setCorps("")
+      setType("article")
       setStatut("brouillon")
-      setDatePublication(new Date().toISOString().split("T")[0])
+      setImage("")
+      setGalleryMedias([])
     }
   }, [news, open])
 
@@ -127,17 +120,14 @@ export function ActualiteFormDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // `image` / `galleryMedias` volontairement exclus du payload : pas de
+    // champ correspondant sur News côté API réelle (voir NOTE(media)
+    // ci-dessus).
     const payload = {
       titre,
-      extrait: extrait || undefined,
-      contenu: contenu || undefined,
+      corps: corps || undefined,
       type,
-      auteur: auteur || undefined,
-      image: image || undefined,
-      medias: galleryMedias.length > 0 ? galleryMedias : undefined,
-      a_la_une: aLaUne,
       statut,
-      date_publication: datePublication ? `${datePublication}T00:00:00Z` : undefined,
     }
 
     if (isEditing && news) {
@@ -198,51 +188,22 @@ export function ActualiteFormDialog({
                 />
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="news-type" className="text-xs font-semibold">
-                    Format éditorial *
-                  </Label>
-                  <Select value={type} onValueChange={(val) => setType(val as NewsType)}>
-                    <SelectTrigger id="news-type" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
-                      <SelectValue placeholder="Catégorie" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl text-xs">
-                      {(Object.keys(NEWS_TYPE_LABELS) as NewsType[]).map((key) => (
-                        <SelectItem key={key} value={key}>
-                          {NEWS_TYPE_LABELS[key]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="news-auteur" className="text-xs font-semibold">
-                    Auteur / Pôle émetteur
-                  </Label>
-                  <Input
-                    id="news-auteur"
-                    value={auteur}
-                    onChange={(e) => setAuteur(e.target.value)}
-                    placeholder="ex. Pôle Culture & Communication"
-                    className="mt-1.5 h-10 rounded-xl text-xs bg-card"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <Checkbox
-                  id="news-a-la-une"
-                  checked={aLaUne}
-                  onCheckedChange={(checked) => setALaUne(!!checked)}
-                />
-                <Label
-                  htmlFor="news-a-la-une"
-                  className="text-xs font-medium cursor-pointer"
-                >
-                  Mettre cet article « À la une » sur la page d'accueil et la vitrine
+              <div>
+                <Label htmlFor="news-type" className="text-xs font-semibold">
+                  Format éditorial *
                 </Label>
+                <Select value={type} onValueChange={(val) => setType(val as NewsType)}>
+                  <SelectTrigger id="news-type" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
+                    <SelectValue placeholder="Catégorie" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl text-xs">
+                    {(Object.keys(NEWS_TYPE_LABELS) as NewsType[]).map((key) => (
+                      <SelectItem key={key} value={key}>
+                        {NEWS_TYPE_LABELS[key]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -258,29 +219,15 @@ export function ActualiteFormDialog({
               </div>
 
               <div>
-                <Label htmlFor="news-extrait" className="text-xs font-semibold">
-                  Extrait / Chapeau introductif (court résumé percutant)
-                </Label>
-                <Textarea
-                  id="news-extrait"
-                  rows={2}
-                  value={extrait}
-                  onChange={(e) => setExtrait(e.target.value)}
-                  placeholder="Courte phrase résumant l'essentiel de l'information pour les aperçus et réseaux sociaux..."
-                  className="mt-1.5 rounded-xl resize-none text-xs bg-card"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="news-contenu" className="text-xs font-semibold">
+                <Label htmlFor="news-corps" className="text-xs font-semibold">
                   Corps de l'article / Texte complet *
                 </Label>
                 <Textarea
-                  id="news-contenu"
+                  id="news-corps"
                   required
                   rows={6}
-                  value={contenu}
-                  onChange={(e) => setContenu(e.target.value)}
+                  value={corps}
+                  onChange={(e) => setCorps(e.target.value)}
                   placeholder="Rédigez les détails de l'événement, les déclarations, les chiffres et les perspectives..."
                   className="mt-1.5 rounded-xl text-xs bg-card"
                 />
@@ -471,41 +418,26 @@ export function ActualiteFormDialog({
                   5
                 </span>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  Statut & Date de Diffusion
+                  Statut Éditorial
                 </h4>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="news-date-pub" className="text-xs font-semibold">
-                    Date de publication
-                  </Label>
-                  <Input
-                    id="news-date-pub"
-                    type="date"
-                    value={datePublication}
-                    onChange={(e) => setDatePublication(e.target.value)}
-                    className="mt-1.5 h-10 rounded-xl text-xs bg-card"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="news-statut" className="text-xs font-semibold">
-                    Statut éditorial *
-                  </Label>
-                  <Select value={statut} onValueChange={(val) => setStatut(val as NewsStatus)}>
-                    <SelectTrigger id="news-statut" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
-                      <SelectValue placeholder="Statut" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl text-xs">
-                      {(Object.keys(NEWS_STATUS_LABELS) as NewsStatus[]).map((key) => (
-                        <SelectItem key={key} value={key}>
-                          {NEWS_STATUS_LABELS[key]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label htmlFor="news-statut" className="text-xs font-semibold">
+                  Statut éditorial *
+                </Label>
+                <Select value={statut} onValueChange={(val) => setStatut(val as NewsStatus)}>
+                  <SelectTrigger id="news-statut" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
+                    <SelectValue placeholder="Statut" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl text-xs">
+                    {(Object.keys(NEWS_STATUS_LABELS) as NewsStatus[]).map((key) => (
+                      <SelectItem key={key} value={key}>
+                        {NEWS_STATUS_LABELS[key]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

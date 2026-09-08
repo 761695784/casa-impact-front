@@ -11,10 +11,11 @@ import {
   Sparkles,
 } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import type { Media } from "@/types/models"
+import { resolveMediaUrl } from "@/lib/format"
+import type { PublicMedia } from "@/types/models"
 
 interface NewsGalleryProps {
-  medias?: Media[]
+  medias?: PublicMedia[]
 }
 
 export function NewsGallery({ medias }: NewsGalleryProps) {
@@ -75,8 +76,8 @@ export function NewsGallery({ medias }: NewsGalleryProps) {
             className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer bg-secondary shadow-xs hover:shadow-xl transition-all duration-300 border border-border"
           >
             <Image
-              src={media.url}
-              alt={media.alt || media.nom || `Photo ${idx + 1}`}
+              src={resolveMediaUrl(media.url) || media.url}
+              alt={media.legende || media.nom_original || `Photo ${idx + 1}`}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -88,7 +89,7 @@ export function NewsGallery({ medias }: NewsGalleryProps) {
                 <Maximize2 className="size-3.5" />
               </div>
               <p className="text-xs font-bold line-clamp-2 leading-tight">
-                {media.nom || media.description || `Photo ${idx + 1}`}
+                {media.legende || media.nom_original || `Photo ${idx + 1}`}
               </p>
             </div>
           </div>
@@ -109,7 +110,7 @@ export function NewsGallery({ medias }: NewsGalleryProps) {
                   {(activeIndex ?? 0) + 1} / {items.length}
                 </span>
                 <p className="text-sm font-bold text-white/90 truncate max-w-md hidden sm:block">
-                  {activeMedia.nom || activeMedia.nom_fichier}
+                  {activeMedia.legende || activeMedia.nom_original}
                 </p>
               </div>
 
@@ -127,8 +128,8 @@ export function NewsGallery({ medias }: NewsGalleryProps) {
             <div className="relative flex-1 flex items-center justify-center p-2 sm:p-6 select-none">
               <div className="relative max-h-full max-w-full aspect-[16/10] w-full h-full">
                 <Image
-                  src={activeMedia.url}
-                  alt={activeMedia.alt || activeMedia.nom || "Photo plein écran"}
+                  src={resolveMediaUrl(activeMedia.url) || activeMedia.url}
+                  alt={activeMedia.legende || activeMedia.nom_original || "Photo plein écran"}
                   fill
                   sizes="100vw"
                   className="object-contain"
@@ -168,13 +169,8 @@ export function NewsGallery({ medias }: NewsGalleryProps) {
             {/* Bottom Caption Bar */}
             <div className="p-4 sm:p-6 bg-gradient-to-t from-black/90 to-transparent text-center z-10">
               <p className="text-sm font-semibold text-white">
-                {activeMedia.nom}
+                {activeMedia.legende || activeMedia.nom_original}
               </p>
-              {activeMedia.description && (
-                <p className="text-xs text-white/70 mt-1 max-w-xl mx-auto">
-                  {activeMedia.description}
-                </p>
-              )}
             </div>
           </DialogContent>
         </Dialog>

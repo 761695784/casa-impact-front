@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react"
 import { Newspaper, Search, Filter } from "lucide-react"
 import { useNews } from "@/hooks/use-content"
-import { mockNews } from "@/lib/mock/news.mock"
 import { NewsCard } from "@/components/cards/news-card"
 import { CardGridSkeleton } from "@/components/ui/card-grid-skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
@@ -23,7 +22,8 @@ export function NewsList() {
   const [selectedType, setSelectedType] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState<string>("")
 
-  const rawData = data && data.length > 0 ? data : mockNews
+  // Pas de repli sur des données mockées : une liste réelle vide doit afficher l'état vide, jamais du faux contenu.
+  const rawData = data ?? []
 
   const filteredNews = useMemo(() => {
     return rawData.filter((n) => {
@@ -31,11 +31,11 @@ export function NewsList() {
       if (n.statut && n.statut !== "publie") return false
 
       const matchType = selectedType === "all" || n.type === (selectedType as NewsType)
+      // Pas d'`extrait` côté API réelle — recherche sur le titre et le corps (`corps`, pas `contenu`)
       const matchSearch =
         searchQuery === "" ||
         n.titre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (n.extrait && n.extrait.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (n.contenu && n.contenu.toLowerCase().includes(searchQuery.toLowerCase()))
+        (n.corps && n.corps.toLowerCase().includes(searchQuery.toLowerCase()))
       return matchType && matchSearch
     })
   }, [rawData, selectedType, searchQuery])

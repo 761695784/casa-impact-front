@@ -10,8 +10,6 @@ import {
   Edit,
   Trash2,
   Power,
-  MapPin,
-  Compass,
   Layers,
   ExternalLink,
   Globe,
@@ -28,7 +26,7 @@ import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog"
 import { ErrorState } from "@/components/admin/ui/error-state"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { formatDate } from "@/lib/format"
+import { formatDate, resolveMediaUrl } from "@/lib/format"
 import { REGION_LABELS } from "@/types/enums"
 
 export default function TalentDetailPage() {
@@ -134,9 +132,9 @@ export default function TalentDetailPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-4">
             <div className="relative size-16 shrink-0 overflow-hidden rounded-2xl border border-border bg-secondary flex items-center justify-center font-bold text-forest font-display text-xl shadow-xs">
-              {talent.photo ? (
+              {talent.media?.[0]?.url ? (
                 <Image
-                  src={talent.photo}
+                  src={resolveMediaUrl(talent.media[0].url) || talent.media[0].url}
                   alt={talent.nom}
                   fill
                   sizes="64px"
@@ -155,7 +153,7 @@ export default function TalentDetailPage() {
                   </span>
                 )}
                 <span className="font-mono text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-md">
-                  Rang #{talent.ordre || talent.id}
+                  Fiche #{talent.id}
                 </span>
                 <StatusBadge status={talent.statut} />
               </div>
@@ -163,9 +161,11 @@ export default function TalentDetailPage() {
               <h1 className="mt-2 font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                 {talent.nom}
               </h1>
-              <p className="mt-0.5 text-xs sm:text-sm font-medium text-forest">
-                {talent.domaine_activite} {talent.localisation ? `• ${talent.localisation}` : ""}
-              </p>
+              {talent.domain?.nom && (
+                <p className="mt-0.5 text-xs sm:text-sm font-medium text-forest">
+                  {talent.domain.nom}
+                </p>
+              )}
             </div>
           </div>
 
@@ -220,13 +220,13 @@ export default function TalentDetailPage() {
               </h2>
             </div>
 
-            {talent.bio && (
+            {talent.presentation && (
               <div className="space-y-1.5">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Synthèse
                 </h3>
                 <p className="text-sm sm:text-base leading-relaxed text-foreground font-medium bg-secondary/30 rounded-2xl p-4 border border-border/50">
-                  {talent.bio}
+                  {talent.presentation}
                 </p>
               </div>
             )}
@@ -247,23 +247,23 @@ export default function TalentDetailPage() {
             )}
 
             {/* Liens externes */}
-            {talent.liens && talent.liens.length > 0 && (
+            {talent.liens_externes && talent.liens_externes.length > 0 && (
               <div className="pt-3 border-t border-border/40 space-y-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
                   Liens & Références Web
                 </span>
                 <div className="flex flex-wrap gap-2.5">
-                  {talent.liens.map((l, i) => (
+                  {talent.liens_externes.map((url, i) => (
                     <a
                       key={i}
-                      href={l.url}
+                      href={url}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-3.5 py-1 text-xs font-medium text-foreground hover:bg-forest/10 hover:text-forest transition-colors border border-border"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-3.5 py-1 text-xs font-medium text-foreground hover:bg-forest/10 hover:text-forest transition-colors border border-border max-w-full"
                     >
-                      <Globe className="size-3.5" />
-                      <span>{l.label}</span>
-                      <ExternalLink className="size-2.5 opacity-60" />
+                      <Globe className="size-3.5 shrink-0" />
+                      <span className="truncate">{url}</span>
+                      <ExternalLink className="size-2.5 opacity-60 shrink-0" />
                     </a>
                   ))}
                 </div>
@@ -272,15 +272,15 @@ export default function TalentDetailPage() {
           </div>
 
           {/* Rattachements Casa Impact */}
-          <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-2xs space-y-4">
-            <h3 className="font-display text-lg font-bold text-foreground border-b border-border/80 pb-3">
-              Ancrage & Rattachement Institutionnel
-            </h3>
+          {talent.domain && (
+            <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-2xs space-y-4">
+              <h3 className="font-display text-lg font-bold text-foreground border-b border-border/80 pb-3">
+                Ancrage & Rattachement Institutionnel
+              </h3>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              {talent.domaine && (
+              <div className="grid gap-4 sm:grid-cols-2">
                 <Link
-                  href={`/admin/domaines/${talent.domaine.id}`}
+                  href={`/admin/domaines/${talent.domain.id}`}
                   className="rounded-2xl bg-secondary/30 p-4 border border-border/60 hover:bg-forest/5 hover:border-forest/30 transition-all flex items-start gap-3"
                 >
                   <Layers className="size-5 text-forest mt-0.5 shrink-0" />
@@ -289,30 +289,13 @@ export default function TalentDetailPage() {
                       Domaine d'Intervention
                     </span>
                     <span className="font-bold text-sm text-foreground block truncate mt-0.5">
-                      {talent.domaine.nom}
+                      {talent.domain.nom}
                     </span>
                   </div>
                 </Link>
-              )}
-
-              {talent.programme && (
-                <Link
-                  href={`/admin/programmes/${talent.programme.id}`}
-                  className="rounded-2xl bg-secondary/30 p-4 border border-border/60 hover:bg-forest/5 hover:border-forest/30 transition-all flex items-start gap-3"
-                >
-                  <Compass className="size-5 text-forest mt-0.5 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
-                      Programme Rattaché
-                    </span>
-                    <span className="font-bold text-sm text-foreground block truncate mt-0.5">
-                      {talent.programme.titre}
-                    </span>
-                  </div>
-                </Link>
-              )}
+              </div>
             </div>
-          </div>
+          )}
 
         </div>
 
@@ -344,24 +327,12 @@ export default function TalentDetailPage() {
                 </span>
               </div>
 
-              {talent.localisation && (
-                <div>
-                  <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
-                    Commune / Ancrage
-                  </span>
-                  <span className="font-medium text-foreground mt-0.5 block flex items-center gap-1">
-                    <MapPin className="size-3 text-muted-foreground" />
-                    <span>{talent.localisation}</span>
-                  </span>
-                </div>
-              )}
-
               <div>
                 <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
-                  Ordre d'Apparition
+                  Identifiant
                 </span>
                 <span className="font-bold text-foreground mt-0.5 block">
-                  Rang #{talent.ordre || talent.id}
+                  #{talent.id}
                 </span>
               </div>
 

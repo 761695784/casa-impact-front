@@ -18,19 +18,22 @@ import { useTalents } from "@/hooks/use-content"
 import { CardGridSkeleton } from "@/components/ui/card-grid-skeleton"
 import { Button } from "@/components/ui/button"
 import { BaobabMark } from "@/components/brand/baobab-mark"
-import type { Region } from "@/types/enums"
+import { resolveMediaUrl } from "@/lib/format"
+import { REGION_LABELS, type Region } from "@/types/enums"
 
+// Clés alignées sur le vrai type Region ('ziguinchor' | 'sedhiou' | 'kolda'),
+// libellés via REGION_LABELS — l'API ne renvoie jamais "Ziguinchor"/"Sédhiou".
 const REGIONS: { key: string; label: string }[] = [
   { key: "all", label: "Toutes les régions" },
-  { key: "Ziguinchor", label: "Ziguinchor" },
-  { key: "Kolda", label: "Kolda" },
-  { key: "Sédhiou", label: "Sédhiou" },
+  { key: "ziguinchor", label: REGION_LABELS.ziguinchor },
+  { key: "kolda", label: REGION_LABELS.kolda },
+  { key: "sedhiou", label: REGION_LABELS.sedhiou },
 ]
 
-const regionBadgeColors: Record<string, string> = {
-  Ziguinchor: "bg-forest/15 text-forest border-forest/30",
-  Kolda: "bg-accent/25 text-accent-foreground border-accent/40",
-  Sédhiou: "bg-earth/15 text-earth border-earth/30",
+const regionBadgeColors: Record<Region, string> = {
+  ziguinchor: "bg-forest/15 text-forest border-forest/30",
+  kolda: "bg-accent/25 text-accent-foreground border-accent/40",
+  sedhiou: "bg-earth/15 text-earth border-earth/30",
 }
 
 export function TalentsList() {
@@ -46,9 +49,9 @@ export function TalentsList() {
       const matchSearch =
         searchQuery === "" ||
         t.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (t.domaine_activite &&
-          t.domaine_activite.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (t.bio && t.bio.toLowerCase().includes(searchQuery.toLowerCase()))
+        // domain reste undefined tant que Domaines n'est pas rebranché sur l'API réelle
+        (t.domain?.nom && t.domain.nom.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (t.presentation && t.presentation.toLowerCase().includes(searchQuery.toLowerCase()))
       return matchRegion && matchSearch
     })
   }, [data, selectedRegion, searchQuery])
@@ -208,10 +211,10 @@ export function TalentsList() {
               className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl"
             >
               <div>
-                {/* Photo container */}
+                {/* Photo container — pas de champ `photo` direct, image via `media` (premier élément) */}
                 <div className="relative aspect-[4/5] w-full overflow-hidden bg-secondary">
                   <Image
-                    src={talent.photo || "/assets/team/placeholder.svg"}
+                    src={resolveMediaUrl(talent.media?.[0]?.url) || "/assets/team/placeholder.svg"}
                     alt={talent.nom}
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"
@@ -224,16 +227,17 @@ export function TalentsList() {
                       }`}
                     >
                       <MapPin className="size-3" />
-                      {talent.region}
+                      {REGION_LABELS[talent.region]}
                     </span>
                   )}
                 </div>
 
                 {/* Content */}
                 <div className="p-6">
-                  {talent.domaine_activite && (
+                  {/* domain reste undefined tant que Domaines n'est pas rebranché sur l'API réelle */}
+                  {talent.domain?.nom && (
                     <span className="inline-block rounded-md bg-secondary px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-primary">
-                      {talent.domaine_activite}
+                      {talent.domain.nom}
                     </span>
                   )}
 
@@ -241,29 +245,37 @@ export function TalentsList() {
                     {talent.nom}
                   </h3>
 
-                  {talent.bio && (
+                  {talent.presentation && (
                     <p className="mt-2.5 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
-                      {talent.bio}
+                      {talent.presentation}
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* Links and Actions */}
-              {talent.liens && talent.liens.length > 0 && (
+              {/* Links and Actions — liens_externes est un tableau de simples URLs (string[]) */}
+              {talent.liens_externes && talent.liens_externes.length > 0 && (
                 <div className="p-6 pt-0 border-t border-border/60 mt-4 flex flex-wrap gap-2">
-                  {talent.liens.map((link, idx) => (
-                    <a
-                      key={idx}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-                    >
-                      <span>{link.label}</span>
-                      <ExternalLink className="size-3" />
-                    </a>
-                  ))}
+                  {talent.liens_externes.map((url, idx) => {
+                    let label = url
+                    try {
+                      label = new URL(url).hostname
+                    } catch {
+                      // URL non parsable : on garde l'URL brute comme libellé
+                    }
+                    return (
+                      <a
+                        key={idx}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                      >
+                        <span>{label}</span>
+                        <ExternalLink className="size-3" />
+                      </a>
+                    )
+                  })}
                 </div>
               )}
             </article>

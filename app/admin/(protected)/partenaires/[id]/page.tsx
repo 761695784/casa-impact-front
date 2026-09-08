@@ -10,9 +10,6 @@ import {
   Trash2,
   Power,
   ExternalLink,
-  Building2,
-  Mail,
-  Phone,
   Globe,
 } from "lucide-react"
 import { usePartner, useDeletePartner, useUpdatePartner } from "@/hooks/use-partners"
@@ -22,7 +19,7 @@ import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog"
 import { ErrorState } from "@/components/admin/ui/error-state"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { formatDate } from "@/lib/format"
+import { formatDate, getPartnerLogoUrl } from "@/lib/format"
 import { PARTNER_TYPE_LABELS } from "@/types/enums"
 
 export default function PartenaireDetailPage() {
@@ -123,9 +120,13 @@ export default function PartenaireDetailPage() {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-secondary/50 text-forest font-bold font-display text-lg">
-              {partner.logo ? (
-                <Building2 className="size-7 text-forest/70" />
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-secondary/50 text-forest font-bold font-display text-lg overflow-hidden">
+              {getPartnerLogoUrl(partner) ? (
+                <img
+                  src={getPartnerLogoUrl(partner)}
+                  alt={partner.nom}
+                  className="size-full object-contain p-2"
+                />
               ) : (
                 <span>{partner.nom.substring(0, 2).toUpperCase()}</span>
               )}
@@ -236,49 +237,6 @@ export default function PartenaireDetailPage() {
         {/* Right Column (4 cols) : Coordonnées & Métadonnées */}
         <div className="space-y-8 lg:col-span-4">
           
-          {/* Contacts & Référents */}
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-2xs space-y-4">
-            <h3 className="font-display text-base font-bold text-foreground border-b border-border/80 pb-3">
-              Coordonnées de Contact
-            </h3>
-
-            <div className="space-y-3.5 text-xs">
-              <div>
-                <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
-                  Email
-                </span>
-                {partner.contact_email ? (
-                  <a
-                    href={`mailto:${partner.contact_email}`}
-                    className="font-medium text-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5 mt-0.5"
-                  >
-                    <Mail className="size-3.5 text-muted-foreground" />
-                    <span>{partner.contact_email}</span>
-                  </a>
-                ) : (
-                  <span className="text-muted-foreground mt-0.5 block">—</span>
-                )}
-              </div>
-
-              <div>
-                <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">
-                  Téléphone
-                </span>
-                {partner.contact_telephone ? (
-                  <a
-                    href={`tel:${partner.contact_telephone}`}
-                    className="font-medium text-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5 mt-0.5"
-                  >
-                    <Phone className="size-3.5 text-muted-foreground" />
-                    <span>{partner.contact_telephone}</span>
-                  </a>
-                ) : (
-                  <span className="text-muted-foreground mt-0.5 block">—</span>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* Fiche Technique */}
           <div className="rounded-3xl border border-border bg-card p-6 shadow-2xs space-y-4">
             <h3 className="font-display text-base font-bold text-foreground border-b border-border/80 pb-3">

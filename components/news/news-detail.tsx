@@ -21,12 +21,10 @@ import { Button } from "@/components/ui/button"
 import { NewsGallery } from "@/components/news/news-gallery"
 import { Badge } from "@/components/ui/badge"
 import { NEWS_TYPE_LABELS } from "@/types/enums"
-import { formatDate } from "@/lib/format"
+import { formatDate, resolveMediaUrl } from "@/lib/format"
 import { NewsCard } from "@/components/cards/news-card"
 import { BaobabMark } from "@/components/brand/baobab-mark"
 import { toast } from "sonner"
-
-import { mockNews } from "@/lib/mock/news.mock"
 
 const newsTypeBadgeColors: Record<string, string> = {
   article: "bg-forest text-white",
@@ -36,15 +34,24 @@ const newsTypeBadgeColors: Record<string, string> = {
 }
 
 export function NewsDetail({ slug }: { slug: string }) {
-  const { data: article } = useNewsArticle(slug)
+  const { data: article, isLoading, isError } = useNewsArticle(slug)
   const { data: allNews } = useNews()
 
-  // Dynamic or instant fallback
-  const currentArticle = article || mockNews.find((n) => n.slug === slug)
-  const rawAllNews = allNews && allNews.length > 0 ? allNews : mockNews
-  const otherArticles = rawAllNews.filter((n) => n.slug !== slug).slice(0, 3)
+  // Pas de repli sur des données mockées : un article réel introuvable doit afficher l'état vide, jamais du faux contenu.
+  const otherArticles = (allNews ?? []).filter((n) => n.slug !== slug).slice(0, 3)
 
-  if (!currentArticle) {
+  if (isLoading) {
+    return (
+      <Section className="py-24">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="mt-6 h-10 w-2/3" />
+        <Skeleton className="mt-4 h-4 w-full" />
+        <Skeleton className="mt-2 h-4 w-5/6" />
+      </Section>
+    )
+  }
+
+  if (isError || !article) {
     return (
       <Section className="py-24">
         <EmptyState
@@ -60,7 +67,9 @@ export function NewsDetail({ slug }: { slug: string }) {
     )
   }
 
-  const cover = currentArticle.image || "/assets/hero/DSC08016%20copie.jpg"
+  const currentArticle = article
+  // Pas de champ `image` direct côté API réelle — visuel via `media` (premier élément, sinon fallback).
+  const cover = resolveMediaUrl(currentArticle.media?.[0]?.url) || "/assets/hero/DSC08016%20copie.jpg"
 
   const shareOnSocial = (platform: string) => {
     if (typeof window === "undefined") return
@@ -166,10 +175,11 @@ export function NewsDetail({ slug }: { slug: string }) {
               {NEWS_TYPE_LABELS[currentArticle.type]}
             </span>
 
-            {currentArticle.date_publication && (
+            {/* Pas de `date_publication` côté API réelle — `created_at` utilisé comme repère temporel */}
+            {currentArticle.created_at && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm border border-white/15">
                 <Calendar className="size-3 text-accent" />
-                <time>{formatDate(currentArticle.date_publication)}</time>
+                <time>{formatDate(currentArticle.created_at)}</time>
               </span>
             )}
 
@@ -184,12 +194,7 @@ export function NewsDetail({ slug }: { slug: string }) {
             {currentArticle.titre}
           </h1>
 
-          {/* Excerpt Lead */}
-          {currentArticle.extrait && (
-            <p className="mt-6 text-lg sm:text-xl leading-relaxed text-white/90 font-normal drop-shadow">
-              {currentArticle.extrait}
-            </p>
-          )}
+          {/* Pas d'`extrait` côté API réelle — pas de chapeau introductif dans le hero */}
         </div>
       </section>
 
@@ -209,18 +214,18 @@ export function NewsDetail({ slug }: { slug: string }) {
               />
             </div>
 
-            {/* Editorial Body Text */}
+            {/* Editorial Body Text — le champ réel est `corps` (pas `contenu`) */}
             <div className="prose prose-lg prose-neutral max-w-none dark:prose-invert space-y-4">
-              {currentArticle.contenu?.split("\n\n").map((para, idx) => (
+              {currentArticle.corps?.split("\n\n").map((para, idx) => (
                 <p key={idx} className="text-base sm:text-lg leading-relaxed text-foreground/90 font-normal">
                   {para}
                 </p>
               ))}
             </div>
 
-            {/* Photo Gallery with Lightbox if available */}
-            {currentArticle.medias && currentArticle.medias.length > 0 && (
-              <NewsGallery medias={currentArticle.medias} />
+            {/* Photo Gallery with Lightbox if available — `media` (pas `medias`) */}
+            {currentArticle.media && currentArticle.media.length > 0 && (
+              <NewsGallery medias={currentArticle.media} />
             )}
 
             {/* Author / Publisher Footnote */}

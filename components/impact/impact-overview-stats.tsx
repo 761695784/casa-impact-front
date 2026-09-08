@@ -22,8 +22,8 @@ export function ImpactOverviewStats() {
     const ind = indicators?.find((i) =>
       i.libelle.toLowerCase().includes("impact") || i.id === 1
     )
-    if (ind && ind.valeurs && ind.valeurs.length > 0) {
-      return ind.valeurs.reduce((acc, v) => acc + (v.valeur || 0), 0)
+    if (ind && ind.values && ind.values.length > 0) {
+      return ind.values.reduce((acc, v) => acc + (v.valeur || 0), 0)
     }
     return 300
   })()
@@ -34,40 +34,40 @@ export function ImpactOverviewStats() {
       i.libelle.toLowerCase().includes("membre") ||
       i.id === 2
     )
-    if (ind && ind.valeurs && ind.valeurs.length > 0) {
-      return ind.valeurs.reduce((acc, v) => acc + (v.valeur || 0), 0)
+    if (ind && ind.values && ind.values.length > 0) {
+      return ind.values.reduce((acc, v) => acc + (v.valeur || 0), 0)
     }
     return 130
   })()
 
   const regionsCount = (() => {
     const ind = indicators?.find((i) => i.id === 3)
-    if (ind && ind.valeurs && ind.valeurs.length > 0) {
-      return ind.valeurs[ind.valeurs.length - 1].valeur || 3
+    if (ind && ind.values && ind.values.length > 0) {
+      return ind.values[ind.values.length - 1].valeur || 3
     }
     return 3
   })()
 
   const domainesCount = (() => {
     const ind = indicators?.find((i) => i.id === 4)
-    if (ind && ind.valeurs && ind.valeurs.length > 0) {
-      return ind.valeurs[ind.valeurs.length - 1].valeur || 6
+    if (ind && ind.values && ind.values.length > 0) {
+      return ind.values[ind.values.length - 1].valeur || 6
     }
     return 6
   })()
 
   const projetsCount = (() => {
     const ind = indicators?.find((i) => i.id === 5)
-    if (ind && ind.valeurs && ind.valeurs.length > 0) {
-      return ind.valeurs[ind.valeurs.length - 1].valeur || 24
+    if (ind && ind.values && ind.values.length > 0) {
+      return ind.values[ind.values.length - 1].valeur || 24
     }
     return 24
   })()
 
   const communesCount = (() => {
     const ind = indicators?.find((i) => i.id === 6)
-    if (ind && ind.valeurs && ind.valeurs.length > 0) {
-      return ind.valeurs[ind.valeurs.length - 1].valeur || 18
+    if (ind && ind.values && ind.values.length > 0) {
+      return ind.values[ind.values.length - 1].valeur || 18
     }
     return 18
   })()

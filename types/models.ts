@@ -41,6 +41,24 @@ export interface Media {
   updated_at?: string
 }
 
+/**
+ * Forme réelle de MediaResource (App\Http\Resources\MediaResource), utilisée
+ * par les ressources déjà reconnectées à l'API réelle dans cette phase
+ * (News, Talent, Testimonial). Distincte du type `Media` ci-dessus, qui
+ * reste utilisé par Program/ApplicationCall/Partner tant que ces
+ * ressources ne sont pas migrées (hors périmètre de cette phase).
+ */
+export interface PublicMedia {
+  id: number
+  collection: string
+  url: string
+  nom_original?: string
+  mime?: string
+  taille?: number
+  legende?: string
+  ordre?: number
+}
+
 export interface Role {
   id: number
   nom: string
@@ -196,72 +214,100 @@ export interface ApplicationConfirmation {
   message?: string
 }
 
+/**
+ * Forme réelle de NewsResource — délibérément courte. Pas d'`extrait`,
+ * pas de `date_publication`, pas d'`a_la_une`, pas d'`auteur`, pas de
+ * `vues_count`, pas d'`image` directe côté API (visuels via `media`).
+ * Le corps de l'article est `corps` (pas `contenu`).
+ */
 export interface News {
   id: number
   titre: string
   slug: string
-  extrait?: string
-  contenu?: string
   type: NewsType
-  image?: string
-  medias?: Media[]
-  date_publication?: string
-  a_la_une?: boolean
+  corps?: string
   statut: NewsStatus
-  auteur?: string
-  vues_count?: number
+  media?: PublicMedia[]
   created_at?: string
   updated_at?: string
 }
 
+/**
+ * Forme réelle de TalentResource. Relation réelle : `domain`/`domain_id`
+ * (pas `domaine`). Pas de `domaine_activite`, pas de `bio` (le champ
+ * réel est `presentation`), pas de photo directe (via `media`), pas de
+ * relation `programme` (Talent n'a aucune relation programme côté
+ * backend), pas d'`ordre`. `liens_externes` est un simple tableau
+ * d'URLs (string[]), pas des objets {label, url}.
+ *
+ * NB : `domain`/`domain_id` référencent le type `Domain` existant tel
+ * quel — Domaines reste hors périmètre de cette phase (toujours
+ * alimenté par les mocks), donc ce champ restera `undefined` avec les
+ * données réelles pour l'instant.
+ */
 export interface Talent {
   id: number
   nom: string
   slug: string
-  domaine_activite?: string
+  domain_id?: number
+  domain?: Domain | null
   region?: Region
-  localisation?: string
-  bio?: string
+  presentation?: string
   parcours?: string
-  photo?: string
-  liens?: { label: string; url: string }[]
-  domaine_id?: number
-  domaine?: Domain
-  programme_id?: number
-  programme?: Program
+  projet?: string
+  realisations?: string
+  temoignage?: string
+  recit_titre?: string
+  recit_corps?: string
+  liens_externes?: string[]
   statut: TalentStatus
-  ordre?: number
+  media?: PublicMedia[]
   created_at?: string
   updated_at?: string
 }
 
+/**
+ * Forme réelle de TestimonialResource. `citation` (pas `contenu`),
+ * `role_organisation` combiné (pas de `fonction`+`organisation`
+ * séparés), relation réelle `application_call`/`application_call_id`
+ * en plus de `program`/`program_id` (pas `programme`) — et sur l'index
+ * PUBLIC ces deux relations ne sont jamais eager-loadées (toujours
+ * `null`/absentes). Pas de photo directe (via `media`), pas d'`ordre`.
+ */
 export interface Testimonial {
   id: number
   auteur: string
-  fonction?: string
-  organisation?: string
-  contenu: string
-  photo?: string
-  programme?: Program
-  programme_id?: number
+  role_organisation?: string
+  citation: string
+  contexte?: string
+  program_id?: number
+  application_call_id?: number
+  program?: Program | null
+  application_call?: ApplicationCall | null
   statut: TestimonialStatus
-  ordre?: number
+  media?: PublicMedia[]
   created_at?: string
   updated_at?: string
 }
 
+/**
+ * Forme réelle de PartnerResource (App\Http\Resources\PartnerResource,
+ * partagée admin/public). Pas de `slug` (pas de page de détail
+ * individuelle sur ce modèle), pas de `logo` direct ni de
+ * `contact_email`/`contact_telephone` (aucune colonne de ce type en base —
+ * voir Partner::$fillable côté backend). Le logo passe exclusivement par
+ * la Médiathèque polymorphique, collection `'logo'`, exposée ici via
+ * `media` (même forme que PublicMedia — MediaResource est déjà partagée).
+ */
 export interface Partner {
   id: number
   nom: string
-  slug?: string
   description?: string
   lien?: string
   type: PartnerType
-  logo?: string
   statut: PartnerStatus
   ordre?: number
-  contact_email?: string
-  contact_telephone?: string
+  media?: PublicMedia[]
   created_at?: string
   updated_at?: string
 }
@@ -274,42 +320,45 @@ export interface Location {
   longitude: number
 }
 
+/**
+ * Forme réelle de MapPointResource (GET /api/public/map). `type` ne
+ * prend que 3 valeurs réelles — pas de "implantation" (aucun mapping de
+ * ce type côté backend, voir MapController::LOCATABLE_MAP). Pas de
+ * `departement`, `commune`, `statut`, `description` ni `domaine_nom`.
+ */
 export interface MapPoint {
   id: number
-  type: 'program' | 'application-call' | 'talent' | 'implantation'
-  titre: string
-  slug?: string
-  region: Region
-  departement?: string
-  commune?: string
+  type: 'program' | 'application-call' | 'talent'
   latitude: number
   longitude: number
-  statut?: string
-  description?: string
-  domaine_nom?: string
+  libelle?: string
+  region?: Region
+  titre?: string
+  slug?: string
 }
 
+/** Forme réelle d'ImpactValueResource. */
 export interface ImpactValue {
   id: number
-  periode: string
-  region?: Region
   valeur: number
+  periode?: string
+  region?: Region
+  created_at?: string
+  updated_at?: string
 }
 
+/**
+ * Forme réelle d'ImpactIndicatorResource. Le tableau de valeurs est
+ * `values` (pas `valeurs`). Pas de `categorie`, `domaine`/`domaine_id`,
+ * `programme`/`programme_id`, `cible`, `statut` ni `ordre` — aucun de
+ * ces champs n'existe côté backend pour cette ressource.
+ */
 export interface ImpactIndicator {
   id: number
   libelle: string
   unite?: string
   description?: string
-  valeurs: ImpactValue[]
-  categorie?: string
-  domaine_id?: number
-  domaine?: Domain
-  programme_id?: number
-  programme?: Program
-  cible?: number
-  statut?: 'actif' | 'inactif'
-  ordre?: number
+  values?: ImpactValue[]
   created_at?: string
   updated_at?: string
 }
@@ -380,14 +429,37 @@ export interface DashboardStats {
   utilisateurs: { total: number }
 }
 
+/**
+ * Enveloppe réelle d'un endpoint public PAGINÉ (Laravel `paginate()`) :
+ * `news`, `talents`, `testimonials` dans cette phase. `links`/`from`/`to`
+ * ajoutés en optionnel — la forme d'origine (utilisée par Programmes/
+ * Appels/Partenaires, hors périmètre de cette phase) reste valide.
+ */
 export interface PaginatedResponse<T> {
   data: T[]
+  links?: {
+    first?: string | null
+    last?: string | null
+    prev?: string | null
+    next?: string | null
+  }
   meta: {
     current_page: number
+    from?: number | null
     last_page: number
     per_page: number
+    to?: number | null
     total: number
   }
+}
+
+/**
+ * Enveloppe réelle d'un endpoint public NON paginé (Laravel `get()`,
+ * pas de `paginate()`) : `impact-indicators`, `map` dans cette phase.
+ * Pas de clé `meta`/`links`.
+ */
+export interface CollectionResponse<T> {
+  data: T[]
 }
 
 export interface SingleResponse<T> {

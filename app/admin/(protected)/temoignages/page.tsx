@@ -39,7 +39,7 @@ export default function TemoignagesListPage() {
   } = useTestimonials({
     search,
     statut,
-    programme_id: programmeId,
+    program_id: programmeId,
   })
 
   const deleteMutation = useDeleteTestimonial()

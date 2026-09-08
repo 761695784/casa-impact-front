@@ -1,4 +1,5 @@
-import { DATA_SOURCE, API_URL } from "@/lib/config"
+import { DATA_SOURCE } from "@/lib/config"
+import { apiFetch } from "@/lib/api-client"
 import { mockTestimonials } from "@/lib/mock/testimonials.mock"
 import { mockPrograms } from "@/lib/mock/programs.mock"
 import type { Testimonial } from "@/types/models"
@@ -7,11 +8,19 @@ import type { TestimonialStatus } from "@/types/enums"
 export interface ListTestimonialsParams {
   search?: string
   statut?: TestimonialStatus | "all" | string
-  programme_id?: number | "all" | string
+  program_id?: number | "all" | string
 }
 
 function delay<T>(data: T, ms = 100): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(data), ms))
+}
+
+/** Déballe une réponse Laravel qui peut être `{ data: T }` ou `T` directement. */
+function unwrap<T>(payload: T | { data: T }): T {
+  if (payload && typeof payload === "object" && "data" in (payload as Record<string, unknown>)) {
+    return (payload as { data: T }).data
+  }
+  return payload as T
 }
 
 export const testimonialsService = {
@@ -22,7 +31,7 @@ export const testimonialsService = {
   listTestimonials: async (
     params: ListTestimonialsParams = {}
   ): Promise<Testimonial[]> => {
-    const { search = "", statut = "all", programme_id = "all" } = params
+    const { search = "", statut = "all", program_id = "all" } = params
 
     if (DATA_SOURCE === "mock") {
       let filtered = [...mockTestimonials]
@@ -32,9 +41,8 @@ export const testimonialsService = {
         filtered = filtered.filter(
           (t) =>
             t.auteur.toLowerCase().includes(q) ||
-            t.fonction?.toLowerCase().includes(q) ||
-            t.organisation?.toLowerCase().includes(q) ||
-            t.contenu.toLowerCase().includes(q)
+            t.role_organisation?.toLowerCase().includes(q) ||
+            t.citation.toLowerCase().includes(q)
         )
       }
 
@@ -42,13 +50,13 @@ export const testimonialsService = {
         filtered = filtered.filter((t) => t.statut === statut)
       }
 
-      if (programme_id && programme_id !== "all") {
+      if (program_id && program_id !== "all") {
         filtered = filtered.filter(
-          (t) => t.programme_id === Number(programme_id) || t.programme?.id === Number(programme_id)
+          (t) => t.program_id === Number(program_id) || t.program?.id === Number(program_id)
         )
       }
 
-      filtered.sort((a, b) => (a.ordre || a.id) - (b.ordre || b.id))
+      filtered.sort((a, b) => a.id - b.id)
       return delay<Testimonial[]>(filtered)
     }
 
@@ -56,30 +64,14 @@ export const testimonialsService = {
     const queryParams = new URLSearchParams()
     if (search) queryParams.set("search", search)
     if (statut && statut !== "all") queryParams.set("statut", statut)
-    if (programme_id && programme_id !== "all") queryParams.set("programme_id", String(programme_id))
+    if (program_id && program_id !== "all") queryParams.set("program_id", String(program_id))
 
-    const url = `${API_URL}/api/admin/testimonials${
+    const path = `/api/admin/testimonials${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`
 
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Laravel Sanctum SPA
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors du chargement des témoignages (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const result = await apiFetch<Testimonial[] | { data: Testimonial[] }>(path)
+    return unwrap(result)
   },
 
   /**
@@ -95,21 +87,10 @@ export const testimonialsService = {
       return delay<Testimonial>(found)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/testimonials/${id}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Impossible de charger le témoignage #${id} (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const result = await apiFetch<Testimonial | { data: Testimonial }>(
+      `/api/admin/testimonials/${id}`
+    )
+    return unwrap(result)
   },
 
   /**
@@ -121,15 +102,14 @@ export const testimonialsService = {
   ): Promise<Testimonial> => {
     if (DATA_SOURCE === "mock") {
       const newId = Math.max(0, ...mockTestimonials.map((t) => t.id)) + 1
-      const progObj = payload.programme_id
-        ? mockPrograms.find((p) => p.id === payload.programme_id)
-        : payload.programme
+      const progObj = payload.program_id
+        ? mockPrograms.find((p) => p.id === payload.program_id)
+        : payload.program
 
       const newTestimonial: Testimonial = {
         ...payload,
         id: newId,
-        programme: progObj,
-        ordre: payload.ordre || newId,
+        program: progObj,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }
@@ -138,25 +118,11 @@ export const testimonialsService = {
       return delay<Testimonial>(newTestimonial)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/testimonials`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la création du témoignage (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const result = await apiFetch<Testimonial | { data: Testimonial }>(
+      "/api/admin/testimonials",
+      { method: "POST", body: payload }
+    )
+    return unwrap(result)
   },
 
   /**
@@ -172,16 +138,16 @@ export const testimonialsService = {
       if (index === -1) throw new Error("Témoignage introuvable")
 
       const existing = mockTestimonials[index]
-      const progObj = payload.programme_id
-        ? mockPrograms.find((p) => p.id === payload.programme_id)
-        : payload.programme !== undefined
-        ? payload.programme
-        : existing.programme
+      const progObj = payload.program_id
+        ? mockPrograms.find((p) => p.id === payload.program_id)
+        : payload.program !== undefined
+        ? payload.program
+        : existing.program
 
       const updated: Testimonial = {
         ...existing,
         ...payload,
-        programme: progObj,
+        program: progObj,
         updated_at: new Date().toISOString(),
       }
 
@@ -189,25 +155,11 @@ export const testimonialsService = {
       return delay<Testimonial>(updated)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/testimonials/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la mise à jour du témoignage (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const result = await apiFetch<Testimonial | { data: Testimonial }>(
+      `/api/admin/testimonials/${id}`,
+      { method: "PUT", body: payload }
+    )
+    return unwrap(result)
   },
 
   /**
@@ -223,19 +175,7 @@ export const testimonialsService = {
       return delay<boolean>(true)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/testimonials/${id}`, {
-      method: "DELETE",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la suppression du témoignage (HTTP ${res.status})`
-      )
-    }
-
+    await apiFetch<void>(`/api/admin/testimonials/${id}`, { method: "DELETE" })
     return true
   },
 }

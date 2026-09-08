@@ -6,7 +6,7 @@ import {
   impactService,
   type ListImpactIndicatorsParams,
 } from "@/lib/services/impact.service"
-import type { ImpactIndicator } from "@/types/models"
+import type { ImpactIndicator, ImpactValue } from "@/types/models"
 
 export const IMPACT_QUERY_KEY = ["admin", "impact"]
 
@@ -91,6 +91,91 @@ export function useDeleteImpactIndicator() {
     },
     onError: (err: unknown) => {
       toast.error("Erreur lors de la suppression de l'indicateur", {
+        description:
+          err instanceof Error ? err.message : "Une erreur est survenue.",
+      })
+    },
+  })
+}
+
+/**
+ * Les valeurs (points de mesure) sont une sous-ressource imbriquée sous
+ * un indicateur — jamais gérées via updateImpactIndicator. On invalide à
+ * la fois la liste et le détail de l'indicateur concerné.
+ */
+export function useAddImpactValue() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      indicatorId,
+      payload,
+    }: {
+      indicatorId: number
+      payload: Omit<ImpactValue, "id">
+    }) => impactService.addImpactValue(indicatorId, payload),
+    onSuccess: (_value, variables) => {
+      toast.success("Valeur ajoutée à l'indicateur")
+      queryClient.invalidateQueries({ queryKey: IMPACT_QUERY_KEY })
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "impact-indicator", variables.indicatorId],
+      })
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] })
+    },
+    onError: (err: unknown) => {
+      toast.error("Erreur lors de l'ajout de la valeur", {
+        description:
+          err instanceof Error ? err.message : "Une erreur est survenue.",
+      })
+    },
+  })
+}
+
+export function useUpdateImpactValue() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      valueId,
+      payload,
+    }: {
+      valueId: number
+      indicatorId: number
+      payload: Partial<Omit<ImpactValue, "id">>
+    }) => impactService.updateImpactValue(valueId, payload),
+    onSuccess: (_value, variables) => {
+      toast.success("Valeur mise à jour")
+      queryClient.invalidateQueries({ queryKey: IMPACT_QUERY_KEY })
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "impact-indicator", variables.indicatorId],
+      })
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] })
+    },
+    onError: (err: unknown) => {
+      toast.error("Erreur lors de la mise à jour de la valeur", {
+        description:
+          err instanceof Error ? err.message : "Une erreur est survenue.",
+      })
+    },
+  })
+}
+
+export function useDeleteImpactValue() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ valueId }: { valueId: number; indicatorId: number }) =>
+      impactService.deleteImpactValue(valueId),
+    onSuccess: (_ok, variables) => {
+      toast.success("Valeur supprimée")
+      queryClient.invalidateQueries({ queryKey: IMPACT_QUERY_KEY })
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "impact-indicator", variables.indicatorId],
+      })
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] })
+    },
+    onError: (err: unknown) => {
+      toast.error("Erreur lors de la suppression de la valeur", {
         description:
           err instanceof Error ? err.message : "Une erreur est survenue.",
       })

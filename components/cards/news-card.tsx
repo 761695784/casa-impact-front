@@ -5,7 +5,7 @@ import Link from "next/link"
 import { ArrowUpRight, Calendar, Clock, Sparkles, Camera } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { NEWS_TYPE_LABELS } from "@/types/enums"
-import { formatDate } from "@/lib/format"
+import { formatDate, resolveMediaUrl } from "@/lib/format"
 import type { News } from "@/types/models"
 
 const newsTypeBadgeColors: Record<string, string> = {
@@ -16,7 +16,8 @@ const newsTypeBadgeColors: Record<string, string> = {
 }
 
 export function NewsCard({ article, featured = false }: { article: News; featured?: boolean }) {
-  const cover = article.image || "/assets/news/default-news.png"
+  // Pas de champ `image` direct côté API réelle — visuel via `media` (premier élément, sinon fallback).
+  const cover = resolveMediaUrl(article.media?.[0]?.url) || "/assets/news/default-news.png"
 
   return (
     <Link
@@ -55,10 +56,10 @@ export function NewsCard({ article, featured = false }: { article: News; feature
           </span>
         )}
 
-        {article.medias && article.medias.length > 0 && (
+        {article.media && article.media.length > 0 && (
           <span className="absolute right-3.5 bottom-3.5 inline-flex items-center gap-1 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
             <Camera className="size-3 text-accent" />
-            <span>{article.medias.length} photos</span>
+            <span>{article.media.length} photos</span>
           </span>
         )}
       </div>
@@ -68,10 +69,11 @@ export function NewsCard({ article, featured = false }: { article: News; feature
         <div>
           {/* Metadata Row */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium">
-            {article.date_publication && (
+            {/* Pas de `date_publication` côté API réelle — `created_at` utilisé comme repère temporel */}
+            {article.created_at && (
               <span className="flex items-center gap-1">
                 <Calendar className="size-3.5 text-primary" />
-                <time>{formatDate(article.date_publication)}</time>
+                <time>{formatDate(article.created_at)}</time>
               </span>
             )}
             <span>•</span>
@@ -90,16 +92,7 @@ export function NewsCard({ article, featured = false }: { article: News; feature
             {article.titre}
           </h3>
 
-          {/* Excerpt */}
-          {article.extrait && (
-            <p
-              className={`mt-3 text-sm leading-relaxed text-muted-foreground ${
-                featured ? "text-base sm:text-lg" : "line-clamp-3"
-              }`}
-            >
-              {article.extrait}
-            </p>
-          )}
+          {/* Pas d'`extrait` côté API réelle — pas d'aperçu textuel sur la carte */}
         </div>
 
         {/* Read More Link */}

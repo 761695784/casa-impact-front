@@ -7,18 +7,19 @@ import type { MapPoint } from "@/types/models"
 import { REGION_LABELS } from "@/types/enums"
 import "leaflet/dist/leaflet.css"
 
+// Pas de type "implantation" côté backend (aucun mapping dans
+// MapController::LOCATABLE_MAP) : seules ces 3 valeurs existent réellement.
 const typeLabels: Record<MapPoint["type"], string> = {
   program: "Programme",
   "application-call": "Appel à candidatures",
   talent: "Talent",
-  implantation: "Implantation",
 }
 
-const typeHrefBase: Record<MapPoint["type"], string> = {
+// Les talents n'ont pas de page de détail dédiée : pas d'entrée ici, le lien
+// n'est rendu que pour les types qui en ont une (voir plus bas).
+const typeHrefBase: Partial<Record<MapPoint["type"], string>> = {
   program: "/programmes",
   "application-call": "/appels-a-candidatures",
-  talent: "/talents",
-  implantation: "/qui-sommes-nous",
 }
 
 // Casamance approximate center
@@ -66,9 +67,14 @@ export default function CasamanceMap({ points }: { points: MapPoint[] }) {
                 <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
                   {typeLabels[p.type]}
                 </span>
-                <p className="mt-1 text-sm font-semibold leading-snug text-neutral-900">{p.titre}</p>
-                <p className="mt-0.5 text-xs text-neutral-500">{REGION_LABELS[p.region]}</p>
-                {p.slug ? (
+                <p className="mt-1 text-sm font-semibold leading-snug text-neutral-900">
+                  {p.titre || p.libelle}
+                </p>
+                {/* `region` est optionnel côté API : on n'affiche la ligne que si elle est présente */}
+                {p.region && (
+                  <p className="mt-0.5 text-xs text-neutral-500">{REGION_LABELS[p.region]}</p>
+                )}
+                {p.slug && typeHrefBase[p.type] ? (
                   <Link
                     href={`${typeHrefBase[p.type]}/${p.slug}`}
                     className="mt-2 inline-block text-xs font-medium text-emerald-700 underline"

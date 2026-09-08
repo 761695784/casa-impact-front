@@ -24,7 +24,8 @@ import { TESTIMONIAL_STATUS_LABELS } from "@/types/enums"
 import { usePrograms } from "@/hooks/use-programs"
 import { useCreateTestimonial, useUpdateTestimonial } from "@/hooks/use-testimonials"
 import { MediaPickerDialog } from "@/components/admin/media/media-picker-dialog"
-import { Quote, Loader2, Image as ImageIcon, User, Star } from "lucide-react"
+import { resolveMediaUrl } from "@/lib/format"
+import { Quote, Loader2, Image as ImageIcon, User } from "lucide-react"
 import type { Testimonial, Media } from "@/types/models"
 import type { TestimonialStatus } from "@/types/enums"
 
@@ -50,12 +51,15 @@ export function TemoignageFormDialog({
   const programs = programsData?.data || []
 
   const [auteur, setAuteur] = useState("")
-  const [fonction, setFonction] = useState("")
-  const [organisation, setOrganisation] = useState("")
-  const [contenu, setContenu] = useState("")
+  // Le backend combine fonction + organisation en un seul champ `role_organisation`.
+  const [roleOrganisation, setRoleOrganisation] = useState("")
+  const [citation, setCitation] = useState("")
+  // NOTE : pas de champ `photo` direct sur Testimonial (voir `media`). Ce
+  // champ sert uniquement à prévisualiser une image existante ; il n'est
+  // PAS envoyé au backend — l'association réelle passe par le module
+  // Médiathèque (TODO : intégration Médiathèque plutôt qu'upload en ligne).
   const [photo, setPhoto] = useState("")
-  const [programmeId, setProgrammeId] = useState<string>("")
-  const [ordre, setOrdre] = useState<string>("1")
+  const [programId, setProgramId] = useState<string>("")
   const [statut, setStatut] = useState<TestimonialStatus>("publie")
 
   // Media Picker Dialog state
@@ -64,27 +68,23 @@ export function TemoignageFormDialog({
   useEffect(() => {
     if (testimonial) {
       setAuteur(testimonial.auteur || "")
-      setFonction(testimonial.fonction || "")
-      setOrganisation(testimonial.organisation || "")
-      setContenu(testimonial.contenu || "")
-      setPhoto(testimonial.photo || "")
-      setProgrammeId(
-        testimonial.programme_id
-          ? String(testimonial.programme_id)
-          : testimonial.programme?.id
-          ? String(testimonial.programme.id)
+      setRoleOrganisation(testimonial.role_organisation || "")
+      setCitation(testimonial.citation || "")
+      setPhoto(resolveMediaUrl(testimonial.media?.[0]?.url) || "")
+      setProgramId(
+        testimonial.program_id
+          ? String(testimonial.program_id)
+          : testimonial.program?.id
+          ? String(testimonial.program.id)
           : ""
       )
-      setOrdre(testimonial.ordre ? String(testimonial.ordre) : "1")
       setStatut(testimonial.statut || "publie")
     } else {
       setAuteur("")
-      setFonction("")
-      setOrganisation("")
-      setContenu("")
+      setRoleOrganisation("")
+      setCitation("")
       setPhoto("")
-      setProgrammeId("")
-      setOrdre("1")
+      setProgramId("")
       setStatut("publie")
     }
   }, [testimonial, open])
@@ -100,14 +100,12 @@ export function TemoignageFormDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // `photo` (Médiathèque) n'est pas un champ du modèle Testimonial : non inclus.
     const payload = {
       auteur,
-      fonction: fonction || undefined,
-      organisation: organisation || undefined,
-      contenu,
-      photo: photo || undefined,
-      programme_id: programmeId ? Number(programmeId) : undefined,
-      ordre: Number(ordre) || 1,
+      role_organisation: roleOrganisation || undefined,
+      citation,
+      program_id: programId ? Number(programId) : undefined,
       statut,
     }
 
@@ -169,32 +167,17 @@ export function TemoignageFormDialog({
                 />
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="temoin-fonction" className="text-xs font-semibold">
-                    Titre / Qualité
-                  </Label>
-                  <Input
-                    id="temoin-fonction"
-                    value={fonction}
-                    onChange={(e) => setFonction(e.target.value)}
-                    placeholder="ex. Lauréate Promotion 2025"
-                    className="mt-1.5 h-10 rounded-xl text-xs bg-card"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="temoin-orga" className="text-xs font-semibold">
-                    Organisation / Ville
-                  </Label>
-                  <Input
-                    id="temoin-orga"
-                    value={organisation}
-                    onChange={(e) => setOrganisation(e.target.value)}
-                    placeholder="ex. Coopérative Sédhiou"
-                    className="mt-1.5 h-10 rounded-xl text-xs bg-card"
-                  />
-                </div>
+              <div>
+                <Label htmlFor="temoin-role-orga" className="text-xs font-semibold">
+                  Rôle / Organisation
+                </Label>
+                <Input
+                  id="temoin-role-orga"
+                  value={roleOrganisation}
+                  onChange={(e) => setRoleOrganisation(e.target.value)}
+                  placeholder="ex. Lauréate Promotion 2025 — Coopérative Sédhiou"
+                  className="mt-1.5 h-10 rounded-xl text-xs bg-card"
+                />
               </div>
             </div>
 
@@ -293,52 +276,36 @@ export function TemoignageFormDialog({
               </div>
 
               <div>
-                <Label htmlFor="temoin-contenu" className="text-xs font-semibold">
+                <Label htmlFor="temoin-citation" className="text-xs font-semibold">
                   Citation / Retour d'expérience *
                 </Label>
                 <Textarea
-                  id="temoin-contenu"
+                  id="temoin-citation"
                   required
                   rows={4}
-                  value={contenu}
-                  onChange={(e) => setContenu(e.target.value)}
+                  value={citation}
+                  onChange={(e) => setCitation(e.target.value)}
                   placeholder="Rédigez le texte du témoignage vécu avec Casa Impact..."
                   className="mt-1.5 rounded-xl text-xs bg-card"
                 />
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="temoin-prog" className="text-xs font-semibold">
-                    Programme associé (facultatif)
-                  </Label>
-                  <Select value={programmeId} onValueChange={(val) => setProgrammeId(val || "")}>
-                    <SelectTrigger id="temoin-prog" className="mt-1.5 h-10 rounded-xl text-xs bg-card truncate">
-                      <SelectValue placeholder="Aucun programme" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl text-xs max-w-xs">
-                      {programs.map((p) => (
-                        <SelectItem key={p.id} value={String(p.id)}>
-                          {p.titre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="temoin-ordre" className="text-xs font-semibold">
-                    Ordre d'affichage
-                  </Label>
-                  <Input
-                    id="temoin-ordre"
-                    type="number"
-                    min={1}
-                    value={ordre}
-                    onChange={(e) => setOrdre(e.target.value)}
-                    className="mt-1.5 h-10 rounded-xl text-xs bg-card"
-                  />
-                </div>
+              <div>
+                <Label htmlFor="temoin-prog" className="text-xs font-semibold">
+                  Programme associé (facultatif)
+                </Label>
+                <Select value={programId} onValueChange={(val) => setProgramId(val || "")}>
+                  <SelectTrigger id="temoin-prog" className="mt-1.5 h-10 rounded-xl text-xs bg-card truncate">
+                    <SelectValue placeholder="Aucun programme" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl text-xs max-w-xs">
+                    {programs.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        {p.titre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="pt-1">

@@ -22,10 +22,10 @@ import {
 } from "@/components/ui/select"
 import { TALENT_STATUS_LABELS, REGION_LABELS } from "@/types/enums"
 import { useDomains } from "@/hooks/use-domains"
-import { usePrograms } from "@/hooks/use-programs"
 import { useCreateTalent, useUpdateTalent } from "@/hooks/use-talents"
 import { MediaPickerDialog } from "@/components/admin/media/media-picker-dialog"
-import { Sparkles, Loader2, Image as ImageIcon, Star, User } from "lucide-react"
+import { resolveMediaUrl } from "@/lib/format"
+import { Sparkles, Loader2, Image as ImageIcon, User } from "lucide-react"
 import type { Talent, Media } from "@/types/models"
 import type { TalentStatus, Region } from "@/types/enums"
 
@@ -48,20 +48,18 @@ export function TalentFormDialog({
   const updateMutation = useUpdateTalent()
 
   const { data: domains = [] } = useDomains()
-  const { data: programsData } = usePrograms()
-  const programs = programsData?.data || []
 
   const [nom, setNom] = useState("")
   const [slug, setSlug] = useState("")
-  const [domaineActivite, setDomaineActivite] = useState("")
   const [region, setRegion] = useState<Region>("ziguinchor")
-  const [localisation, setLocalisation] = useState("")
-  const [bio, setBio] = useState("")
+  const [presentation, setPresentation] = useState("")
   const [parcours, setParcours] = useState("")
+  // NOTE: pas de champ `photo` direct sur Talent (voir `media`). Ce champ
+  // sert uniquement à prévisualiser une image existante ; il n'est PAS
+  // envoyé au backend — l'association réelle passe par le module
+  // Médiathèque (TODO : intégration Médiathèque plutôt qu'upload en ligne).
   const [photo, setPhoto] = useState("")
-  const [domaineId, setDomaineId] = useState<string>("")
-  const [programmeId, setProgrammeId] = useState<string>("")
-  const [ordre, setOrdre] = useState<string>("1")
+  const [domainId, setDomainId] = useState<string>("")
   const [statut, setStatut] = useState<TalentStatus>("publie")
 
   // Media Picker Dialog State
@@ -71,40 +69,26 @@ export function TalentFormDialog({
     if (talent) {
       setNom(talent.nom || "")
       setSlug(talent.slug || "")
-      setDomaineActivite(talent.domaine_activite || "")
       setRegion(talent.region || "ziguinchor")
-      setLocalisation(talent.localisation || "")
-      setBio(talent.bio || "")
+      setPresentation(talent.presentation || "")
       setParcours(talent.parcours || "")
-      setPhoto(talent.photo || "")
-      setDomaineId(
-        talent.domaine_id
-          ? String(talent.domaine_id)
-          : talent.domaine?.id
-          ? String(talent.domaine.id)
+      setPhoto(resolveMediaUrl(talent.media?.[0]?.url) || "")
+      setDomainId(
+        talent.domain_id
+          ? String(talent.domain_id)
+          : talent.domain?.id
+          ? String(talent.domain.id)
           : ""
       )
-      setProgrammeId(
-        talent.programme_id
-          ? String(talent.programme_id)
-          : talent.programme?.id
-          ? String(talent.programme.id)
-          : ""
-      )
-      setOrdre(talent.ordre ? String(talent.ordre) : "1")
       setStatut(talent.statut || "publie")
     } else {
       setNom("")
       setSlug("")
-      setDomaineActivite("")
       setRegion("ziguinchor")
-      setLocalisation("")
-      setBio("")
+      setPresentation("")
       setParcours("")
       setPhoto("")
-      setDomaineId("")
-      setProgrammeId("")
-      setOrdre("1")
+      setDomainId("")
       setStatut("publie")
     }
   }, [talent, open])
@@ -120,18 +104,14 @@ export function TalentFormDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // `photo` (Médiathèque) n'est pas un champ du modèle Talent : non inclus.
     const payload = {
       nom,
       slug: slug || undefined,
-      domaine_activite: domaineActivite || undefined,
       region,
-      localisation: localisation || undefined,
-      bio: bio || undefined,
+      presentation: presentation || undefined,
       parcours: parcours || undefined,
-      photo: photo || undefined,
-      domaine_id: domaineId ? Number(domaineId) : undefined,
-      programme_id: programmeId ? Number(programmeId) : undefined,
-      ordre: Number(ordre) || 1,
+      domain_id: domainId ? Number(domainId) : undefined,
       statut,
     }
 
@@ -195,20 +175,6 @@ export function TalentFormDialog({
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <Label htmlFor="talent-dom-act" className="text-xs font-semibold">
-                    Domaine d'activité / Métier *
-                  </Label>
-                  <Input
-                    id="talent-dom-act"
-                    required
-                    value={domaineActivite}
-                    onChange={(e) => setDomaineActivite(e.target.value)}
-                    placeholder="ex. Éco-construction & Architecture bioclimatique"
-                    className="mt-1.5 h-10 rounded-xl text-xs bg-card"
-                  />
-                </div>
-
-                <div>
                   <Label htmlFor="talent-region" className="text-xs font-semibold">
                     Région *
                   </Label>
@@ -225,19 +191,24 @@ export function TalentFormDialog({
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="talent-loc" className="text-xs font-semibold">
-                  Localisation précise (Ville / Commune)
-                </Label>
-                <Input
-                  id="talent-loc"
-                  value={localisation}
-                  onChange={(e) => setLocalisation(e.target.value)}
-                  placeholder="ex. Ziguinchor (Quartier Boukot)"
-                  className="mt-1.5 h-10 rounded-xl text-xs bg-card"
-                />
+                <div>
+                  <Label htmlFor="talent-dom" className="text-xs font-semibold">
+                    Domaine d'intervention lié
+                  </Label>
+                  <Select value={domainId} onValueChange={(val) => setDomainId(val || "")}>
+                    <SelectTrigger id="talent-dom" className="mt-1.5 h-10 rounded-xl text-xs bg-card truncate">
+                      <SelectValue placeholder="Aucun domaine" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl text-xs max-w-xs">
+                      {domains.map((d) => (
+                        <SelectItem key={d.id} value={String(d.id)}>
+                          {d.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
@@ -331,19 +302,19 @@ export function TalentFormDialog({
                   3
                 </span>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  Bio & Parcours d'Excellence
+                  Présentation & Parcours d'Excellence
                 </h4>
               </div>
 
               <div>
-                <Label htmlFor="talent-bio" className="text-xs font-semibold">
-                  Bio courte / Accroche (synthèse percutante)
+                <Label htmlFor="talent-presentation" className="text-xs font-semibold">
+                  Présentation courte / Accroche (synthèse percutante)
                 </Label>
                 <Textarea
-                  id="talent-bio"
+                  id="talent-presentation"
                   rows={2}
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
+                  value={presentation}
+                  onChange={(e) => setPresentation(e.target.value)}
                   placeholder="Une ou deux phrases synthétisant l'impact du talent..."
                   className="mt-1.5 rounded-xl resize-none text-xs bg-card"
                 />
@@ -364,87 +335,33 @@ export function TalentFormDialog({
               </div>
             </div>
 
-            {/* Section 4 : Rattachement Institutionnel & Publication */}
+            {/* Section 4 : Statut de publication */}
             <div className="space-y-3.5 rounded-3xl border border-border/80 bg-secondary/30 p-4 sm:p-5">
               <div className="flex items-center gap-2">
                 <span className="flex size-5 items-center justify-center rounded-full bg-forest text-white text-[11px] font-bold">
                   4
                 </span>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  Rattachement Institutionnel & Statut
+                  Statut de Publication
                 </h4>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="talent-dom" className="text-xs font-semibold">
-                    Domaine d'intervention lié
-                  </Label>
-                  <Select value={domaineId} onValueChange={(val) => setDomaineId(val || "")}>
-                    <SelectTrigger id="talent-dom" className="mt-1.5 h-10 rounded-xl text-xs bg-card truncate">
-                      <SelectValue placeholder="Aucun domaine" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl text-xs max-w-xs">
-                      {domains.map((d) => (
-                        <SelectItem key={d.id} value={String(d.id)}>
-                          {d.nom}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="talent-prog" className="text-xs font-semibold">
-                    Programme rattaché
-                  </Label>
-                  <Select value={programmeId} onValueChange={(val) => setProgrammeId(val || "")}>
-                    <SelectTrigger id="talent-prog" className="mt-1.5 h-10 rounded-xl text-xs bg-card truncate">
-                      <SelectValue placeholder="Aucun programme" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl text-xs max-w-xs">
-                      {programs.map((p) => (
-                        <SelectItem key={p.id} value={String(p.id)}>
-                          {p.titre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="talent-ordre" className="text-xs font-semibold">
-                    Ordre d'affichage
-                  </Label>
-                  <Input
-                    id="talent-ordre"
-                    type="number"
-                    min={1}
-                    value={ordre}
-                    onChange={(e) => setOrdre(e.target.value)}
-                    className="mt-1.5 h-10 rounded-xl text-xs bg-card"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="talent-statut" className="text-xs font-semibold">
-                    Statut de publication *
-                  </Label>
-                  <Select value={statut} onValueChange={(val) => setStatut(val as TalentStatus)}>
-                    <SelectTrigger id="talent-statut" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
-                      <SelectValue placeholder="Statut" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl text-xs">
-                      {(Object.keys(TALENT_STATUS_LABELS) as TalentStatus[]).map((key) => (
-                        <SelectItem key={key} value={key}>
-                          {TALENT_STATUS_LABELS[key]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label htmlFor="talent-statut" className="text-xs font-semibold">
+                  Statut de publication *
+                </Label>
+                <Select value={statut} onValueChange={(val) => setStatut(val as TalentStatus)}>
+                  <SelectTrigger id="talent-statut" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
+                    <SelectValue placeholder="Statut" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl text-xs">
+                    {(Object.keys(TALENT_STATUS_LABELS) as TalentStatus[]).map((key) => (
+                      <SelectItem key={key} value={key}>
+                        {TALENT_STATUS_LABELS[key]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

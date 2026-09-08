@@ -65,7 +65,7 @@ export function TemoignagesFilterBar({
           <Input
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
-            placeholder="Rechercher par auteur, fonction, organisation, citation..."
+            placeholder="Rechercher par auteur, rôle/organisation, citation..."
             className="h-10 rounded-full pl-9 pr-9 text-xs sm:text-sm bg-background"
           />
           {localSearch && (

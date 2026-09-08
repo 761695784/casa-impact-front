@@ -7,8 +7,6 @@ import {
   Edit,
   Trash2,
   Calendar,
-  Sparkles,
-  User,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/admin/ui/status-badge"
@@ -43,12 +41,6 @@ export function ActualitesMobileList({
                 <span className="rounded-md bg-forest/10 px-2 py-0.5 font-bold text-forest text-[10px] uppercase">
                   {NEWS_TYPE_LABELS[item.type] || item.type}
                 </span>
-                {item.a_la_une && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 font-semibold text-foreground text-[10px]">
-                    <Sparkles className="size-2.5 text-accent" />
-                    <span>À la une</span>
-                  </span>
-                )}
               </div>
               <StatusBadge status={item.statut} />
             </div>
@@ -62,22 +54,17 @@ export function ActualitesMobileList({
           </div>
 
           {/* Details */}
-          {item.extrait && (
+          {item.corps && (
             <p className="text-xs text-muted-foreground line-clamp-2">
-              {item.extrait}
+              {item.corps}
             </p>
           )}
 
-          <div className="flex flex-wrap items-center justify-between text-xs text-muted-foreground gap-2 pt-1 border-t border-border/40">
-            <span className="inline-flex items-center gap-1">
-              <User className="size-3 text-muted-foreground" />
-              <span>{item.auteur || "Rédaction"}</span>
-            </span>
-
-            {item.date_publication && (
+          <div className="flex flex-wrap items-center justify-end text-xs text-muted-foreground gap-2 pt-1 border-t border-border/40">
+            {item.created_at && (
               <span className="inline-flex items-center gap-1">
                 <Calendar className="size-3 text-muted-foreground" />
-                <span>{formatDate(item.date_publication)}</span>
+                <span>{formatDate(item.created_at)}</span>
               </span>
             )}
           </div>

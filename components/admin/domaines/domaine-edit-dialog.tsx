@@ -40,7 +40,6 @@ export function DomaineEditDialog({
   onSuccess,
 }: DomaineEditDialogProps) {
   const [nom, setNom] = useState("")
-  const [resume, setResume] = useState("")
   const [description, setDescription] = useState("")
   const [statut, setStatut] = useState<DomainStatus>("actif")
   const [ordre, setOrdre] = useState<string>("1")
@@ -50,7 +49,6 @@ export function DomaineEditDialog({
   useEffect(() => {
     if (domain) {
       setNom(domain.nom || "")
-      setResume(domain.resume || "")
       setDescription(domain.description || "")
       setStatut(domain.statut || "actif")
       setOrdre(domain.ordre ? String(domain.ordre) : "1")
@@ -66,7 +64,6 @@ export function DomaineEditDialog({
       id: domain.id,
       payload: {
         nom,
-        resume,
         description,
         statut,
         ordre: Number(ordre) || 1,
@@ -105,20 +102,6 @@ export function DomaineEditDialog({
                 value={nom}
                 onChange={(e) => setNom(e.target.value)}
                 className="mt-1.5 h-11 rounded-xl text-sm"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="domain-resume" className="text-xs font-semibold">
-                Résumé succinct (accroche éditoriale)
-              </Label>
-              <Textarea
-                id="domain-resume"
-                rows={2}
-                value={resume}
-                onChange={(e) => setResume(e.target.value)}
-                placeholder="Courte phrase résumant l'orientation du domaine..."
-                className="mt-1.5 rounded-xl resize-none text-xs"
               />
             </div>
 

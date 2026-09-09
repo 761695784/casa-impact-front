@@ -1,4 +1,5 @@
-import { DATA_SOURCE, API_URL } from "@/lib/config"
+import { DATA_SOURCE } from "@/lib/config"
+import { apiFetch } from "@/lib/api-client"
 import { mockDomains } from "@/lib/mock/domains.mock"
 import type { Domain } from "@/types/models"
 import type { DomainStatus } from "@/types/enums"
@@ -10,6 +11,11 @@ export interface ListDomainsParams {
 
 function delay<T>(data: T, ms = 100): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(data), ms))
+}
+
+/** Le backend n'expose pas de champ `resume` distinct : on le dérive de `description`. */
+function withResume(d: Domain): Domain {
+  return { ...d, resume: d.resume ?? d.description }
 }
 
 export const domainsService = {
@@ -37,7 +43,7 @@ export const domainsService = {
         filtered = filtered.filter((d) => d.statut === statut)
       }
 
-      return delay<Domain[]>(filtered)
+      return delay<Domain[]>(filtered.map(withResume))
     }
 
     // MODE API RÉEL : Aucun fallback silencieux
@@ -45,28 +51,16 @@ export const domainsService = {
     if (search) queryParams.set("search", search)
     if (statut && statut !== "all") queryParams.set("statut", statut)
 
-    const url = `${API_URL}/api/admin/domains${
+    const path = `/api/admin/domains${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`
 
-    const res = await fetch(url, {
+    const json = await apiFetch<{ data?: Domain[] } | Domain[]>(path, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Laravel Sanctum SPA
     })
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors du chargement des domaines d'intervention (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const list = Array.isArray(json) ? json : json.data || []
+    return list.map(withResume)
   },
 
   /**
@@ -81,24 +75,16 @@ export const domainsService = {
       if (!found) {
         throw new Error("Domaine d'intervention introuvable")
       }
-      return delay<Domain>(found)
+      return delay<Domain>(withResume(found))
     }
 
-    const res = await fetch(`${API_URL}/api/admin/domains/${id}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
+    const json = await apiFetch<{ data?: Domain } | Domain>(
+      `/api/admin/domains/${id}`,
+      { method: "GET" }
+    )
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Impossible de charger le domaine #${id} (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const domain = (json as { data?: Domain }).data ?? (json as Domain)
+    return withResume(domain)
   },
 
   /**
@@ -120,27 +106,24 @@ export const domainsService = {
       }
 
       mockDomains[index] = updated
-      return delay<Domain>(updated)
+      return delay<Domain>(withResume(updated))
     }
 
-    const res = await fetch(`${API_URL}/api/admin/domains/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
+    // Le backend n'accepte que ces champs — jamais `slug` (verrouillé par le
+    // seeder) ni `resume` (dérivé côté frontend uniquement).
+    const body: Record<string, unknown> = {}
+    if (payload.nom !== undefined) body.nom = payload.nom
+    if (payload.description !== undefined) body.description = payload.description
+    if (payload.icone !== undefined) body.icone = payload.icone
+    if (payload.ordre !== undefined) body.ordre = payload.ordre
+    if (payload.statut !== undefined) body.statut = payload.statut
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la mise à jour du domaine (HTTP ${res.status})`
-      )
-    }
+    const json = await apiFetch<{ data?: Domain } | Domain>(
+      `/api/admin/domains/${id}`,
+      { method: "PUT", body }
+    )
 
-    const json = await res.json()
-    return json.data || json
+    const domain = (json as { data?: Domain }).data ?? (json as Domain)
+    return withResume(domain)
   },
 }

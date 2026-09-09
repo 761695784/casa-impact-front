@@ -83,6 +83,21 @@ export interface User {
   updated_at?: string
 }
 
+/**
+ * Forme réelle de DomainResource (App\Http\Resources\DomainResource) :
+ * id/nom/slug/description/icone/ordre/statut, rien d'autre. Pas de
+ * `resume` séparé (une seule zone de texte libre, `description`), pas
+ * d'`image` (le visuel de chaque domaine est géré côté frontend par
+ * `lib/domain-visuals.tsx`, jamais par l'API — les 6 domaines ont une
+ * identité visuelle fixe, pas de champ image en base), pas de
+ * `programmes_count` (non calculé par ce endpoint).
+ *
+ * `resume` reste ici en optionnel pour ne pas casser les composants
+ * existants (domain-card.tsx/domain-detail.tsx) qui l'affichent comme
+ * accroche courte — la couche service (content.service.ts) le
+ * renseigne à partir de `description` quand les données viennent de la
+ * vraie API, il n'existe pas de second champ dédié côté backend.
+ */
 export interface Domain {
   id: number
   nom: string
@@ -90,10 +105,8 @@ export interface Domain {
   description?: string
   resume?: string
   icone?: string
-  image?: string
   statut: DomainStatus
   ordre?: number
-  programmes_count?: number
   created_at?: string
   updated_at?: string
 }

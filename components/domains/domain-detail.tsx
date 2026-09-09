@@ -24,6 +24,19 @@ import { Button } from "@/components/ui/button"
 import { RegionBadge } from "@/components/cards/region-badge"
 import { BaobabMark } from "@/components/brand/baobab-mark"
 
+/**
+ * Liste les intitulés des axes sous forme de phrase ("A, B, C et D"), pour
+ * le chapeau du hero. Volontairement dérivé de `meta.axes` (déjà utilisé
+ * plus bas pour les 4 cartes détaillées) plutôt que d'un texte séparé, pour
+ * qu'il ne puisse jamais être désynchronisé des axes réellement affichés
+ * sur la page.
+ */
+function formatAxesTitles(axes: { title: string }[]): string {
+  const titles = axes.map((axis) => axis.title)
+  if (titles.length <= 1) return titles.join("")
+  return `${titles.slice(0, -1).join(", ")} et ${titles[titles.length - 1]}`
+}
+
 export function DomainDetail({ slug }: { slug: string }) {
   const { data: domain, isLoading, isError } = useDomain(slug)
   const { data: allDomains } = useDomains()
@@ -149,10 +162,10 @@ export function DomainDetail({ slug }: { slug: string }) {
             </div>
           </div>
 
-          {/* Lead Summary */}
-          {domain.resume && (
+          {/* Lead Summary — liste courte des axes, pas la description complète */}
+          {meta.axes.length > 0 && (
             <p className="mt-6 max-w-3xl text-lg sm:text-xl leading-relaxed text-white/90 font-normal drop-shadow">
-              {domain.resume}
+              Ce domaine s'articule autour de {meta.axes.length} axes stratégiques : {formatAxesTitles(meta.axes)}.
             </p>
           )}
         </div>
@@ -173,7 +186,7 @@ export function DomainDetail({ slug }: { slug: string }) {
                 Pourquoi ce domaine est crucial pour la Casamance
               </h2>
               <p className="mt-6 text-base sm:text-lg leading-relaxed text-foreground/90 font-normal">
-                {domain.description}
+                {meta.pitch}
               </p>
               <div className="mt-8 flex items-center gap-3">
                 <Button asChild size="lg" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
@@ -337,7 +350,7 @@ export function DomainDetail({ slug }: { slug: string }) {
                       {d.nom}
                     </h3>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground line-clamp-2">
-                      {d.resume}
+                      {otherMeta.pitch}
                     </p>
                   </div>
                 </Link>

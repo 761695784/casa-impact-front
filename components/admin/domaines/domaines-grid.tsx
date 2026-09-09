@@ -6,7 +6,6 @@ import {
   Eye,
   Edit,
   Power,
-  Compass,
   ArrowRight,
   ExternalLink,
   Layers,
@@ -73,11 +72,7 @@ export function DomainesGrid({
 
           {/* Bottom Meta & Actions */}
           <div className="mt-6 pt-4 border-t border-border/60 space-y-3">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1 font-semibold text-forest">
-                <Compass className="size-3.5" />
-                <span>{domain.programmes_count || 0} programme{(domain.programmes_count || 0) > 1 ? "s" : ""}</span>
-              </span>
+            <div className="flex items-center justify-end text-xs text-muted-foreground">
               <Link
                 href={`/domaines/${domain.slug}`}
                 target="_blank"

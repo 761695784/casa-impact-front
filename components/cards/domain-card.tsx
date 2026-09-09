@@ -64,8 +64,11 @@ export function DomainCard({
             {domain.nom}
           </h3>
 
+          {/* meta.pitch (frontend) plutôt que domain.resume (backend) : la liste des
+              axes juste en dessous rendrait un texte basé sur la description
+              redondant, puisque celle-ci cite déjà les mêmes intitulés d'axes. */}
           <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
-            {domain.resume}
+            {meta.pitch}
           </p>
 
           {/* Key Axes Preview */}

@@ -17,6 +17,15 @@ export interface DomainMetadata {
   image: string
   accentColor: string
   badgeTone: string
+  /**
+   * Phrase de vision courte (1 phrase) affichée dans le bloc "Pourquoi ce
+   * domaine est crucial pour la Casamance" de la page de détail. Volontairement
+   * distincte du contenu des `axes` ci-dessous : elle ne doit PAS reciter les
+   * intitulés des 4 axes (ceux-ci sont déjà cités dans le chapeau du hero et
+   * détaillés un par un dans les 4 cartes "Axes Stratégiques"), sous peine de
+   * répéter trois fois la même information sur une seule page.
+   */
+  pitch: string
   axes: { title: string; desc: string }[]
 }
 
@@ -35,6 +44,8 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
     image: "/assets/hero/DSC08048%20copie.jpg",
     accentColor: "from-forest/90 to-primary/80",
     badgeTone: "bg-forest text-white",
+    pitch:
+      "Révéler et structurer le potentiel des jeunes talents casamançais à travers le leadership, l'engagement citoyen et le mentorat, pour faire émerger une nouvelle génération de leaders enracinés dans leur terroir.",
     axes: [
       {
         title: "Académie du Leadership",
@@ -59,6 +70,8 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
     image: "/assets/hero/DSC08045%20copie.jpg",
     accentColor: "from-accent/90 to-amber-600/80",
     badgeTone: "bg-accent text-accent-foreground font-bold",
+    pitch:
+      "Soutenir la création de valeur locale à travers l'entrepreneuriat, l'innovation, le numérique, l'intelligence artificielle et la cybersécurité, pour favoriser l'auto-emploi et l'émergence de nouvelles initiatives.",
     axes: [
       {
         title: "Incubateur de Startups & PME",
@@ -83,6 +96,8 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
     image: "/assets/hero/DSC08016%20copie.jpg",
     accentColor: "from-earth/90 to-amber-800/80",
     badgeTone: "bg-earth text-white",
+    pitch:
+      "Préserver et valoriser la richesse culturelle et patrimoniale de la Casamance, pour la transmettre aux nouvelles générations et faire rayonner son identité au-delà de ses frontières.",
     axes: [
       {
         title: "Valorisation du Patrimoine Vivant",
@@ -107,6 +122,8 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
     image: "/assets/hero/DSC08084%20copie.jpg",
     accentColor: "from-primary/90 to-emerald-700/80",
     badgeTone: "bg-primary text-primary-foreground",
+    pitch:
+      "Repérer et accompagner les talents sportifs casamançais vers l'excellence, pour faire du sport un levier d'inclusion, de discipline et de rayonnement pour toute la jeunesse.",
     axes: [
       {
         title: "Détection & Bourses Sportives",
@@ -131,6 +148,8 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
     image: "/assets/hero/casamance-landscape.png",
     accentColor: "from-emerald-800/90 to-forest/80",
     badgeTone: "bg-forest text-white",
+    pitch:
+      "Valoriser les atouts naturels et culturels de la Casamance à travers un tourisme communautaire et responsable, pour renforcer son attractivité et générer des retombées durables pour ses habitants.",
     axes: [
       {
         title: "Écotourisme Communautaire",
@@ -155,6 +174,8 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
     image: "/assets/hero/DSC08011%20copie.jpg",
     accentColor: "from-amber-700/90 to-earth/80",
     badgeTone: "bg-accent text-accent-foreground font-bold",
+    pitch:
+      "Mobiliser les compétences et les ressources de la diaspora casamançaise, pour les transformer en investissements productifs et en projets d'impact durable sur le territoire.",
     axes: [
       {
         title: "Guichet Diaspora & Investisseurs",
@@ -187,6 +208,8 @@ export function getDomainMetadata(slug: string): DomainMetadata {
       image: "/assets/hero/DSC08084%20copie.jpg",
       accentColor: "from-forest/90 to-primary/80",
       badgeTone: "bg-primary text-white",
+      pitch:
+        "Déployer des actions concrètes et durables au service des communautés de la Casamance, en s'appuyant sur des partenariats techniques et financiers structurants.",
       axes: [
         { title: "Action Territoriale", desc: "Déploiement d'initiatives adaptées aux besoins locaux." },
         { title: "Formation & Mentorat", desc: "Renforcement des capacités des acteurs du domaine." },

@@ -29,9 +29,9 @@ import type {
  * Content service — point d'accès unique pour le contenu public.
  *
  * Portée volontairement partielle pour cette phase : Actualités, Talents,
- * Témoignages, Impact, Cartographie et Partenaires sont branchés sur la
- * vraie API (`DATA_SOURCE === 'api'`). Domaines, Programmes/Types de
- * programme et Appels à candidatures restent sur les mocks pour
+ * Témoignages, Impact, Cartographie, Partenaires et Domaines sont
+ * branchés sur la vraie API (`DATA_SOURCE === 'api'`). Programmes/Types
+ * de programme et Appels à candidatures restent sur les mocks pour
  * l'instant — ne pas les rebrancher sans instruction explicite.
  */
 
@@ -42,9 +42,24 @@ function delay<T>(data: T, ms = 100): Promise<T> {
 const MAX_PER_PAGE = "per_page=100"
 
 export const contentService = {
-  // Domaines — hors périmètre de cette phase, reste sur les mocks.
-  listDomains: () => delay<Domain[]>(mockDomains),
-  getDomain: (slug: string) => delay<Domain | undefined>(mockDomains.find((d) => d.slug === slug)),
+  // Domaines — non paginé côté backend (référentiel fixe de 6 entrées).
+  // Pas de champ `resume` séparé côté API réelle (voir types/models.ts) —
+  // on le renseigne ici à partir de `description` pour ne pas casser
+  // domain-card.tsx/domain-detail.tsx, qui l'affichent comme accroche.
+  listDomains: async (): Promise<Domain[]> => {
+    if (DATA_SOURCE === "mock") return delay<Domain[]>(mockDomains)
+    const res = await apiFetch<CollectionResponse<Domain>>("/api/public/domains")
+    return res.data.map((d) => ({ ...d, resume: d.resume ?? d.description }))
+  },
+  getDomain: async (slug: string): Promise<Domain | undefined> => {
+    if (DATA_SOURCE === "mock") return delay<Domain | undefined>(mockDomains.find((d) => d.slug === slug))
+    try {
+      const res = await apiFetch<SingleResponse<Domain>>(`/api/public/domains/${encodeURIComponent(slug)}`)
+      return { ...res.data, resume: res.data.resume ?? res.data.description }
+    } catch {
+      return undefined
+    }
+  },
 
   // Programmes / Types de programme — hors périmètre de cette phase, restent sur les mocks.
   listProgramTypes: () => delay<ProgramType[]>(mockProgramTypes),

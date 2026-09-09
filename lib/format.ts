@@ -117,3 +117,18 @@ export function getTestimonialPhotoUrl(testimonial: {
   return resolveMediaUrl(photo?.url)
 }
 
+/**
+ * Résout la photo de profil d'un talent à partir de sa collection de
+ * médias (App\Http\Resources\TalentResource::media, pivot
+ * media_attachments) : l'entrée dont `collection === 'photo'`, repli sur
+ * le premier média disponible. Même principe et même raison que
+ * `getTestimonialPhotoUrl`.
+ */
+export function getTalentPhotoUrl(talent: {
+  media?: { collection?: string; url: string }[]
+}): string | undefined {
+  const media = talent.media || []
+  const photo = media.find((m) => m.collection === "photo") || media[0]
+  return resolveMediaUrl(photo?.url)
+}
+

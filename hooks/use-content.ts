@@ -14,6 +14,7 @@ export const queryKeys = {
   news: ["news"] as const,
   newsArticle: (slug: string) => ["news", slug] as const,
   talents: ["talents"] as const,
+  talent: (slug: string) => ["talents", slug] as const,
   testimonials: ["testimonials"] as const,
   partners: ["partners"] as const,
   impact: ["impact-indicators"] as const,
@@ -66,6 +67,14 @@ export function useNewsArticle(slug: string) {
 
 export function useTalents() {
   return useQuery({ queryKey: queryKeys.talents, queryFn: () => contentService.listTalents() })
+}
+
+export function useTalent(slug: string) {
+  return useQuery({
+    queryKey: queryKeys.talent(slug),
+    queryFn: () => contentService.getTalent(slug),
+    enabled: !!slug,
+  })
 }
 
 export function useTestimonials() {

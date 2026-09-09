@@ -26,7 +26,7 @@ import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog"
 import { ErrorState } from "@/components/admin/ui/error-state"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { formatDate, resolveMediaUrl } from "@/lib/format"
+import { formatDate, getTalentPhotoUrl } from "@/lib/format"
 import { REGION_LABELS } from "@/types/enums"
 
 export default function TalentDetailPage() {
@@ -132,9 +132,9 @@ export default function TalentDetailPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-4">
             <div className="relative size-16 shrink-0 overflow-hidden rounded-2xl border border-border bg-secondary flex items-center justify-center font-bold text-forest font-display text-xl shadow-xs">
-              {talent.media?.[0]?.url ? (
+              {getTalentPhotoUrl(talent) ? (
                 <Image
-                  src={resolveMediaUrl(talent.media[0].url) || talent.media[0].url}
+                  src={getTalentPhotoUrl(talent)!}
                   alt={talent.nom}
                   fill
                   sizes="64px"

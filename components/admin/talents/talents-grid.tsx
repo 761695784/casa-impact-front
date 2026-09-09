@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/admin/ui/status-badge"
-import { resolveMediaUrl } from "@/lib/format"
+import { getTalentPhotoUrl } from "@/lib/format"
 import { REGION_LABELS } from "@/types/enums"
 import type { Talent } from "@/types/models"
 
@@ -33,7 +33,7 @@ export function TalentsGrid({
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {talents.map((t, index) => {
-        const photoUrl = resolveMediaUrl(t.media?.[0]?.url)
+        const photoUrl = getTalentPhotoUrl(t)
         return (
         <div
           key={t.id}

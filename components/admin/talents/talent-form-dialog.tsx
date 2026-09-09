@@ -25,15 +25,18 @@ import { useDomains } from "@/hooks/use-domains"
 import { useCreateTalent, useUpdateTalent } from "@/hooks/use-talents"
 import { mockDomains } from "@/lib/mock/domains.mock"
 import { MediaPickerDialog } from "@/components/admin/media/media-picker-dialog"
-import { resolveMediaUrl } from "@/lib/format"
 import { showValidationErrorAlert, showSuccessAlert, showErrorAlert } from "@/lib/alerts"
 import { FormFieldError } from "@/components/ui/form-field-error"
 import { ApiError } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
+import { useAttachMedia, useDetachMedia } from "@/hooks/use-media"
 import { Image as ImageIcon, Sparkles, Loader2, User } from "lucide-react"
 import { toast } from "sonner"
 import type { Talent, Media } from "@/types/models"
 import type { TalentStatus, Region } from "@/types/enums"
+
+/** Collection dédiée à la photo de profil du talent (voir MediaController::MEDIABLE_MAP). */
+const PHOTO_COLLECTION = "photo"
 
 interface TalentFormDialogProps {
   talent?: Talent | null
@@ -52,6 +55,8 @@ export function TalentFormDialog({
 
   const createMutation = useCreateTalent()
   const updateMutation = useUpdateTalent()
+  const attachMutation = useAttachMedia()
+  const detachMutation = useDetachMedia()
 
   const { data: rawDomains = [] } = useDomains()
   const domainList = React.useMemo(() => {
@@ -67,7 +72,8 @@ export function TalentFormDialog({
   const [region, setRegion] = useState<Region>("ziguinchor")
   const [presentation, setPresentation] = useState("")
   const [parcours, setParcours] = useState("")
-  const [photo, setPhoto] = useState("")
+  const [photoMedia, setPhotoMedia] = useState<Media | null>(null)
+  const [initialPhotoId, setInitialPhotoId] = useState<number | null>(null)
   const [domainId, setDomainId] = useState<string>("")
   const [statut, setStatut] = useState<TalentStatus>("publie")
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -83,7 +89,11 @@ export function TalentFormDialog({
       setRegion(talent.region || "ziguinchor")
       setPresentation(talent.presentation || "")
       setParcours(talent.parcours || "")
-      setPhoto(resolveMediaUrl(talent.media?.[0]?.url) || "")
+      const existingMedia = talent.media || []
+      const photo =
+        existingMedia.find((m) => m.collection === PHOTO_COLLECTION) || existingMedia[0] || null
+      setPhotoMedia(photo)
+      setInitialPhotoId(photo?.id ?? null)
       setDomainId(
         talent.domain_id
           ? String(talent.domain_id)
@@ -98,7 +108,8 @@ export function TalentFormDialog({
       setRegion("ziguinchor")
       setPresentation("")
       setParcours("")
-      setPhoto("")
+      setPhotoMedia(null)
+      setInitialPhotoId(null)
       setDomainId("")
       setStatut("publie")
     }
@@ -118,8 +129,43 @@ export function TalentFormDialog({
 
   const handleSelectPhoto = (selected: Media[]) => {
     if (selected.length > 0) {
-      setPhoto(selected[0].url)
+      setPhotoMedia(selected[0])
     }
+  }
+
+  /**
+   * Rattache/détache réellement la photo choisie auprès du backend — le
+   * picker ne fait que sélectionner un `Media` en mémoire (voir
+   * handleSelectPhoto), rien n'est persisté tant que cette fonction n'est
+   * pas appelée. Même principe que TemoignageFormDialog::syncPhoto.
+   */
+  const syncPhoto = async (talentId: number) => {
+    if (photoMedia?.id === (initialPhotoId ?? undefined)) return
+
+    const tasks: Promise<unknown>[] = []
+    if (initialPhotoId && initialPhotoId !== photoMedia?.id) {
+      tasks.push(
+        detachMutation.mutateAsync({
+          mediaId: initialPhotoId,
+          mediableType: "talent",
+          mediableId: talentId,
+          collection: PHOTO_COLLECTION,
+        })
+      )
+    }
+    if (photoMedia) {
+      tasks.push(
+        attachMutation.mutateAsync({
+          mediaId: photoMedia.id,
+          mediableType: "talent",
+          mediableId: talentId,
+          collection: PHOTO_COLLECTION,
+          ordre: 0,
+        })
+      )
+    }
+    if (tasks.length === 0) return
+    await Promise.all(tasks)
   }
 
   const validateForm = () => {
@@ -168,16 +214,31 @@ export function TalentFormDialog({
     }
 
     try {
+      let talentId: number
       if (isEditing && talent) {
-        await updateMutation.mutateAsync({
+        const updated = await updateMutation.mutateAsync({
           id: talent.id,
           payload,
         })
+        talentId = updated.id
         showSuccessAlert("Profil mis à jour", `Le profil de « ${nom} » a été modifié avec succès.`)
       } else {
-        await createMutation.mutateAsync(payload as Omit<Talent, "id">)
+        const created = await createMutation.mutateAsync(payload as Omit<Talent, "id">)
+        talentId = created.id
         showSuccessAlert("Talent enregistré", `Le profil de « ${nom} » a été créé avec succès.`)
       }
+
+      try {
+        await syncPhoto(talentId)
+      } catch (photoErr: unknown) {
+        showErrorAlert(
+          "Photo non synchronisée",
+          photoErr instanceof Error
+            ? photoErr.message
+            : "Le profil a été enregistré mais la photo n'a pas pu être mise à jour."
+        )
+      }
+
       onOpenChange(false)
       onSuccess?.()
     } catch (err: unknown) {
@@ -312,12 +373,12 @@ export function TalentFormDialog({
                 </Button>
               </div>
 
-              {photo ? (
+              {photoMedia ? (
                 <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-3.5">
                   <div className="flex items-center gap-4">
                     <div className="relative size-20 rounded-2xl overflow-hidden bg-secondary shrink-0 border border-border shadow-xs">
                       <img
-                        src={photo}
+                        src={photoMedia.url}
                         alt={nom || "Photo du talent"}
                         className="size-full object-cover"
                       />
@@ -328,7 +389,7 @@ export function TalentFormDialog({
                         Photo de profil active
                       </span>
                       <p className="text-xs font-bold text-foreground truncate">
-                        {photo}
+                        {photoMedia.nom || photoMedia.nom_original}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <Button
@@ -344,7 +405,7 @@ export function TalentFormDialog({
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => setPhoto("")}
+                          onClick={() => setPhotoMedia(null)}
                           className="h-7 rounded-lg text-xs font-semibold px-2 text-destructive hover:bg-destructive/10"
                         >
                           Retirer
@@ -491,7 +552,7 @@ export function TalentFormDialog({
         open={isPhotoPickerOpen}
         onOpenChange={setIsPhotoPickerOpen}
         multiple={false}
-        selectedUrls={photo ? [photo] : []}
+        selectedUrls={photoMedia ? [photoMedia.url] : []}
         onSelect={handleSelectPhoto}
         title="Choisir la photo du Talent"
         description="Sélectionnez un portrait ou une photo de terrain pour illustrer le profil de ce talent."

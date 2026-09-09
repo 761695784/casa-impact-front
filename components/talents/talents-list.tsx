@@ -6,7 +6,6 @@ import Link from "next/link"
 import {
   Sparkles,
   MapPin,
-  ExternalLink,
   ArrowRight,
   UserCheck,
   Search,
@@ -18,7 +17,7 @@ import { useTalents } from "@/hooks/use-content"
 import { CardGridSkeleton } from "@/components/ui/card-grid-skeleton"
 import { Button } from "@/components/ui/button"
 import { BaobabMark } from "@/components/brand/baobab-mark"
-import { resolveMediaUrl } from "@/lib/format"
+import { getTalentPhotoUrl } from "@/lib/format"
 import { REGION_LABELS, type Region } from "@/types/enums"
 
 // Clés alignées sur le vrai type Region ('ziguinchor' | 'sedhiou' | 'kolda'),
@@ -206,15 +205,16 @@ export function TalentsList() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredTalents.map((talent) => (
-            <article
+            <Link
               key={talent.id}
+              href={`/talents/${talent.slug}`}
               className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl"
             >
               <div>
-                {/* Photo container — pas de champ `photo` direct, image via `media` (premier élément) */}
+                {/* Photo container — pas de champ `photo` direct, image via `media` (collection "photo") */}
                 <div className="relative aspect-[4/5] w-full overflow-hidden bg-secondary">
                   <Image
-                    src={resolveMediaUrl(talent.media?.[0]?.url) || "/assets/team/placeholder.svg"}
+                    src={getTalentPhotoUrl(talent) || "/assets/team/placeholder.svg"}
                     alt={talent.nom}
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"
@@ -253,32 +253,14 @@ export function TalentsList() {
                 </div>
               </div>
 
-              {/* Links and Actions — liens_externes est un tableau de simples URLs (string[]) */}
-              {talent.liens_externes && talent.liens_externes.length > 0 && (
-                <div className="p-6 pt-0 border-t border-border/60 mt-4 flex flex-wrap gap-2">
-                  {talent.liens_externes.map((url, idx) => {
-                    let label = url
-                    try {
-                      label = new URL(url).hostname
-                    } catch {
-                      // URL non parsable : on garde l'URL brute comme libellé
-                    }
-                    return (
-                      <a
-                        key={idx}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-                      >
-                        <span>{label}</span>
-                        <ExternalLink className="size-3" />
-                      </a>
-                    )
-                  })}
-                </div>
-              )}
-            </article>
+              {/* Read More — le détail complet (parcours, projet, témoignage, liens...) est sur la fiche */}
+              <div className="px-6 pb-6 pt-4 border-t border-border/60 mt-4 flex items-center justify-between text-xs sm:text-sm font-semibold text-primary">
+                <span className="group-hover:underline">Voir le profil complet</span>
+                <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform group-hover:translate-x-1 group-hover:bg-primary group-hover:text-primary-foreground">
+                  <ArrowRight className="size-4" />
+                </span>
+              </div>
+            </Link>
           ))}
         </div>
       )}

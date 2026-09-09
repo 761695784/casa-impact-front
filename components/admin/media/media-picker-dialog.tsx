@@ -26,6 +26,7 @@ import {
 } from "lucide-react"
 import { MEDIA_CATEGORY_LABELS } from "@/types/enums"
 import type { Media } from "@/types/models"
+import { compressImageToWebP } from "@/lib/image-processing"
 
 interface MediaPickerDialogProps {
   open: boolean
@@ -63,6 +64,7 @@ export function MediaPickerDialog({
   const [uploadPreview, setUploadPreview] = useState("")
   const [uploadNom, setUploadNom] = useState("")
   const [uploadCategory, setUploadCategory] = useState<string>("general")
+  const [isCompressing, setIsCompressing] = useState(false)
 
   // Initialize selection when opened
   useEffect(() => {
@@ -142,9 +144,17 @@ export function MediaPickerDialog({
     e.preventDefault()
     if (!uploadFile) return
 
+    let fileToUpload = uploadFile
+    try {
+      setIsCompressing(true)
+      fileToUpload = await compressImageToWebP(uploadFile)
+    } finally {
+      setIsCompressing(false)
+    }
+
     try {
       const created = await createMutation.mutateAsync({
-        file: uploadFile,
+        file: fileToUpload,
         nom: uploadNom.trim() || undefined,
         categorie: (uploadCategory as any) || "general",
       })
@@ -374,10 +384,14 @@ export function MediaPickerDialog({
 
               <Button
                 type="submit"
-                disabled={createMutation.isPending || !uploadFile}
+                disabled={createMutation.isPending || isCompressing || !uploadFile}
                 className="w-full rounded-full bg-primary text-white hover:bg-forest font-bold text-xs"
               >
-                {createMutation.isPending ? "Téléversement..." : "Ajouter et Sélectionner"}
+                {isCompressing
+                  ? "Optimisation de l'image..."
+                  : createMutation.isPending
+                    ? "Téléversement..."
+                    : "Ajouter et Sélectionner"}
               </Button>
             </form>
           </TabsContent>

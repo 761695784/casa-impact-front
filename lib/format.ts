@@ -65,9 +65,12 @@ export function resolveMediaUrl(url?: string): string | undefined {
  * logo n'est présent — à l'appelant de gérer le repli visuel.
  */
 export function getPartnerLogoUrl(partner: {
-  media?: { collection: string; url: string }[]
+  media?: { collection?: string; url: string }[]
+  logo?: string
 }): string | undefined {
-  return resolveMediaUrl(partner.media?.find((m) => m.collection === "logo")?.url)
+  const media = partner.media || []
+  const logoMedia = media.find((m) => m.collection === "logo")
+  return resolveMediaUrl(logoMedia?.url || partner.logo)
 }
 
 /**
@@ -126,9 +129,10 @@ export function getTestimonialPhotoUrl(testimonial: {
  */
 export function getTalentPhotoUrl(talent: {
   media?: { collection?: string; url: string }[]
+  photo?: string
 }): string | undefined {
   const media = talent.media || []
   const photo = media.find((m) => m.collection === "photo") || media[0]
-  return resolveMediaUrl(photo?.url)
+  return resolveMediaUrl(photo?.url || talent.photo)
 }
 

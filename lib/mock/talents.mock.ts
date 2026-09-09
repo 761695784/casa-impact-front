@@ -139,4 +139,41 @@ export const mockTalents: Talent[] = [
     created_at: "2026-02-01T11:00:00Z",
     updated_at: "2026-02-18T10:00:00Z",
   },
+  {
+    id: 7,
+    nom: "Elisabeth Leye",
+    slug: "elisabeth-leye",
+    domaine_activite: "Agroalimentaire & Transformation Artisanale",
+    region: "ziguinchor",
+    localisation: "Ziguinchor, Basse-Casamance",
+    bio: "Entrepreneure audacieuse valorisant les richesses du terroir casamançais à travers des produits bio d'exception.",
+    presentation: "Entrepreneure audacieuse et engagée, Elisabeth Leye incarne la renaissance de la transformation artisanale et agroalimentaire en Basse-Casamance, conciliant tradition ancestrale et standards de qualité modernes.",
+    recit_titre: "De la passion des terroirs à une entreprise agroalimentaire d'impact",
+    recit_corps: `Née et ayant grandi au cœur de la Casamance, Elisabeth Leye a toujours été fascinée par l'abondance naturelle de sa région : mangues sauvages, noix de cajou, miel des mangroves et céréales locales. Après des études en gestion et plusieurs années d'expériences professionnelles, elle a fait le choix audacieux de revenir s'ancrer sur sa terre natale pour bâtir une unité de transformation innovante.
+
+Aujourd'hui, son entreprise collabore directement avec plus d'une cinquantaine de femmes productrices et d'agriculteurs familiaux des départements de Ziguinchor et d'Oussouye. En garantissant un prix équitable et en introduisant des procédés de séchage solaire respectueux de l'environnement, elle transforme les surplus agricoles en produits sains, gourmands et labellisés.
+
+Pour Elisabeth, chaque bocal et chaque sachet qui sort de son atelier est un ambassadeur de la Casamance : une preuve vivante que la jeunesse locale peut créer de la valeur durable, préserver le patrimoine culinaire et inspirer tout un continent.`,
+    parcours: "Diplômée en sciences de gestion, Elisabeth a débuté son parcours dans la distribution avant de lancer son unité artisanale. Lauréate de plusieurs prix régionaux pour l'innovation agricole et l'autonomisation des femmes, elle forme aujourd'hui des dizaines de jeunes aux métiers de la transformation agro-écologique.",
+    projet: "Développement d'une chaîne de valeur bio-sourcée et déploiement d'une marque territoriale de produits fins de Casamance distribués à l'échelle nationale et internationale.",
+    realisations: "Création de 28 emplois directs et indirects, mise en place d'une coopérative de 50 récoltantes de mangues et d'épices, et labellisation 'Origine Casamance Garantie'.",
+    temoignage: "La Casamance regorge d'or vert et de talents inouïs. Tout ce dont nous avons besoin, c'est de croire en notre potentiel et de structurer nos filières pour faire briller notre terroir dans le monde entier.",
+    photo: "/assets/team/placeholder.svg",
+    liens: [
+      { label: "LinkedIn", url: "https://linkedin.com/in/elisabethleye" },
+      { label: "Boutique Terroir", url: "https://casaimpact.org/boutique" },
+    ],
+    liens_externes: [
+      "https://linkedin.com/in/elisabethleye",
+      "https://casaimpact.org/boutique",
+    ],
+    domaine_id: 2,
+    domaine: mockDomains[1],
+    programme_id: 2,
+    programme: mockPrograms[1],
+    statut: "publie",
+    ordre: 7,
+    created_at: "2026-02-15T10:00:00Z",
+    updated_at: "2026-02-20T14:00:00Z",
+  },
 ]

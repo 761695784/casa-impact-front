@@ -35,7 +35,7 @@ export interface Media {
   url: string
   nom_original?: string
   mime?: string
-  type: 'image' | 'document'
+  type?: 'image' | 'document' | string
   taille?: number
   dimensions?: string
   alt?: string

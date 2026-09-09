@@ -21,6 +21,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showValidationErrorAlert,
+} from "@/lib/alerts"
+import { ApiError } from "@/lib/api-client"
 import { Plus, Trash2, Megaphone, Loader2, Sparkles } from "lucide-react"
 import { APPLICATION_CALL_STATUS_LABELS, REGION_LABELS } from "@/types/enums"
 import { mockPrograms } from "@/lib/mock/programs.mock"
@@ -60,6 +67,17 @@ export function AppelFormDialog({
   const [nombrePlaces, setNombrePlaces] = useState<string>("30")
   const [statut, setStatut] = useState<ApplicationCallStatus>("brouillon")
   const [documents, setDocuments] = useState<ApplicationDocument[]>(DEFAULT_DOCUMENTS)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[field]
+        return next
+      })
+    }
+  }
 
   const createMutation = useCreateApplicationCall()
   const updateMutation = useUpdateApplicationCall()
@@ -98,6 +116,7 @@ export function AppelFormDialog({
       setStatut("brouillon")
       setDocuments(DEFAULT_DOCUMENTS)
     }
+    setErrors({})
   }, [applicationCall, open])
 
   const handleAddDocument = () => {
@@ -117,17 +136,50 @@ export function AppelFormDialog({
     setDocuments(updated)
   }
 
+  const validateForm = (): boolean => {
+    const errs: Record<string, string> = {}
+
+    if (!titre.trim()) {
+      errs.titre = "Le titre officiel de l'appel est requis."
+    } else if (titre.trim().length < 3) {
+      errs.titre = "Le titre doit comporter au moins 3 caractères."
+    }
+
+    if (!programmeId) {
+      errs.programmeId = "Veuillez sélectionner un programme associé."
+    }
+
+    if (!dateLimite) {
+      errs.dateLimite = "La date limite de candidature est requise."
+    } else if (dateOuverture && new Date(dateLimite) < new Date(dateOuverture)) {
+      errs.dateLimite = "La date limite ne peut pas être antérieure à la date d'ouverture."
+    }
+
+    if (nombrePlaces && Number(nombrePlaces) <= 0) {
+      errs.nombrePlaces = "Le nombre de places doit être supérieur à 0."
+    }
+
+    setErrors(errs)
+    if (Object.keys(errs).length > 0) {
+      showValidationErrorAlert(Object.values(errs))
+      return false
+    }
+    return true
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (!validateForm()) return
+
     const payload = {
-      titre,
-      slug: slug || titre.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-      resume,
-      description,
+      titre: titre.trim(),
+      slug: slug || titre.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      resume: resume.trim() || undefined,
+      description: description.trim() || undefined,
       programme_id: Number(programmeId),
       region: region as Region,
-      localisation,
+      localisation: localisation.trim() || undefined,
       date_ouverture: dateOuverture || undefined,
       date_limite: dateLimite || undefined,
       nombre_places: nombrePlaces ? Number(nombrePlaces) : null,
@@ -135,17 +187,47 @@ export function AppelFormDialog({
       documents_requis: documents,
     }
 
-    if (isEditing && applicationCall) {
-      await updateMutation.mutateAsync({
-        id: applicationCall.id,
-        payload,
-      })
-    } else {
-      await createMutation.mutateAsync(payload)
-    }
+    try {
+      if (isEditing && applicationCall) {
+        await updateMutation.mutateAsync({
+          id: applicationCall.id,
+          payload,
+        })
+        await showSuccessAlert(
+          "Appel à candidatures mis à jour !",
+          "L'appel à candidatures a été modifié avec succès."
+        )
+      } else {
+        await createMutation.mutateAsync(payload)
+        await showSuccessAlert(
+          "Appel à candidatures créé !",
+          "Le nouvel appel a été enregistré avec succès."
+        )
+      }
 
-    onOpenChange(false)
-    onSuccess?.()
+      onOpenChange(false)
+      onSuccess?.()
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.errors) {
+        const backendErrors: Record<string, string> = {}
+        const errorMessages: string[] = []
+        Object.entries(err.errors).forEach(([field, messages]) => {
+          backendErrors[field] = messages[0]
+          errorMessages.push(...messages)
+        })
+        setErrors(backendErrors)
+        showValidationErrorAlert(
+          errorMessages.length > 0 ? errorMessages : [err.message]
+        )
+      } else {
+        showErrorAlert(
+          "Erreur d'enregistrement",
+          err instanceof Error
+            ? err.message
+            : "Une erreur est survenue lors de l'enregistrement de l'appel."
+        )
+      }
+    }
   }
 
   return (
@@ -173,17 +255,25 @@ export function AppelFormDialog({
 
             <div className="space-y-3">
               <div>
-                <Label htmlFor="call-titre" className="text-xs font-semibold">
+                <Label htmlFor="call-titre" className={`text-xs font-semibold ${errors.titre ? "text-destructive" : ""}`}>
                   Titre officiel de l'appel *
                 </Label>
                 <Input
                   id="call-titre"
                   required
                   value={titre}
-                  onChange={(e) => setTitre(e.target.value)}
+                  onChange={(e) => {
+                    setTitre(e.target.value)
+                    clearError("titre")
+                  }}
                   placeholder="Ex : Cohorte 2026 — Académie du Leadership Jeune"
-                  className="mt-1.5 h-11 rounded-xl text-sm"
+                  className={`mt-1.5 h-11 rounded-xl text-sm ${
+                    errors.titre
+                      ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                      : ""
+                  }`}
                 />
+                <FormFieldError error={errors.titre} />
               </div>
 
               <div>
@@ -224,11 +314,24 @@ export function AppelFormDialog({
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <Label htmlFor="call-programme" className="text-xs font-semibold">
-                  Programme associé
+                <Label htmlFor="call-programme" className={`text-xs font-semibold ${errors.programmeId ? "text-destructive" : ""}`}>
+                  Programme associé *
                 </Label>
-                <Select value={programmeId} onValueChange={(val) => setProgrammeId(val || "1")}>
-                  <SelectTrigger id="call-programme" className="mt-1.5 h-10 rounded-xl text-xs">
+                <Select
+                  value={programmeId}
+                  onValueChange={(val) => {
+                    setProgrammeId(val || "1")
+                    clearError("programmeId")
+                  }}
+                >
+                  <SelectTrigger
+                    id="call-programme"
+                    className={`mt-1.5 h-10 w-full rounded-xl text-xs ${
+                      errors.programmeId
+                        ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                        : ""
+                    }`}
+                  >
                     <SelectValue placeholder="Sélectionner un programme" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl text-xs">
@@ -239,6 +342,7 @@ export function AppelFormDialog({
                     ))}
                   </SelectContent>
                 </Select>
+                <FormFieldError error={errors.programmeId} />
               </div>
 
               <div>
@@ -246,7 +350,7 @@ export function AppelFormDialog({
                   Région cible
                 </Label>
                 <Select value={region} onValueChange={(val) => setRegion(val || "ziguinchor")}>
-                  <SelectTrigger id="call-region" className="mt-1.5 h-10 rounded-xl text-xs">
+                  <SelectTrigger id="call-region" className="mt-1.5 h-10 w-full rounded-xl text-xs">
                     <SelectValue placeholder="Région" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl text-xs">
@@ -273,7 +377,7 @@ export function AppelFormDialog({
               </div>
 
               <div>
-                <Label htmlFor="call-places" className="text-xs font-semibold">
+                <Label htmlFor="call-places" className={`text-xs font-semibold ${errors.nombrePlaces ? "text-destructive" : ""}`}>
                   Nombre de places disponibles
                 </Label>
                 <Input
@@ -281,10 +385,18 @@ export function AppelFormDialog({
                   type="number"
                   min={1}
                   value={nombrePlaces}
-                  onChange={(e) => setNombrePlaces(e.target.value)}
+                  onChange={(e) => {
+                    setNombrePlaces(e.target.value)
+                    clearError("nombrePlaces")
+                  }}
                   placeholder="Ex : 40"
-                  className="mt-1.5 h-10 rounded-xl text-xs"
+                  className={`mt-1.5 h-10 rounded-xl text-xs ${
+                    errors.nombrePlaces
+                      ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                      : ""
+                  }`}
                 />
+                <FormFieldError error={errors.nombrePlaces} />
               </div>
 
               <div>
@@ -295,13 +407,16 @@ export function AppelFormDialog({
                   id="call-date-ouverture"
                   type="date"
                   value={dateOuverture}
-                  onChange={(e) => setDateOuverture(e.target.value)}
+                  onChange={(e) => {
+                    setDateOuverture(e.target.value)
+                    clearError("dateLimite")
+                  }}
                   className="mt-1.5 h-10 rounded-xl text-xs"
                 />
               </div>
 
               <div>
-                <Label htmlFor="call-date-limite" className="text-xs font-semibold">
+                <Label htmlFor="call-date-limite" className={`text-xs font-semibold ${errors.dateLimite ? "text-destructive" : ""}`}>
                   Date limite de candidature *
                 </Label>
                 <Input
@@ -309,9 +424,17 @@ export function AppelFormDialog({
                   type="date"
                   required
                   value={dateLimite}
-                  onChange={(e) => setDateLimite(e.target.value)}
-                  className="mt-1.5 h-10 rounded-xl text-xs"
+                  onChange={(e) => {
+                    setDateLimite(e.target.value)
+                    clearError("dateLimite")
+                  }}
+                  className={`mt-1.5 h-10 rounded-xl text-xs ${
+                    errors.dateLimite
+                      ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                      : ""
+                  }`}
                 />
+                <FormFieldError error={errors.dateLimite} />
               </div>
             </div>
           </div>

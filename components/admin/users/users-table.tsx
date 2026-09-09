@@ -119,7 +119,7 @@ export function UsersTable({ users, onEdit, onDelete }: UsersTableProps) {
                       }`}
                     >
                       <Shield className="size-3 shrink-0" />
-                      <span>{ADMIN_ROLE_LABELS[u.role?.slug] || u.role?.nom}</span>
+                      <span>{(u.role?.slug && ADMIN_ROLE_LABELS[u.role.slug]) || u.role?.nom || "Utilisateur"}</span>
                     </span>
                   </TableCell>
 

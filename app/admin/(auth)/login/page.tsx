@@ -7,6 +7,8 @@ import { Logo } from "@/components/brand/logo"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import { showErrorAlert, showValidationErrorAlert } from "@/lib/alerts"
 import { useAuth } from "@/lib/auth/auth-context"
 import { ApiError } from "@/lib/api-client"
 import { DATA_SOURCE } from "@/lib/config"
@@ -17,20 +19,62 @@ function LoginForm() {
   const [email, setEmail] = useState(DATA_SOURCE === "mock" ? "admin@casaimpact.org" : "")
   const [password, setPassword] = useState(DATA_SOURCE === "mock" ? "password123" : "")
   const [error, setError] = useState<string | null>(null)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[field]
+        return next
+      })
+    }
+    if (error) setError(null)
+  }
+
+  const validateForm = (): boolean => {
+    const errs: Record<string, string> = {}
+
+    if (!email.trim()) {
+      errs.email = "L'adresse e-mail est requise."
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errs.email = "Veuillez entrer une adresse e-mail valide."
+    }
+
+    if (!password) {
+      errs.password = "Le mot de passe est requis."
+    } else if (password.length < 6) {
+      errs.password = "Le mot de passe doit comporter au moins 6 caractères."
+    }
+
+    setErrors(errs)
+    if (Object.keys(errs).length > 0) {
+      return false
+    }
+    return true
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+
+    if (!validateForm()) return
+
     try {
-      await login({ email, password })
+      await login({ email: email.trim(), password })
     } catch (err: unknown) {
       // Un échec de connexion réel est un 422 Laravel (ValidationException),
       // pas un 401 — le message de champ (err.errors.email[0]) est plus
       // précis que le message générique quand il est disponible.
       if (err instanceof ApiError) {
-        setError(err.errors?.email?.[0] || err.message)
+        const msg = err.errors?.email?.[0] || err.message
+        setError(msg)
+        setErrors({ email: msg })
+        showErrorAlert("Échec de connexion", msg)
       } else {
-        setError(err instanceof Error ? err.message : "Identifiants invalides.")
+        const msg = err instanceof Error ? err.message : "Identifiants invalides."
+        setError(msg)
+        showErrorAlert("Échec de connexion", msg)
       }
     }
   }
@@ -64,7 +108,7 @@ function LoginForm() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <Label htmlFor="email" className="text-xs font-semibold text-foreground">
+              <Label htmlFor="email" className={`text-xs font-semibold ${errors.email ? "text-destructive" : "text-foreground"}`}>
                 Adresse e-mail institutionnelle
               </Label>
               <div className="relative mt-1.5">
@@ -73,17 +117,25 @@ function LoginForm() {
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    clearError("email")
+                  }}
                   placeholder="nom@casaimpact.org"
-                  className="h-11 rounded-xl pl-10"
+                  className={`h-11 rounded-xl pl-10 ${
+                    errors.email
+                      ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                      : ""
+                  }`}
                 />
-                <Mail className="absolute left-3.5 top-3.5 size-4 text-muted-foreground" />
+                <Mail className={`absolute left-3.5 top-3.5 size-4 ${errors.email ? "text-destructive" : "text-muted-foreground"}`} />
               </div>
+              <FormFieldError error={errors.email} />
             </div>
 
             <div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-xs font-semibold text-foreground">
+                <Label htmlFor="password" className={`text-xs font-semibold ${errors.password ? "text-destructive" : "text-foreground"}`}>
                   Mot de passe
                 </Label>
               </div>
@@ -93,12 +145,20 @@ function LoginForm() {
                   type="password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    clearError("password")
+                  }}
                   placeholder="••••••••••••"
-                  className="h-11 rounded-xl pl-10"
+                  className={`h-11 rounded-xl pl-10 ${
+                    errors.password
+                      ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                      : ""
+                  }`}
                 />
-                <Lock className="absolute left-3.5 top-3.5 size-4 text-muted-foreground" />
+                <Lock className={`absolute left-3.5 top-3.5 size-4 ${errors.password ? "text-destructive" : "text-muted-foreground"}`} />
               </div>
+              <FormFieldError error={errors.password} />
             </div>
 
             <Button

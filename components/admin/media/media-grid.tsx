@@ -2,15 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
-import {
-  FileText,
-  Eye,
-  Pencil,
-  Trash2,
-  Copy,
-  Layers,
-  ExternalLink,
-} from "lucide-react"
+import { FileText, Eye, Pencil, Trash2, Copy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { formatDate } from "@/lib/format"
@@ -69,7 +61,7 @@ export function MediaGrid({
                 <div className="flex flex-col items-center justify-center text-forest p-4">
                   <FileText className="size-10 opacity-80 group-hover:scale-110 transition-transform" />
                   <span className="font-mono text-[10px] uppercase mt-1 font-bold text-muted-foreground">
-                    {m.mime_type?.split("/")[1] || "DOC"}
+                    {m.mime?.split("/")[1] || "DOC"}
                   </span>
                 </div>
               )}
@@ -96,12 +88,12 @@ export function MediaGrid({
                 <p
                   onClick={() => onPreview(m)}
                   className="font-bold text-xs text-foreground hover:text-primary transition-colors cursor-pointer line-clamp-1 mt-1"
-                  title={m.nom || m.nom_fichier}
+                  title={m.nom || m.nom_original}
                 >
-                  {m.nom || m.nom_fichier}
+                  {m.nom || m.nom_original}
                 </p>
                 <p className="font-mono text-[10px] text-muted-foreground truncate">
-                  {m.nom_fichier}
+                  {m.nom_original}
                 </p>
               </div>
 
@@ -109,14 +101,6 @@ export function MediaGrid({
                 <span>{formatBytes(m.taille)}</span>
                 {m.dimensions && <span>{m.dimensions}</span>}
               </div>
-
-              {/* Linked Entity */}
-              {m.entite_liee && (
-                <div className="flex items-center gap-1 text-[10px] text-forest font-medium truncate bg-forest/5 px-2 py-1 rounded-lg border border-forest/15">
-                  <Layers className="size-3 shrink-0" />
-                  <span className="truncate">{m.entite_liee.titre}</span>
-                </div>
-              )}
             </div>
 
             {/* Card Action Buttons */}

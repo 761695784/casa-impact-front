@@ -1,4 +1,5 @@
-import { DATA_SOURCE, API_URL } from "@/lib/config"
+import { DATA_SOURCE } from "@/lib/config"
+import { apiFetch } from "@/lib/api-client"
 import { mockPrograms, mockProgramTypes } from "@/lib/mock/programs.mock"
 import { mockDomains } from "@/lib/mock/domains.mock"
 import type { Program, PaginatedResponse } from "@/types/models"
@@ -7,11 +8,26 @@ import type { ProgramStatus, Region } from "@/types/enums"
 export interface ListProgramsParams {
   search?: string
   statut?: ProgramStatus | "all" | string
+  domain_id?: number | "all" | string
+  program_type_id?: number | "all" | string
+  /** Alias legacy (composants admin existants) — voir resolveFilterIds(). */
   domaine_id?: number | "all" | string
   type_id?: number | "all" | string
   region?: Region | "all" | string
   page?: number
   per_page?: number
+}
+
+/**
+ * Les composants admin existants (page liste, barre de filtres) passent
+ * encore `domaine_id`/`type_id` (noms historiques). On les accepte en
+ * alias de `domain_id`/`program_type_id` (noms réels API) pour n'avoir
+ * à toucher aucun composant de présentation.
+ */
+function resolveFilterIds(params: ListProgramsParams) {
+  const domainId = params.domain_id ?? params.domaine_id ?? "all"
+  const programTypeId = params.program_type_id ?? params.type_id ?? "all"
+  return { domainId, programTypeId }
 }
 
 function delay<T>(data: T, ms = 120): Promise<T> {
@@ -22,9 +38,53 @@ function generateSlug(titre: string): string {
   return titre
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "")
+}
+
+/**
+ * Seuls ces champs existent réellement côté backend (voir
+ * StoreProgramRequest/UpdateProgramRequest) — jamais `domaine`/`domaine_id`/
+ * `type`/`type_id`/`image`/`medias`/`appels_count` (calculés ou dérivés,
+ * jamais envoyés en écriture).
+ */
+function toApiPayload(payload: Partial<Program>): Record<string, unknown> {
+  const body: Record<string, unknown> = {}
+  if (payload.titre !== undefined) body.titre = payload.titre
+  if (payload.slug !== undefined) body.slug = payload.slug
+  if (payload.description !== undefined) body.description = payload.description
+  if (payload.resume !== undefined) body.resume = payload.resume
+  if (payload.region !== undefined) body.region = payload.region
+  if (payload.localisation !== undefined) body.localisation = payload.localisation
+  if (payload.statut !== undefined) body.statut = payload.statut
+  // Le formulaire admin construit encore son payload avec `domaine_id`/
+  // `type_id` (noms historiques) — on les accepte en repli des noms réels.
+  const domainId = payload.domain_id ?? payload.domaine_id
+  const programTypeId = payload.program_type_id ?? payload.type_id
+  if (domainId !== undefined) body.domain_id = domainId
+  if (programTypeId !== undefined) body.program_type_id = programTypeId
+  if (payload.date_debut !== undefined) body.date_debut = payload.date_debut
+  if (payload.date_fin !== undefined) body.date_fin = payload.date_fin
+  if (payload.beneficiaires_count !== undefined) body.beneficiaires_count = payload.beneficiaires_count
+  return body
+}
+
+/**
+ * Aligne la réponse API réelle (`domain`/`domain_id`/`program_type`/
+ * `program_type_id`, voir ProgramResource) sur les noms historiques
+ * (`domaine`/`domaine_id`/`type`/`type_id`) attendus par les composants
+ * de présentation admin déjà en place (table, liste mobile, fiche détail,
+ * formulaire) — évite de devoir les réécrire un par un.
+ */
+function withLegacyNames(p: Program): Program {
+  return {
+    ...p,
+    domaine: p.domain ?? p.domaine,
+    domaine_id: p.domain_id ?? p.domaine_id,
+    type: p.program_type ?? p.type,
+    type_id: p.program_type_id ?? p.type_id,
+  }
 }
 
 export const programsService = {
@@ -35,15 +95,8 @@ export const programsService = {
   listPrograms: async (
     params: ListProgramsParams = {}
   ): Promise<PaginatedResponse<Program>> => {
-    const {
-      search = "",
-      statut = "all",
-      domaine_id = "all",
-      type_id = "all",
-      region = "all",
-      page = 1,
-      per_page = 10,
-    } = params
+    const { search = "", statut = "all", region = "all", page = 1, per_page = 10 } = params
+    const { domainId: domain_id, programTypeId: program_type_id } = resolveFilterIds(params)
 
     if (DATA_SOURCE === "mock") {
       let filtered = [...mockPrograms]
@@ -63,15 +116,15 @@ export const programsService = {
         filtered = filtered.filter((p) => p.statut === statut)
       }
 
-      if (domaine_id && domaine_id !== "all") {
+      if (domain_id && domain_id !== "all") {
         filtered = filtered.filter(
-          (p) => p.domaine_id === Number(domaine_id) || p.domaine?.id === Number(domaine_id)
+          (p) => p.domaine_id === Number(domain_id) || p.domaine?.id === Number(domain_id)
         )
       }
 
-      if (type_id && type_id !== "all") {
+      if (program_type_id && program_type_id !== "all") {
         filtered = filtered.filter(
-          (p) => p.type_id === Number(type_id) || p.type?.id === Number(type_id)
+          (p) => p.type_id === Number(program_type_id) || p.type?.id === Number(program_type_id)
         )
       }
 
@@ -99,34 +152,22 @@ export const programsService = {
     const queryParams = new URLSearchParams()
     if (search) queryParams.set("search", search)
     if (statut && statut !== "all") queryParams.set("statut", statut)
-    if (domaine_id && domaine_id !== "all") queryParams.set("domaine_id", String(domaine_id))
-    if (type_id && type_id !== "all") queryParams.set("type_id", String(type_id))
+    if (domain_id && domain_id !== "all") queryParams.set("domain_id", String(domain_id))
+    if (program_type_id && program_type_id !== "all") queryParams.set("program_type_id", String(program_type_id))
     if (region && region !== "all") queryParams.set("region", region)
     queryParams.set("page", String(page))
     queryParams.set("per_page", String(per_page))
 
-    const res = await fetch(`${API_URL}/api/admin/programs?${queryParams.toString()}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Laravel Sanctum SPA
-    })
+    const json = await apiFetch<PaginatedResponse<Program>>(
+      `/api/admin/programs?${queryParams.toString()}`,
+      { method: "GET" }
+    )
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors du chargement des programmes (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data ? json : { data: json.data || json, meta: json.meta }
+    return { ...json, data: json.data.map(withLegacyNames) }
   },
 
   /**
-   * Détail d'un programme par son ID ou son slug
+   * Détail d'un programme par son ID
    * Endpoint : GET /api/admin/programs/{id}
    */
   getProgram: async (id: number | string): Promise<Program> => {
@@ -140,21 +181,12 @@ export const programsService = {
       return delay<Program>(found)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/programs/${id}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
+    const json = await apiFetch<{ data?: Program } | Program>(
+      `/api/admin/programs/${id}`,
+      { method: "GET" }
+    )
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Impossible de charger le programme #${id} (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    return withLegacyNames((json as { data?: Program }).data ?? (json as Program))
   },
 
   /**
@@ -189,25 +221,12 @@ export const programsService = {
       return delay<Program>(newProgram)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/programs`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
+    const json = await apiFetch<{ data?: Program } | Program>(
+      `/api/admin/programs`,
+      { method: "POST", body: toApiPayload(payload) }
+    )
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la création du programme (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    return withLegacyNames((json as { data?: Program }).data ?? (json as Program))
   },
 
   /**
@@ -247,25 +266,12 @@ export const programsService = {
       return delay<Program>(updated)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/programs/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
+    const json = await apiFetch<{ data?: Program } | Program>(
+      `/api/admin/programs/${id}`,
+      { method: "PUT", body: toApiPayload(payload) }
+    )
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la mise à jour du programme (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    return withLegacyNames((json as { data?: Program }).data ?? (json as Program))
   },
 
   /**
@@ -281,25 +287,15 @@ export const programsService = {
       return delay<boolean>(true)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/programs/${id}`, {
-      method: "DELETE",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la suppression du programme (HTTP ${res.status})`
-      )
-    }
-
+    await apiFetch<void>(`/api/admin/programs/${id}`, { method: "DELETE" })
     return true
   },
 
   /**
    * Exportation des programmes en CSV
    * Endpoint : GET /api/admin/programs/export
+   * (Réponse binaire — passe par `fetch` directement, `apiFetch` est taillé
+   * pour du JSON. GET n'a pas besoin du header CSRF.)
    */
   exportPrograms: async (
     params: Omit<ListProgramsParams, "page" | "per_page"> = {}
@@ -316,15 +312,17 @@ export const programsService = {
         )
         .join("\n")
 
-      blob = new Blob(["\uFEFF" + headers + rows], {
+      blob = new Blob(["﻿" + headers + rows], {
         type: "text/csv;charset=utf-8;",
       })
     } else {
+      const { API_URL } = await import("@/lib/config")
+      const { domainId, programTypeId } = resolveFilterIds(params)
       const queryParams = new URLSearchParams()
       if (params.search) queryParams.set("search", params.search)
       if (params.statut && params.statut !== "all") queryParams.set("statut", params.statut)
-      if (params.domaine_id && params.domaine_id !== "all") queryParams.set("domaine_id", String(params.domaine_id))
-      if (params.type_id && params.type_id !== "all") queryParams.set("type_id", String(params.type_id))
+      if (domainId !== "all") queryParams.set("domain_id", String(domainId))
+      if (programTypeId !== "all") queryParams.set("program_type_id", String(programTypeId))
       if (params.region && params.region !== "all") queryParams.set("region", params.region)
 
       const res = await fetch(`${API_URL}/api/admin/programs/export?${queryParams.toString()}`, {

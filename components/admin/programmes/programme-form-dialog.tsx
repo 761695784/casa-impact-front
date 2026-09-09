@@ -24,7 +24,14 @@ import { PROGRAM_STATUS_LABELS, REGION_LABELS } from "@/types/enums"
 import { useDomains } from "@/hooks/use-domains"
 import { useProgramTypes } from "@/hooks/use-program-types"
 import { useCreateProgram, useUpdateProgram } from "@/hooks/use-programs"
-import { Compass, Loader2, Sparkles } from "lucide-react"
+import { mockDomains } from "@/lib/mock/domains.mock"
+import { mockProgramTypes } from "@/lib/mock/programs.mock"
+import { showValidationErrorAlert, showSuccessAlert, showErrorAlert } from "@/lib/alerts"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import { ApiError } from "@/lib/api-client"
+import { cn } from "@/lib/utils"
+import { Compass, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 import type { Program } from "@/types/models"
 import type { ProgramStatus, Region } from "@/types/enums"
 
@@ -46,6 +53,22 @@ export function ProgrammeFormDialog({
   const { data: domains = [] } = useDomains()
   const { data: programTypes = [] } = useProgramTypes()
 
+  const domainList = React.useMemo(() => {
+    const base = domains && domains.length > 0 ? [...domains] : [...mockDomains]
+    if (program?.domaine && !base.some((d) => String(d.id) === String(program.domaine?.id))) {
+      base.push(program.domaine)
+    }
+    return base
+  }, [domains, program])
+
+  const typeList = React.useMemo(() => {
+    const base = programTypes && programTypes.length > 0 ? [...programTypes] : [...mockProgramTypes]
+    if (program?.type && !base.some((t) => String(t.id) === String(program.type?.id))) {
+      base.push(program.type)
+    }
+    return base
+  }, [programTypes, program])
+
   const createMutation = useCreateProgram()
   const updateMutation = useUpdateProgram()
 
@@ -59,17 +82,35 @@ export function ProgrammeFormDialog({
   const [dateDebut, setDateDebut] = useState("")
   const [dateFin, setDateFin] = useState("")
   const [statut, setStatut] = useState<ProgramStatus>("brouillon")
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
+    setErrors({})
     if (program) {
       setTitre(program.titre || "")
       setResume(program.resume || "")
       setDescription(program.description || "")
       setDomaineId(
-        program.domaine_id ? String(program.domaine_id) : program.domaine?.id ? String(program.domaine.id) : ""
+        program.domaine_id
+          ? String(program.domaine_id)
+          : program.domaine?.id
+          ? String(program.domaine.id)
+          : (program as any).domain_id
+          ? String((program as any).domain_id)
+          : (program as any).domain?.id
+          ? String((program as any).domain.id)
+          : ""
       )
       setTypeId(
-        program.type_id ? String(program.type_id) : program.type?.id ? String(program.type.id) : ""
+        program.type_id
+          ? String(program.type_id)
+          : program.type?.id
+          ? String(program.type.id)
+          : (program as any).program_type_id
+          ? String((program as any).program_type_id)
+          : (program as any).program_type?.id
+          ? String((program as any).program_type.id)
+          : ""
       )
       setRegion(program.region || "none")
       setLocalisation(program.localisation || "")
@@ -92,33 +133,92 @@ export function ProgrammeFormDialog({
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const updated = { ...prev }
+        delete updated[field]
+        return updated
+      })
+    }
+  }
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+
+    if (!titre.trim()) {
+      newErrors.titre = "Le titre officiel du programme est obligatoire."
+    } else if (titre.trim().length < 3) {
+      newErrors.titre = "Le titre doit comporter au moins 3 caractères."
+    }
+
+    if (!domaineId) {
+      newErrors.domaine_id = "Veuillez sélectionner le domaine d'intervention officiel."
+    }
+
+    if (!typeId) {
+      newErrors.type_id = "Veuillez sélectionner le type / modalité du programme."
+    }
+
+    if (dateDebut && dateFin && dateFin < dateDebut) {
+      newErrors.date_fin = "La date de clôture doit être égale ou postérieure à la date de lancement."
+    }
+
+    setErrors(newErrors)
+    return newErrors
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    const validationErrors = validateForm()
+    if (Object.keys(validationErrors).length > 0) {
+      showValidationErrorAlert("Formulaire incomplet", validationErrors)
+      return
+    }
+
     const payload = {
-      titre,
-      resume,
-      description,
-      domaine_id: domaineId ? Number(domaineId) : undefined,
-      type_id: typeId ? Number(typeId) : undefined,
+      titre: titre.trim(),
+      resume: resume.trim() || undefined,
+      description: description.trim() || undefined,
+      domaine_id: Number(domaineId),
+      type_id: Number(typeId),
       region: region !== "none" ? (region as Region) : undefined,
-      localisation: localisation || undefined,
+      localisation: localisation.trim() || undefined,
       date_debut: dateDebut || undefined,
       date_fin: dateFin || undefined,
       statut,
     }
 
-    if (isEditing && program) {
-      await updateMutation.mutateAsync({
-        id: program.id,
-        payload,
-      })
-    } else {
-      await createMutation.mutateAsync(payload as Omit<Program, "id">)
+    try {
+      if (isEditing && program) {
+        await updateMutation.mutateAsync({
+          id: program.id,
+          payload,
+        })
+        showSuccessAlert("Programme mis à jour", `Le programme « ${titre} » a été modifié avec succès.`)
+      } else {
+        await createMutation.mutateAsync(payload as Omit<Program, "id">)
+        showSuccessAlert("Programme créé avec succès", `Le nouveau programme « ${titre} » a été enregistré.`)
+      }
+      onOpenChange(false)
+      onSuccess?.()
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.errors) {
+        const backendErrors: Record<string, string> = {}
+        Object.entries(err.errors).forEach(([k, msgs]) => {
+          const fieldKey = k === "domain_id" ? "domaine_id" : k === "program_type_id" ? "type_id" : k
+          backendErrors[fieldKey] = Array.isArray(msgs) ? msgs[0] : String(msgs)
+        })
+        setErrors(backendErrors)
+        showValidationErrorAlert("Erreur de validation", backendErrors)
+      } else {
+        showErrorAlert(
+          "Erreur d'enregistrement",
+          err instanceof Error ? err.message : "Une erreur est survenue lors de l'enregistrement."
+        )
+      }
     }
-
-    onOpenChange(false)
-    onSuccess?.()
   }
 
   return (
@@ -147,17 +247,24 @@ export function ProgrammeFormDialog({
             </h4>
 
             <div>
-              <Label htmlFor="prog-titre" className="text-xs font-semibold">
+              <Label htmlFor="prog-titre" className={cn("text-xs font-semibold", errors.titre ? "text-destructive" : "")}>
                 Titre officiel du programme *
               </Label>
               <Input
                 id="prog-titre"
-                required
                 value={titre}
-                onChange={(e) => setTitre(e.target.value)}
+                onChange={(e) => {
+                  setTitre(e.target.value)
+                  clearError("titre")
+                }}
                 placeholder="ex. Académie du Leadership Jeune"
-                className="mt-1.5 h-11 rounded-xl text-sm"
+                aria-invalid={!!errors.titre}
+                className={cn(
+                  "mt-1.5 h-11 rounded-xl text-sm transition-colors",
+                  errors.titre ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
+                )}
               />
+              <FormFieldError error={errors.titre} />
             </div>
 
             <div>
@@ -168,10 +275,14 @@ export function ProgrammeFormDialog({
                 id="prog-resume"
                 rows={2}
                 value={resume}
-                onChange={(e) => setResume(e.target.value)}
+                onChange={(e) => {
+                  setResume(e.target.value)
+                  clearError("resume")
+                }}
                 placeholder="Courte présentation résumant l'impact du programme..."
                 className="mt-1.5 rounded-xl resize-none text-xs"
               />
+              <FormFieldError error={errors.resume} />
             </div>
 
             <div>
@@ -182,10 +293,14 @@ export function ProgrammeFormDialog({
                 id="prog-description"
                 rows={4}
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => {
+                  setDescription(e.target.value)
+                  clearError("description")
+                }}
                 placeholder="Détail des activités, bénéficiaires cibles et déroulement..."
                 className="mt-1.5 rounded-xl resize-none text-xs"
               />
+              <FormFieldError error={errors.description} />
             </div>
           </div>
 
@@ -197,39 +312,67 @@ export function ProgrammeFormDialog({
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <Label htmlFor="prog-domaine" className="text-xs font-semibold">
+                <Label htmlFor="prog-domaine" className={cn("text-xs font-semibold", errors.domaine_id ? "text-destructive" : "")}>
                   Domaine d'intervention officiel *
                 </Label>
-                <Select value={domaineId} onValueChange={(val) => setDomaineId(val || "")}>
-                  <SelectTrigger id="prog-domaine" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
+                <Select
+                  value={domaineId}
+                  onValueChange={(val) => {
+                    setDomaineId(val || "")
+                    clearError("domaine_id")
+                  }}
+                >
+                  <SelectTrigger
+                    id="prog-domaine"
+                    aria-invalid={!!errors.domaine_id}
+                    className={cn(
+                      "mt-1.5 h-10 w-full rounded-xl text-xs bg-card transition-colors",
+                      errors.domaine_id ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
+                    )}
+                  >
                     <SelectValue placeholder="Sélectionner un domaine" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl text-xs max-w-xs">
-                    {domains.map((d) => (
+                  <SelectContent className="rounded-2xl text-xs w-full min-w-[240px]">
+                    {domainList.map((d) => (
                       <SelectItem key={d.id} value={String(d.id)}>
                         0{d.ordre || d.id}. {d.nom}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                <FormFieldError error={errors.domaine_id} />
               </div>
 
               <div>
-                <Label htmlFor="prog-type" className="text-xs font-semibold">
+                <Label htmlFor="prog-type" className={cn("text-xs font-semibold", errors.type_id ? "text-destructive" : "")}>
                   Type de programme (modalité) *
                 </Label>
-                <Select value={typeId} onValueChange={(val) => setTypeId(val || "")}>
-                  <SelectTrigger id="prog-type" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
+                <Select
+                  value={typeId}
+                  onValueChange={(val) => {
+                    setTypeId(val || "")
+                    clearError("type_id")
+                  }}
+                >
+                  <SelectTrigger
+                    id="prog-type"
+                    aria-invalid={!!errors.type_id}
+                    className={cn(
+                      "mt-1.5 h-10 w-full rounded-xl text-xs bg-card transition-colors",
+                      errors.type_id ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
+                    )}
+                  >
                     <SelectValue placeholder="Sélectionner une typologie" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl text-xs max-w-xs">
-                    {programTypes.map((t) => (
+                  <SelectContent className="rounded-2xl text-xs w-full min-w-[240px]">
+                    {typeList.map((t) => (
                       <SelectItem key={t.id} value={String(t.id)}>
                         {t.nom}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                <FormFieldError error={errors.type_id} />
               </div>
             </div>
           </div>
@@ -246,10 +389,10 @@ export function ProgrammeFormDialog({
                   Région principale
                 </Label>
                 <Select value={region} onValueChange={(val) => setRegion(val || "none")}>
-                  <SelectTrigger id="prog-region" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
+                  <SelectTrigger id="prog-region" className="mt-1.5 h-10 w-full rounded-xl text-xs bg-card">
                     <SelectValue placeholder="Toutes les régions" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl text-xs">
+                  <SelectContent className="rounded-2xl text-xs w-full min-w-[220px]">
                     <SelectItem value="none">Multi-régional / Tout territoire</SelectItem>
                     {(Object.keys(REGION_LABELS) as Region[]).map((key) => (
                       <SelectItem key={key} value={key}>
@@ -283,22 +426,33 @@ export function ProgrammeFormDialog({
                   id="prog-date-debut"
                   type="date"
                   value={dateDebut}
-                  onChange={(e) => setDateDebut(e.target.value)}
+                  onChange={(e) => {
+                    setDateDebut(e.target.value)
+                    clearError("date_fin")
+                  }}
                   className="mt-1.5 h-10 rounded-xl text-xs bg-card"
                 />
               </div>
 
               <div>
-                <Label htmlFor="prog-date-fin" className="text-xs font-semibold">
+                <Label htmlFor="prog-date-fin" className={cn("text-xs font-semibold", errors.date_fin ? "text-destructive" : "")}>
                   Date de clôture
                 </Label>
                 <Input
                   id="prog-date-fin"
                   type="date"
                   value={dateFin}
-                  onChange={(e) => setDateFin(e.target.value)}
-                  className="mt-1.5 h-10 rounded-xl text-xs bg-card"
+                  onChange={(e) => {
+                    setDateFin(e.target.value)
+                    clearError("date_fin")
+                  }}
+                  aria-invalid={!!errors.date_fin}
+                  className={cn(
+                    "mt-1.5 h-10 rounded-xl text-xs bg-card transition-colors",
+                    errors.date_fin ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
+                  )}
                 />
+                <FormFieldError error={errors.date_fin} />
               </div>
 
               <div>
@@ -306,10 +460,10 @@ export function ProgrammeFormDialog({
                   Statut administratif *
                 </Label>
                 <Select value={statut} onValueChange={(val) => setStatut(val as ProgramStatus)}>
-                  <SelectTrigger id="prog-statut" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
+                  <SelectTrigger id="prog-statut" className="mt-1.5 h-10 w-full rounded-xl text-xs bg-card">
                     <SelectValue placeholder="Statut" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl text-xs">
+                  <SelectContent className="rounded-2xl text-xs w-full min-w-[180px]">
                     {(Object.keys(PROGRAM_STATUS_LABELS) as ProgramStatus[]).map((key) => (
                       <SelectItem key={key} value={key}>
                         {PROGRAM_STATUS_LABELS[key]}

@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // DEMO ONLY — replace with API data
         const demo = mockAdminUsers[0]
         setUser(demo)
-        setPermissions(demo.roles.includes("administrateur-principal") ? ["*"] : [])
+        setPermissions(demo?.roles?.includes("administrateur-principal") ? ["*"] : [])
         setIsLoading(false)
         return
       }
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           mockAdminUsers.find((u) => u.email === credentials.email) ||
           mockAdminUsers[0]
         setUser(found)
-        setPermissions(found.roles.includes("administrateur-principal") ? ["*"] : [])
+        setPermissions(found?.roles?.includes("administrateur-principal") ? ["*"] : [])
         router.push("/admin/dashboard")
         return
       }
@@ -121,10 +121,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Permet en mode mock de tester facilement les vues sous différents rôles
   const switchMockRole = (roleSlug: AdminRoleSlug) => {
     if (DATA_SOURCE === "mock") {
-      const found = mockAdminUsers.find((u) => u.roles.includes(roleSlug))
+      const found = mockAdminUsers.find((u) => u.roles?.includes(roleSlug))
       if (found) {
         setUser(found)
-        setPermissions(found.roles.includes("administrateur-principal") ? ["*"] : [])
+        setPermissions(found?.roles?.includes("administrateur-principal") ? ["*"] : [])
       }
     }
   }

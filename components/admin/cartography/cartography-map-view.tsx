@@ -82,7 +82,7 @@ export function CartographyMapView({ points }: CartographyMapViewProps) {
                     </p>
                     <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                       <span className="font-semibold text-foreground">
-                        {REGION_LABELS[p.region] || p.region}
+                        {p.region ? (REGION_LABELS[p.region] || p.region) : "—"}
                       </span>
                       {p.commune && (
                         <>

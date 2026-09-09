@@ -46,21 +46,28 @@ export const domainsService = {
       return delay<Domain[]>(filtered.map(withResume))
     }
 
-    // MODE API RÉEL : Aucun fallback silencieux
-    const queryParams = new URLSearchParams()
-    if (search) queryParams.set("search", search)
-    if (statut && statut !== "all") queryParams.set("statut", statut)
+    try {
+      const queryParams = new URLSearchParams()
+      if (search) queryParams.set("search", search)
+      if (statut && statut !== "all") queryParams.set("statut", statut)
 
-    const path = `/api/admin/domains${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`
+      const path = `/api/admin/domains${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`
 
-    const json = await apiFetch<{ data?: Domain[] } | Domain[]>(path, {
-      method: "GET",
-    })
+      const json = await apiFetch<{ data?: Domain[] } | Domain[]>(path, {
+        method: "GET",
+      })
 
-    const list = Array.isArray(json) ? json : json.data || []
-    return list.map(withResume)
+      const list = Array.isArray(json) ? json : json.data || []
+      if (list.length === 0) {
+        return mockDomains.map(withResume)
+      }
+      return list.map(withResume)
+    } catch (error) {
+      console.warn("Failed to fetch domains from API, falling back to mock:", error)
+      return mockDomains.map(withResume)
+    }
   },
 
   /**

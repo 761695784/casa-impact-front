@@ -40,14 +40,14 @@ export function MediaEditDialog({
 }: MediaEditDialogProps) {
   const [nom, setNom] = useState("")
   const [alt, setAlt] = useState("")
-  const [description, setDescription] = useState("")
+  const [legende, setLegende] = useState("")
   const [categorie, setCategorie] = useState<string>("general")
 
   useEffect(() => {
     if (media) {
       setNom(media.nom || "")
       setAlt(media.alt || "")
-      setDescription(media.description || "")
+      setLegende(media.legende || "")
       setCategorie(media.categorie || "general")
     }
   }, [media, open])
@@ -59,7 +59,7 @@ export function MediaEditDialog({
     await onSubmit(media.id, {
       nom: nom.trim(),
       alt: alt.trim(),
-      description: description.trim(),
+      legende: legende.trim(),
       categorie: categorie as Media["categorie"],
     })
 
@@ -129,16 +129,16 @@ export function MediaEditDialog({
             />
           </div>
 
-          {/* Description */}
+          {/* Légende */}
           <div className="space-y-1.5">
-            <Label htmlFor="media-desc" className="text-xs font-semibold">
-              Notes & Description
+            <Label htmlFor="media-legende" className="text-xs font-semibold">
+              Notes & Légende
             </Label>
             <Textarea
-              id="media-desc"
+              id="media-legende"
               rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={legende}
+              onChange={(e) => setLegende(e.target.value)}
               placeholder="Précisions sur l'utilisation de ce fichier..."
               className="rounded-2xl text-xs sm:text-sm resize-none"
             />

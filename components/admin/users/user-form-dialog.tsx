@@ -19,6 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showValidationErrorAlert,
+} from "@/lib/alerts"
+import { ApiError } from "@/lib/api-client"
 import { ADMIN_ROLE_LABELS } from "@/types/enums"
 import type { User } from "@/types/models"
 import type { AdminRoleSlug } from "@/types/admin"
@@ -49,6 +56,17 @@ export function UserFormDialog({
   const [email, setEmail] = useState("")
   const [roleSlug, setRoleSlug] = useState<AdminRoleSlug>("communication")
   const [statut, setStatut] = useState<"actif" | "inactif" | "suspendu">("actif")
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[field]
+        return next
+      })
+    }
+  }
 
   const isEditing = !!initialData
 
@@ -66,21 +84,78 @@ export function UserFormDialog({
       setRoleSlug("communication")
       setStatut("actif")
     }
+    setErrors({})
   }, [initialData, open])
+
+  const validateForm = (): boolean => {
+    const errs: Record<string, string> = {}
+
+    if (!nom.trim()) {
+      errs.nom = "Le nom de famille est requis."
+    } else if (nom.trim().length < 2) {
+      errs.nom = "Le nom doit comporter au moins 2 caractères."
+    }
+
+    if (!email.trim()) {
+      errs.email = "L'adresse email est requise."
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errs.email = "Veuillez entrer une adresse email valide."
+    }
+
+    if (!roleSlug) {
+      errs.roleSlug = "Veuillez sélectionner un rôle administratif."
+    }
+
+    setErrors(errs)
+    if (Object.keys(errs).length > 0) {
+      showValidationErrorAlert(Object.values(errs))
+      return false
+    }
+    return true
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!nom.trim() || !email.trim()) return
+    if (!validateForm()) return
 
-    await onSubmit({
-      nom: nom.trim(),
-      prenom: prenom.trim() || undefined,
-      email: email.trim(),
-      role_slug: roleSlug,
-      statut,
-    })
+    try {
+      await onSubmit({
+        nom: nom.trim(),
+        prenom: prenom.trim() || undefined,
+        email: email.trim().toLowerCase(),
+        role_slug: roleSlug,
+        statut,
+      })
 
-    onOpenChange(false)
+      await showSuccessAlert(
+        isEditing ? "Compte modifié !" : "Compte créé !",
+        isEditing
+          ? "Les modifications ont été enregistrées avec succès."
+          : "Le nouveau compte administratif a été créé avec succès."
+      )
+
+      onOpenChange(false)
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.errors) {
+        const backendErrors: Record<string, string> = {}
+        const errorMessages: string[] = []
+        Object.entries(err.errors).forEach(([field, messages]) => {
+          backendErrors[field] = messages[0]
+          errorMessages.push(...messages)
+        })
+        setErrors(backendErrors)
+        showValidationErrorAlert(
+          errorMessages.length > 0 ? errorMessages : [err.message]
+        )
+      } else {
+        showErrorAlert(
+          "Erreur d'enregistrement",
+          err instanceof Error
+            ? err.message
+            : "Une erreur est survenue lors de l'enregistrement de l'utilisateur."
+        )
+      }
+    }
   }
 
   return (
@@ -115,23 +190,31 @@ export function UserFormDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="nom" className="text-xs font-semibold">
+              <Label htmlFor="nom" className={`text-xs font-semibold ${errors.nom ? "text-destructive" : ""}`}>
                 Nom <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="nom"
                 required
                 value={nom}
-                onChange={(e) => setNom(e.target.value)}
+                onChange={(e) => {
+                  setNom(e.target.value)
+                  clearError("nom")
+                }}
                 placeholder="Ex : Faye"
-                className="h-10 rounded-2xl text-xs sm:text-sm"
+                className={`h-10 rounded-2xl text-xs sm:text-sm ${
+                  errors.nom
+                    ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                    : ""
+                }`}
               />
+              <FormFieldError error={errors.nom} />
             </div>
           </div>
 
           {/* Email */}
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-xs font-semibold">
+            <Label htmlFor="email" className={`text-xs font-semibold ${errors.email ? "text-destructive" : ""}`}>
               Adresse e-mail professionnelle <span className="text-destructive">*</span>
             </Label>
             <Input
@@ -139,23 +222,40 @@ export function UserFormDialog({
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                clearError("email")
+              }}
               placeholder="admin@casa-impact.org"
-              className="h-10 rounded-2xl text-xs sm:text-sm"
+              className={`h-10 rounded-2xl text-xs sm:text-sm ${
+                errors.email
+                  ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                  : ""
+              }`}
             />
+            <FormFieldError error={errors.email} />
           </div>
 
           {/* Rôle & Statut */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">
+              <Label className={`text-xs font-semibold ${errors.roleSlug ? "text-destructive" : ""}`}>
                 Rôle attribué <span className="text-destructive">*</span>
               </Label>
               <Select
                 value={roleSlug}
-                onValueChange={(val) => setRoleSlug(val as AdminRoleSlug)}
+                onValueChange={(val) => {
+                  setRoleSlug(val as AdminRoleSlug)
+                  clearError("roleSlug")
+                }}
               >
-                <SelectTrigger className="h-10 rounded-2xl text-xs truncate">
+                <SelectTrigger
+                  className={`h-10 w-full rounded-2xl text-xs truncate ${
+                    errors.roleSlug
+                      ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                      : ""
+                  }`}
+                >
                   <SelectValue placeholder="Sélectionner un rôle" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl text-xs">
@@ -168,6 +268,7 @@ export function UserFormDialog({
                   )}
                 </SelectContent>
               </Select>
+              <FormFieldError error={errors.roleSlug} />
             </div>
 
             <div className="space-y-1.5">
@@ -180,7 +281,7 @@ export function UserFormDialog({
                   setStatut(val as "actif" | "inactif" | "suspendu")
                 }
               >
-                <SelectTrigger className="h-10 rounded-2xl text-xs">
+                <SelectTrigger className="h-10 w-full rounded-2xl text-xs">
                   <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl text-xs">
@@ -203,7 +304,7 @@ export function UserFormDialog({
             </Button>
             <Button
               type="submit"
-              disabled={loading || !nom.trim() || !email.trim()}
+              disabled={loading}
               className="rounded-full text-xs bg-forest hover:bg-forest/90 text-white font-medium"
             >
               {loading ? "Enregistrement..." : isEditing ? "Mettre à jour" : "Créer le compte"}

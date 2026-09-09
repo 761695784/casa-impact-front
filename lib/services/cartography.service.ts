@@ -29,7 +29,7 @@ export const cartographyService = {
         const q = search.toLowerCase()
         filtered = filtered.filter(
           (p) =>
-            p.titre.toLowerCase().includes(q) ||
+            (p.titre || p.libelle || "").toLowerCase().includes(q) ||
             p.commune?.toLowerCase().includes(q) ||
             p.departement?.toLowerCase().includes(q) ||
             p.description?.toLowerCase().includes(q) ||

@@ -13,6 +13,7 @@ const typeLabels: Record<MapPoint["type"], string> = {
   program: "Programme",
   "application-call": "Appel à candidatures",
   talent: "Talent",
+  implantation: "Implantation",
 }
 
 // Les talents n'ont pas de page de détail dédiée : pas d'entrée ici, le lien

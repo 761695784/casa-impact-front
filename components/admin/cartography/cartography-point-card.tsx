@@ -88,7 +88,7 @@ export function CartographyPointCard({
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Région naturelle :</span>
             <span className="font-bold text-foreground">
-              {REGION_LABELS[point.region] || point.region}
+              {point.region ? (REGION_LABELS[point.region] || point.region) : "—"}
             </span>
           </div>
           {point.departement && (

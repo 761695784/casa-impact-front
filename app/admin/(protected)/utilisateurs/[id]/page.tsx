@@ -135,7 +135,7 @@ export default function AdminUserDetailPage({ params }: PageProps) {
             {fullName}
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-            Compte administratif #{user.id} • {ADMIN_ROLE_LABELS[user.role?.slug] || user.role?.nom}
+            Compte administratif #{user.id} • {(user.role?.slug && ADMIN_ROLE_LABELS[user.role.slug]) || user.role?.nom || "Utilisateur"}
           </p>
         </div>
 
@@ -263,7 +263,7 @@ export default function AdminUserDetailPage({ params }: PageProps) {
                 <span className="font-bold text-foreground text-base mt-0.5 flex items-center gap-2">
                   <Shield className="size-4 text-forest" />
                   <span>
-                    {ADMIN_ROLE_LABELS[user.role?.slug] || user.role?.nom}
+                    {(user.role?.slug && ADMIN_ROLE_LABELS[user.role.slug]) || user.role?.nom || "Utilisateur"}
                   </span>
                 </span>
               </div>

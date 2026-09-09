@@ -22,11 +22,16 @@ import {
   UploadCloud,
   X,
 } from "lucide-react"
-import { toast } from "sonner"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showValidationErrorAlert,
+} from "@/lib/alerts"
 import { cn } from "@/lib/utils"
 import { contactInfo } from "@/lib/config"
 import {
@@ -71,25 +76,41 @@ export function MembershipForm() {
     if (!file) return
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("La photo ne doit pas dépasser 5 Mo.")
+      showErrorAlert("Fichier trop volumineux", "La photo ne doit pas dépasser 5 Mo.")
       return
     }
 
     const reader = new FileReader()
     reader.onload = () => {
       setPhotoPreview(reader.result as string)
-      toast.success("Photo d'identité chargée avec succès !")
+      showSuccessAlert("Photo chargée !", "Votre photo d'identité a été importée avec succès.")
     }
     reader.readAsDataURL(file)
   }
 
   async function onSubmit(values: FormValues) {
-    // Simulated submit delay
-    await new Promise((r) => setTimeout(r, 900))
-    const ref = makeRef()
-    setReference(ref)
-    setSubmittedValues(values)
-    toast.success("Votre demande d'adhésion a bien été enregistrée !")
+    try {
+      // Simulated submit delay
+      await new Promise((r) => setTimeout(r, 900))
+      const ref = makeRef()
+      setReference(ref)
+      setSubmittedValues(values)
+      await showSuccessAlert(
+        "Adhésion enregistrée !",
+        "Votre demande d'adhésion a été enregistrée avec succès."
+      )
+    } catch {
+      showErrorAlert("Erreur", "Une erreur est survenue lors de l'enregistrement de votre adhésion.")
+    }
+  }
+
+  const onInvalid = (formErrors: typeof errors) => {
+    const messages = Object.values(formErrors)
+      .map((e) => e?.message)
+      .filter((m): m is string => Boolean(m))
+    if (messages.length > 0) {
+      showValidationErrorAlert(messages)
+    }
   }
 
   if (reference && submittedValues) {
@@ -232,13 +253,13 @@ export function MembershipForm() {
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onSubmit, onInvalid)}
       className="rounded-3xl border border-border bg-card p-6 sm:p-10 shadow-sm"
     >
       <div className="grid gap-6 sm:grid-cols-2">
         {/* Nom complet */}
         <Field
-          label="Nom complet"
+          label="Nom complet *"
           icon={User}
           error={errors.nom_complet?.message}
         >
@@ -246,13 +267,16 @@ export function MembershipForm() {
             {...register("nom_complet")}
             placeholder="Prénom et Nom"
             aria-invalid={!!errors.nom_complet}
-            className="h-11 rounded-xl bg-background text-sm"
+            className={cn(
+              "h-11 rounded-xl bg-background text-sm",
+              errors.nom_complet && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
 
         {/* Adresse e-mail */}
         <Field
-          label="Adresse e-mail"
+          label="Adresse e-mail *"
           icon={Mail}
           error={errors.email?.message}
         >
@@ -261,13 +285,16 @@ export function MembershipForm() {
             type="email"
             placeholder="nom@exemple.com"
             aria-invalid={!!errors.email}
-            className="h-11 rounded-xl bg-background text-sm"
+            className={cn(
+              "h-11 rounded-xl bg-background text-sm",
+              errors.email && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
 
         {/* Téléphone (WhatsApp) */}
         <Field
-          label="Numéro WhatsApp"
+          label="Numéro WhatsApp *"
           icon={Phone}
           error={errors.telephone?.message}
         >
@@ -276,7 +303,10 @@ export function MembershipForm() {
             type="tel"
             placeholder="+221 78 123 45 67"
             aria-invalid={!!errors.telephone}
-            className="h-11 rounded-xl bg-background text-sm"
+            className={cn(
+              "h-11 rounded-xl bg-background text-sm",
+              errors.telephone && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
 
@@ -289,13 +319,16 @@ export function MembershipForm() {
           <Input
             {...register("profession")}
             placeholder="ex. Étudiant, Entrepreneur, Enseignant..."
-            className="h-11 rounded-xl bg-background text-sm"
+            className={cn(
+              "h-11 rounded-xl bg-background text-sm",
+              errors.profession && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
 
         {/* Région */}
         <Field
-          label="Région / Localisation"
+          label="Région / Localisation *"
           icon={MapPin}
           error={errors.region?.message}
         >
@@ -303,6 +336,9 @@ export function MembershipForm() {
             {...register("region")}
             aria-invalid={!!errors.region}
             defaultValue=""
+            className={cn(
+              errors.region && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           >
             <option value="" disabled>
               Sélectionnez votre région
@@ -324,7 +360,10 @@ export function MembershipForm() {
           <Input
             {...register("departement")}
             placeholder="ex. Oussouye, Bignona, Vélingara, Paris..."
-            className="h-11 rounded-xl bg-background text-sm"
+            className={cn(
+              "h-11 rounded-xl bg-background text-sm",
+              errors.departement && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
 
@@ -373,7 +412,7 @@ export function MembershipForm() {
 
         {/* Domaine de contribution */}
         <Field
-          label="Pôle / Commission de prédilection"
+          label="Pôle / Commission de prédilection *"
           icon={Layers}
           error={errors.domaine_contribution?.message}
           className="sm:col-span-2"
@@ -382,6 +421,9 @@ export function MembershipForm() {
             {...register("domaine_contribution")}
             aria-invalid={!!errors.domaine_contribution}
             defaultValue=""
+            className={cn(
+              errors.domaine_contribution && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           >
             <option value="" disabled>
               Sélectionnez un pôle d'action
@@ -396,7 +438,7 @@ export function MembershipForm() {
 
         {/* Type de contribution */}
         <Field
-          label="Type d'engagement souhaité"
+          label="Type d'engagement souhaité *"
           icon={HeartHandshake}
           error={errors.type_contribution?.message}
           className="sm:col-span-2"
@@ -405,6 +447,9 @@ export function MembershipForm() {
             {...register("type_contribution")}
             aria-invalid={!!errors.type_contribution}
             defaultValue=""
+            className={cn(
+              errors.type_contribution && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           >
             <option value="" disabled>
               Sélectionnez votre type d'engagement
@@ -462,13 +507,16 @@ function Field({
   children: React.ReactNode
 }) {
   return (
-    <div className={cn("space-y-2", className)}>
-      <Label className="flex items-center gap-1.5 text-xs font-semibold text-foreground uppercase tracking-wide">
-        {Icon && <Icon className="size-3.5 text-primary" />}
+    <div className={cn("space-y-1.5", className)}>
+      <Label className={cn(
+        "flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide",
+        error ? "text-destructive" : "text-foreground"
+      )}>
+        {Icon && <Icon className={cn("size-3.5", error ? "text-destructive" : "text-primary")} />}
         <span>{label}</span>
       </Label>
       {children}
-      {error && <p className="text-xs font-medium text-destructive">{error}</p>}
+      <FormFieldError error={error} />
     </div>
   )
 }
@@ -476,7 +524,7 @@ function Field({
 const SelectField = ({ className, ...props }: React.ComponentProps<"select">) => (
   <select
     className={cn(
-      "flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-destructive",
+      "flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
       className
     )}
     {...props}

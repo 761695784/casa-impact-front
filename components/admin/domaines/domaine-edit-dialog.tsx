@@ -20,6 +20,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showValidationErrorAlert,
+} from "@/lib/alerts"
+import { ApiError } from "@/lib/api-client"
 import { DOMAIN_STATUS_LABELS } from "@/types/enums"
 import { useUpdateDomain } from "@/hooks/use-domains"
 import { Layers, Loader2, Sparkles } from "lucide-react"
@@ -43,6 +50,17 @@ export function DomaineEditDialog({
   const [description, setDescription] = useState("")
   const [statut, setStatut] = useState<DomainStatus>("actif")
   const [ordre, setOrdre] = useState<string>("1")
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[field]
+        return next
+      })
+    }
+  }
 
   const updateMutation = useUpdateDomain()
 
@@ -53,25 +71,76 @@ export function DomaineEditDialog({
       setStatut(domain.statut || "actif")
       setOrdre(domain.ordre ? String(domain.ordre) : "1")
     }
+    setErrors({})
   }, [domain, open])
 
   if (!domain) return null
 
+  const validateForm = (): boolean => {
+    const errs: Record<string, string> = {}
+
+    if (!nom.trim()) {
+      errs.nom = "Le nom du domaine est requis."
+    } else if (nom.trim().length < 2) {
+      errs.nom = "Le nom doit comporter au moins 2 caractères."
+    }
+
+    if (ordre && (Number(ordre) < 1 || Number(ordre) > 20)) {
+      errs.ordre = "L'ordre doit être compris entre 1 et 20."
+    }
+
+    setErrors(errs)
+    if (Object.keys(errs).length > 0) {
+      showValidationErrorAlert(Object.values(errs))
+      return false
+    }
+    return true
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    await updateMutation.mutateAsync({
-      id: domain.id,
-      payload: {
-        nom,
-        description,
-        statut,
-        ordre: Number(ordre) || 1,
-      },
-    })
+    if (!validateForm()) return
 
-    onOpenChange(false)
-    onSuccess?.()
+    try {
+      await updateMutation.mutateAsync({
+        id: domain.id,
+        payload: {
+          nom: nom.trim(),
+          description: description.trim() || undefined,
+          statut,
+          ordre: Number(ordre) || 1,
+        },
+      })
+
+      await showSuccessAlert(
+        "Domaine mis à jour !",
+        "Les modifications ont été enregistrées avec succès."
+      )
+
+      onOpenChange(false)
+      onSuccess?.()
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.errors) {
+        const backendErrors: Record<string, string> = {}
+        const errorMessages: string[] = []
+        Object.entries(err.errors).forEach(([field, messages]) => {
+          backendErrors[field] = messages[0]
+          errorMessages.push(...messages)
+        })
+        setErrors(backendErrors)
+        showValidationErrorAlert(
+          errorMessages.length > 0 ? errorMessages : [err.message]
+        )
+      } else {
+        showErrorAlert(
+          "Erreur d'enregistrement",
+          err instanceof Error
+            ? err.message
+            : "Une erreur est survenue lors de la mise à jour du domaine."
+        )
+      }
+    }
   }
 
   return (
@@ -93,16 +162,24 @@ export function DomaineEditDialog({
           
           <div className="space-y-4 rounded-2xl border border-border/80 bg-secondary/30 p-4 sm:p-5">
             <div>
-              <Label htmlFor="domain-nom" className="text-xs font-semibold">
+              <Label htmlFor="domain-nom" className={`text-xs font-semibold ${errors.nom ? "text-destructive" : ""}`}>
                 Nom officiel du domaine d'intervention *
               </Label>
               <Input
                 id="domain-nom"
                 required
                 value={nom}
-                onChange={(e) => setNom(e.target.value)}
-                className="mt-1.5 h-11 rounded-xl text-sm"
+                onChange={(e) => {
+                  setNom(e.target.value)
+                  clearError("nom")
+                }}
+                className={`mt-1.5 h-11 rounded-xl text-sm ${
+                  errors.nom
+                    ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                    : ""
+                }`}
               />
+              <FormFieldError error={errors.nom} />
             </div>
 
             <div>
@@ -125,7 +202,7 @@ export function DomaineEditDialog({
                   Statut du domaine
                 </Label>
                 <Select value={statut} onValueChange={(val) => setStatut(val as DomainStatus)}>
-                  <SelectTrigger id="domain-statut" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
+                  <SelectTrigger id="domain-statut" className="mt-1.5 h-10 w-full rounded-xl text-xs bg-card">
                     <SelectValue placeholder="Statut" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl text-xs">
@@ -139,18 +216,25 @@ export function DomaineEditDialog({
               </div>
 
               <div>
-                <Label htmlFor="domain-ordre" className="text-xs font-semibold">
-                  Ordre d'affichage (1 à 6)
+                <Label htmlFor="domain-ordre" className={`text-xs font-semibold ${errors.ordre ? "text-destructive" : ""}`}>
+                  Ordre d'affichage
                 </Label>
                 <Input
                   id="domain-ordre"
                   type="number"
                   min={1}
-                  max={6}
                   value={ordre}
-                  onChange={(e) => setOrdre(e.target.value)}
-                  className="mt-1.5 h-10 rounded-xl text-xs bg-card"
+                  onChange={(e) => {
+                    setOrdre(e.target.value)
+                    clearError("ordre")
+                  }}
+                  className={`mt-1.5 h-10 rounded-xl text-xs bg-card ${
+                    errors.ordre
+                      ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                      : ""
+                  }`}
                 />
+                <FormFieldError error={errors.ordre} />
               </div>
             </div>
           </div>

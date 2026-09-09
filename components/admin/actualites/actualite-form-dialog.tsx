@@ -20,8 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showValidationErrorAlert,
+} from "@/lib/alerts"
+import { ApiError } from "@/lib/api-client"
 import { NEWS_STATUS_LABELS, NEWS_TYPE_LABELS } from "@/types/enums"
 import { useCreateNews, useUpdateNews } from "@/hooks/use-news"
+import { useAttachMedia, useDetachMedia } from "@/hooks/use-media"
 import { MediaPickerDialog } from "@/components/admin/media/media-picker-dialog"
 import {
   Newspaper,
@@ -42,6 +50,9 @@ interface ActualiteFormDialogProps {
   onSuccess?: () => void
 }
 
+const COVER_COLLECTION = "cover"
+const GALLERY_COLLECTION = "gallery"
+
 export function ActualiteFormDialog({
   news,
   open,
@@ -52,23 +63,36 @@ export function ActualiteFormDialog({
 
   const createMutation = useCreateNews()
   const updateMutation = useUpdateNews()
+  const attachMutation = useAttachMedia()
+  const detachMutation = useDetachMedia()
 
   const [titre, setTitre] = useState("")
   const [corps, setCorps] = useState("")
   const [type, setType] = useState<NewsType>("article")
   const [statut, setStatut] = useState<NewsStatus>("brouillon")
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // NOTE(media) : `image` (couverture) et `galleryMedias` (album) n'ont pas
-  // d'équivalent direct sur la ressource News réelle — les visuels sont
-  // exposés en lecture via `news.media` (PublicMedia[]) et rattachés côté
-  // backend par le module Médiathèque (voir lib/services/media.service.ts),
-  // pas via le payload de création/mise à jour de l'article. On garde cet
-  // état et l'UI de sélection ci-dessous (décision produit à trancher :
-  // brancher ces sélections sur un vrai flux d'attachement média), mais on
-  // ne les envoie plus dans le payload POST/PUT pour éviter de renvoyer des
-  // champs inconnus de l'API (cause du bug initial).
-  const [image, setImage] = useState("")
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[field]
+        return next
+      })
+    }
+  }
+
+  // Couverture (photo unique, collection "cover") et album (plusieurs
+  // photos, collection "gallery") — rattachées à la fiche News via la
+  // médiathèque partagée (media_attachments), pas via le payload de
+  // création/mise à jour de l'article. On garde une trace de l'état
+  // initial (issu de news.media en édition) pour ne synchroniser au
+  // moment de l'enregistrement que ce qui a réellement changé
+  // (attach des ajouts, detach des retraits).
+  const [coverMedia, setCoverMedia] = useState<Media | null>(null)
   const [galleryMedias, setGalleryMedias] = useState<Media[]>([])
+  const [initialCoverId, setInitialCoverId] = useState<number | null>(null)
+  const [initialGalleryIds, setInitialGalleryIds] = useState<number[]>([])
 
   // Media Picker Dialog states
   const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false)
@@ -80,23 +104,37 @@ export function ActualiteFormDialog({
       setCorps(news.corps || "")
       setType(news.type || "article")
       setStatut(news.statut || "brouillon")
-      setImage("")
-      setGalleryMedias([])
+
+      const existingMedia = news.media || []
+      const cover = existingMedia.find((m) => m.collection === COVER_COLLECTION) || null
+      const gallery = existingMedia.filter((m) => m.collection !== COVER_COLLECTION)
+
+      setCoverMedia(cover)
+      setGalleryMedias(gallery)
+      setInitialCoverId(cover?.id ?? null)
+      setInitialGalleryIds(gallery.map((m) => m.id))
     } else {
       setTitre("")
       setCorps("")
       setType("article")
       setStatut("brouillon")
-      setImage("")
+      setCoverMedia(null)
       setGalleryMedias([])
+      setInitialCoverId(null)
+      setInitialGalleryIds([])
     }
+    setErrors({})
   }, [news, open])
 
-  const isPending = createMutation.isPending || updateMutation.isPending
+  const isPending =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    attachMutation.isPending ||
+    detachMutation.isPending
 
   const handleSelectCover = (selected: Media[]) => {
     if (selected.length > 0) {
-      setImage(selected[0].url)
+      setCoverMedia(selected[0])
     }
   }
 
@@ -114,33 +152,171 @@ export function ActualiteFormDialog({
   }
 
   const handleSetAsCover = (media: Media) => {
-    setImage(media.url)
+    setCoverMedia(media)
+  }
+
+  const validateForm = (): boolean => {
+    const errs: Record<string, string> = {}
+
+    if (!titre.trim()) {
+      errs.titre = "Le titre de la publication est requis."
+    } else if (titre.trim().length < 3) {
+      errs.titre = "Le titre doit comporter au moins 3 caractères."
+    }
+
+    if (!corps.trim()) {
+      errs.corps = "Le corps de l'article est requis."
+    } else if (corps.trim().length < 10) {
+      errs.corps = "Le corps de l'article doit contenir au moins 10 caractères."
+    }
+
+    if (!type) {
+      errs.type = "Le format éditorial est requis."
+    }
+
+    setErrors(errs)
+    if (Object.keys(errs).length > 0) {
+      showValidationErrorAlert(Object.values(errs))
+      return false
+    }
+    return true
+  }
+
+  /**
+   * Synchronise couverture + album avec la médiathèque une fois la fiche
+   * News enregistrée (attach/detach uniquement pour ce qui a changé).
+   * Les erreurs ici n'annulent pas l'enregistrement de l'article — déjà
+   * réussi à ce stade — mais sont signalées séparément.
+   */
+  const syncMedia = async (newsId: number) => {
+    const tasks: Promise<unknown>[] = []
+
+    if (coverMedia?.id !== (initialCoverId ?? undefined)) {
+      if (initialCoverId && initialCoverId !== coverMedia?.id) {
+        tasks.push(
+          detachMutation.mutateAsync({
+            mediaId: initialCoverId,
+            mediableType: "news",
+            mediableId: newsId,
+            collection: COVER_COLLECTION,
+          })
+        )
+      }
+      if (coverMedia) {
+        tasks.push(
+          attachMutation.mutateAsync({
+            mediaId: coverMedia.id,
+            mediableType: "news",
+            mediableId: newsId,
+            collection: COVER_COLLECTION,
+            ordre: 0,
+          })
+        )
+      }
+    }
+
+    const currentGalleryIds = galleryMedias.map((m) => m.id)
+    const removedIds = initialGalleryIds.filter((id) => !currentGalleryIds.includes(id))
+    const addedMedias = galleryMedias.filter((m) => !initialGalleryIds.includes(m.id))
+
+    removedIds.forEach((mediaId) => {
+      tasks.push(
+        detachMutation.mutateAsync({
+          mediaId,
+          mediableType: "news",
+          mediableId: newsId,
+          collection: GALLERY_COLLECTION,
+        })
+      )
+    })
+
+    addedMedias.forEach((media) => {
+      tasks.push(
+        attachMutation.mutateAsync({
+          mediaId: media.id,
+          mediableType: "news",
+          mediableId: newsId,
+          collection: GALLERY_COLLECTION,
+          ordre: galleryMedias.findIndex((m) => m.id === media.id),
+        })
+      )
+    })
+
+    if (tasks.length === 0) return
+
+    await Promise.all(tasks)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // `image` / `galleryMedias` volontairement exclus du payload : pas de
-    // champ correspondant sur News côté API réelle (voir NOTE(media)
-    // ci-dessus).
+    if (!validateForm()) return
+
     const payload = {
-      titre,
-      corps: corps || undefined,
+      titre: titre.trim(),
+      corps: corps.trim() || undefined,
       type,
       statut,
     }
 
-    if (isEditing && news) {
-      await updateMutation.mutateAsync({
-        id: news.id,
-        payload,
-      })
-    } else {
-      await createMutation.mutateAsync(payload as Omit<News, "id">)
-    }
+    try {
+      let newsId: number
 
-    onOpenChange(false)
-    onSuccess?.()
+      if (isEditing && news) {
+        const updated = await updateMutation.mutateAsync({
+          id: news.id,
+          payload,
+        })
+        newsId = updated.id
+      } else {
+        const created = await createMutation.mutateAsync(payload as Omit<News, "id">)
+        newsId = created.id
+      }
+
+      try {
+        await syncMedia(newsId)
+      } catch (mediaErr) {
+        showErrorAlert(
+          "Article enregistré, mais un problème est survenu avec les photos",
+          mediaErr instanceof Error
+            ? mediaErr.message
+            : "Certaines photos n'ont pas pu être rattachées à l'article. Réessayez depuis la fiche."
+        )
+        onOpenChange(false)
+        onSuccess?.()
+        return
+      }
+
+      await showSuccessAlert(
+        isEditing ? "Publication modifiée !" : "Publication créée !",
+        isEditing
+          ? "L'article a été mis à jour avec succès."
+          : "Le nouvel article a été enregistré avec succès."
+      )
+
+      onOpenChange(false)
+      onSuccess?.()
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.errors) {
+        const backendErrors: Record<string, string> = {}
+        const errorMessages: string[] = []
+        Object.entries(err.errors).forEach(([field, messages]) => {
+          backendErrors[field] = messages[0]
+          errorMessages.push(...messages)
+        })
+        setErrors(backendErrors)
+        showValidationErrorAlert(
+          errorMessages.length > 0 ? errorMessages : [err.message]
+        )
+      } else {
+        showErrorAlert(
+          "Erreur d'enregistrement",
+          err instanceof Error
+            ? err.message
+            : "Une erreur inattendue est survenue lors de l'enregistrement de l'article."
+        )
+      }
+    }
   }
 
   return (
@@ -162,7 +338,7 @@ export function ActualiteFormDialog({
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="mt-4 space-y-6">
-            
+
             {/* Section 1 : Identité & Typologie */}
             <div className="space-y-3.5 rounded-3xl border border-border/80 bg-secondary/30 p-4 sm:p-5">
               <div className="flex items-center gap-2">
@@ -175,25 +351,46 @@ export function ActualiteFormDialog({
               </div>
 
               <div>
-                <Label htmlFor="news-titre" className="text-xs font-semibold">
+                <Label htmlFor="news-titre" className={`text-xs font-semibold ${errors.titre ? "text-destructive" : ""}`}>
                   Titre de la publication *
                 </Label>
                 <Input
                   id="news-titre"
                   required
                   value={titre}
-                  onChange={(e) => setTitre(e.target.value)}
+                  onChange={(e) => {
+                    setTitre(e.target.value)
+                    clearError("titre")
+                  }}
                   placeholder="ex. Immersion & Rencontre avec la Jeunesse de Ziguinchor"
-                  className="mt-1.5 h-11 rounded-xl text-sm bg-card"
+                  className={`mt-1.5 h-11 rounded-xl text-sm bg-card ${
+                    errors.titre
+                      ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                      : ""
+                  }`}
                 />
+                <FormFieldError error={errors.titre} />
               </div>
 
               <div>
-                <Label htmlFor="news-type" className="text-xs font-semibold">
+                <Label htmlFor="news-type" className={`text-xs font-semibold ${errors.type ? "text-destructive" : ""}`}>
                   Format éditorial *
                 </Label>
-                <Select value={type} onValueChange={(val) => setType(val as NewsType)}>
-                  <SelectTrigger id="news-type" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
+                <Select
+                  value={type}
+                  onValueChange={(val) => {
+                    setType(val as NewsType)
+                    clearError("type")
+                  }}
+                >
+                  <SelectTrigger
+                    id="news-type"
+                    className={`mt-1.5 h-10 w-full rounded-xl text-xs bg-card ${
+                      errors.type
+                        ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                        : ""
+                    }`}
+                  >
                     <SelectValue placeholder="Catégorie" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl text-xs">
@@ -204,6 +401,7 @@ export function ActualiteFormDialog({
                     ))}
                   </SelectContent>
                 </Select>
+                <FormFieldError error={errors.type} />
               </div>
             </div>
 
@@ -219,7 +417,7 @@ export function ActualiteFormDialog({
               </div>
 
               <div>
-                <Label htmlFor="news-corps" className="text-xs font-semibold">
+                <Label htmlFor="news-corps" className={`text-xs font-semibold ${errors.corps ? "text-destructive" : ""}`}>
                   Corps de l'article / Texte complet *
                 </Label>
                 <Textarea
@@ -227,10 +425,18 @@ export function ActualiteFormDialog({
                   required
                   rows={6}
                   value={corps}
-                  onChange={(e) => setCorps(e.target.value)}
+                  onChange={(e) => {
+                    setCorps(e.target.value)
+                    clearError("corps")
+                  }}
                   placeholder="Rédigez les détails de l'événement, les déclarations, les chiffres et les perspectives..."
-                  className="mt-1.5 rounded-xl text-xs bg-card"
+                  className={`mt-1.5 rounded-xl text-xs bg-card ${
+                    errors.corps
+                      ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                      : ""
+                  }`}
                 />
+                <FormFieldError error={errors.corps} />
               </div>
             </div>
 
@@ -258,12 +464,12 @@ export function ActualiteFormDialog({
                 </Button>
               </div>
 
-              {image ? (
+              {coverMedia ? (
                 <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-3">
                   <div className="flex items-center gap-4">
                     <div className="relative size-20 sm:size-24 rounded-xl overflow-hidden bg-secondary shrink-0 border border-border">
                       <img
-                        src={image}
+                        src={coverMedia.url}
                         alt="Couverture"
                         className="size-full object-cover"
                       />
@@ -274,7 +480,7 @@ export function ActualiteFormDialog({
                         Image de couverture active
                       </span>
                       <p className="text-xs font-bold text-foreground truncate">
-                        {image}
+                        {coverMedia.nom || coverMedia.nom_original}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <Button
@@ -290,7 +496,7 @@ export function ActualiteFormDialog({
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => setImage("")}
+                          onClick={() => setCoverMedia(null)}
                           className="h-7 rounded-lg text-xs font-semibold px-2 text-destructive hover:bg-destructive/10"
                         >
                           Retirer
@@ -380,12 +586,12 @@ export function ActualiteFormDialog({
                           </button>
                         </div>
                         <p className="text-[10px] font-bold line-clamp-2">
-                          {m.nom || m.nom_fichier}
+                          {m.nom || m.nom_original}
                         </p>
                       </div>
 
                       {/* Cover Badge if matches current cover */}
-                      {image === m.url && (
+                      {coverMedia?.id === m.id && (
                         <div className="absolute bottom-1.5 left-1.5 rounded-full bg-accent px-2 py-0.5 text-[9px] font-bold text-accent-foreground shadow-xs">
                           Couverture
                         </div>
@@ -475,7 +681,7 @@ export function ActualiteFormDialog({
         open={isCoverPickerOpen}
         onOpenChange={setIsCoverPickerOpen}
         multiple={false}
-        selectedUrls={image ? [image] : []}
+        selectedUrls={coverMedia ? [coverMedia.url] : []}
         onSelect={handleSelectCover}
         title="Choisir l'image de couverture"
         description="Sélectionnez la photo principale qui illustrera cet article sur la vitrine publique."

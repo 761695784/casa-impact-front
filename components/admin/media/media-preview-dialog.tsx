@@ -9,15 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import {
-  FileText,
-  Download,
-  ExternalLink,
-  Layers,
-  Calendar,
-  HardDrive,
-  Maximize2,
-} from "lucide-react"
+import { FileText, Download } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import { MEDIA_CATEGORY_LABELS } from "@/types/enums"
 import type { Media } from "@/types/models"
@@ -50,7 +42,7 @@ export function MediaPreviewDialog({
         <DialogHeader className="border-b border-border/60 pb-3">
           <div className="flex items-center justify-between">
             <DialogTitle className="font-display text-lg font-bold truncate pr-4">
-              {media.nom || media.nom_fichier}
+              {media.nom || media.nom_original}
             </DialogTitle>
           </div>
         </DialogHeader>
@@ -71,10 +63,10 @@ export function MediaPreviewDialog({
                 </div>
                 <div>
                   <p className="font-bold text-sm text-foreground">
-                    {media.nom_fichier || media.nom}
+                    {media.nom_original || media.nom}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {media.mime_type || "Document numérique"}
+                    {media.mime || "Document numérique"}
                   </p>
                 </div>
               </div>
@@ -86,7 +78,7 @@ export function MediaPreviewDialog({
             <div>
               <span className="text-muted-foreground block text-[11px]">Format / MIME :</span>
               <span className="font-mono font-semibold text-foreground mt-0.5 block truncate">
-                {media.mime_type || media.type}
+                {media.mime || media.type}
               </span>
             </div>
             <div>
@@ -109,29 +101,13 @@ export function MediaPreviewDialog({
             </div>
           </div>
 
-          {/* Description & Alt Text */}
-          {media.description && (
+          {/* Légende */}
+          {media.legende && (
             <div className="text-xs space-y-1">
-              <span className="font-semibold text-foreground">Description :</span>
+              <span className="font-semibold text-foreground">Légende :</span>
               <p className="text-muted-foreground leading-relaxed">
-                {media.description}
+                {media.legende}
               </p>
-            </div>
-          )}
-
-          {/* Linked Entity */}
-          {media.entite_liee && (
-            <div className="flex items-center gap-2 rounded-2xl bg-forest/5 border border-forest/15 p-3 text-xs">
-              <Layers className="size-4 text-forest shrink-0" />
-              <div className="min-w-0 flex-1">
-                <span className="text-muted-foreground">Utilisé dans : </span>
-                <span className="font-semibold text-foreground">
-                  {media.entite_liee.titre}
-                </span>{" "}
-                <span className="text-[10px] text-forest font-bold uppercase">
-                  ({media.entite_liee.type})
-                </span>
-              </div>
             </div>
           )}
 

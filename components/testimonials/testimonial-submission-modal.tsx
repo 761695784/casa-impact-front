@@ -34,6 +34,9 @@ import {
   User,
 } from "lucide-react"
 import { testimonialsService } from "@/lib/services/testimonials.service"
+import { showValidationErrorAlert, showSuccessAlert, showErrorAlert } from "@/lib/alerts"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
 interface TestimonialSubmissionModalProps {
@@ -65,6 +68,17 @@ export function TestimonialSubmissionModal({
     citation: "",
   })
   const [customProgramme, setCustomProgramme] = useState("")
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const updated = { ...prev }
+        delete updated[field]
+        return updated
+      })
+    }
+  }
 
   // Gestion du téléversement d'image locale
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,10 +114,35 @@ export function TestimonialSubmissionModal({
     }
   }
 
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.nom.trim()) {
+      newErrors.nom = "Votre nom et prénom sont obligatoires."
+    } else if (formData.nom.trim().length < 2) {
+      newErrors.nom = "Votre nom doit comporter au moins 2 caractères."
+    }
+
+    if (formData.programme === "autre" && !customProgramme.trim()) {
+      newErrors.customProgramme = "Veuillez préciser le nom du programme suivi."
+    }
+
+    if (!formData.citation.trim()) {
+      newErrors.citation = "Le texte de votre témoignage est obligatoire."
+    } else if (formData.citation.trim().length < 15) {
+      newErrors.citation = "Votre témoignage doit comporter au moins 15 caractères pour être significatif."
+    }
+
+    setErrors(newErrors)
+    return newErrors
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.nom.trim() || !formData.citation.trim()) {
-      toast.error("Veuillez renseigner votre nom et votre témoignage.")
+
+    const validationErrors = validateForm()
+    if (Object.keys(validationErrors).length > 0) {
+      showValidationErrorAlert("Formulaire incomplet", validationErrors)
       return
     }
 
@@ -143,10 +182,10 @@ export function TestimonialSubmissionModal({
       queryClient.invalidateQueries({ queryKey: ["testimonials"] })
       queryClient.invalidateQueries({ queryKey: ["admin", "testimonials"] })
 
-      toast.success("Votre témoignage a été publié avec succès !")
+      showSuccessAlert("Témoignage publié !", "Merci beaucoup pour votre témoignage ! Il apparaît maintenant fièrement sur la plateforme.")
       setIsSubmitted(true)
     } catch (err) {
-      toast.error("Une erreur est survenue lors de l'enregistrement.")
+      showErrorAlert("Erreur lors de la publication", "Une erreur est survenue lors de l'enregistrement de votre témoignage.")
       console.error(err)
     } finally {
       setIsSubmitting(false)
@@ -306,17 +345,24 @@ export function TestimonialSubmissionModal({
 
               {/* Nom & Prénom */}
               <div className="space-y-1.5">
-                <Label htmlFor="author-name" className="text-xs font-bold text-foreground">
+                <Label htmlFor="author-name" className={cn("text-xs font-bold text-foreground", errors.nom ? "text-destructive" : "")}>
                   Nom et Prénom <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="author-name"
                   placeholder="Ex : Mariama Sadio"
                   value={formData.nom}
-                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                  required
-                  className="rounded-xl border-border bg-background focus:ring-primary h-11"
+                  onChange={(e) => {
+                    setFormData({ ...formData, nom: e.target.value })
+                    clearError("nom")
+                  }}
+                  aria-invalid={!!errors.nom}
+                  className={cn(
+                    "rounded-xl border-border bg-background focus:ring-primary h-11 transition-colors",
+                    errors.nom ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
+                  )}
                 />
+                <FormFieldError error={errors.nom} />
               </div>
 
               {/* Rôle / Fonction */}
@@ -339,12 +385,12 @@ export function TestimonialSubmissionModal({
                   <Label className="text-xs font-bold text-foreground">Région d'ancrage</Label>
                   <Select
                     value={formData.region}
-                    onValueChange={(val) => setFormData({ ...formData, region: val })}
+                    onValueChange={(val) => setFormData({ ...formData, region: val || "" })}
                   >
-                    <SelectTrigger className="rounded-xl border-border bg-background h-11">
+                    <SelectTrigger className="rounded-xl border-border bg-background h-11 w-full">
                       <SelectValue placeholder="Choisir une région" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-2xl text-xs w-full min-w-[200px]">
                       <SelectItem value="Ziguinchor">Ziguinchor</SelectItem>
                       <SelectItem value="Sédhiou">Sédhiou</SelectItem>
                       <SelectItem value="Kolda">Kolda</SelectItem>
@@ -357,12 +403,15 @@ export function TestimonialSubmissionModal({
                   <Label className="text-xs font-bold text-foreground">Programme suivi</Label>
                   <Select
                     value={formData.programme}
-                    onValueChange={(val) => setFormData({ ...formData, programme: val })}
+                    onValueChange={(val) => {
+                      setFormData({ ...formData, programme: val || "" })
+                      if (val !== "autre") clearError("customProgramme")
+                    }}
                   >
-                    <SelectTrigger className="rounded-xl border-border bg-background h-11">
+                    <SelectTrigger className="rounded-xl border-border bg-background h-11 w-full">
                       <SelectValue placeholder="Choisir un programme" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-2xl text-xs w-full min-w-[240px]">
                       <SelectItem value="Académie du Leadership Jeune">
                         Académie du Leadership
                       </SelectItem>
@@ -386,17 +435,24 @@ export function TestimonialSubmissionModal({
 
                   {formData.programme === "autre" && (
                     <div className="mt-2.5 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
-                      <Label htmlFor="custom-programme" className="text-xs font-semibold text-primary">
+                      <Label htmlFor="custom-programme" className={cn("text-xs font-semibold text-primary", errors.customProgramme ? "text-destructive" : "")}>
                         Précisez le nom de votre programme / action <span className="text-red-500">*</span>
                       </Label>
                       <Input
                         id="custom-programme"
                         placeholder="Ex : Caravane Éco-responsable, Bourse Tremplin..."
                         value={customProgramme}
-                        onChange={(e) => setCustomProgramme(e.target.value)}
-                        required
-                        className="rounded-xl border-primary/50 bg-background focus:ring-primary h-10"
+                        onChange={(e) => {
+                          setCustomProgramme(e.target.value)
+                          clearError("customProgramme")
+                        }}
+                        aria-invalid={!!errors.customProgramme}
+                        className={cn(
+                          "rounded-xl border-primary/50 bg-background focus:ring-primary h-10 transition-colors",
+                          errors.customProgramme ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
+                        )}
                       />
+                      <FormFieldError error={errors.customProgramme} />
                     </div>
                   )}
                 </div>
@@ -404,7 +460,7 @@ export function TestimonialSubmissionModal({
 
               {/* Message / Citation */}
               <div className="space-y-1.5">
-                <Label htmlFor="author-citation" className="text-xs font-bold text-foreground">
+                <Label htmlFor="author-citation" className={cn("text-xs font-bold text-foreground", errors.citation ? "text-destructive" : "")}>
                   Votre Témoignage <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
@@ -412,10 +468,17 @@ export function TestimonialSubmissionModal({
                   placeholder="Racontez votre expérience, ce que ce programme vous a apporté et son impact sur votre projet ou votre région..."
                   rows={4}
                   value={formData.citation}
-                  onChange={(e) => setFormData({ ...formData, citation: e.target.value })}
-                  required
-                  className="rounded-xl border-border bg-background focus:ring-primary leading-relaxed break-words [overflow-wrap:anywhere]"
+                  onChange={(e) => {
+                    setFormData({ ...formData, citation: e.target.value })
+                    clearError("citation")
+                  }}
+                  aria-invalid={!!errors.citation}
+                  className={cn(
+                    "rounded-xl border-border bg-background focus:ring-primary leading-relaxed break-words [overflow-wrap:anywhere] transition-colors",
+                    errors.citation ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
+                  )}
                 />
+                <FormFieldError error={errors.citation} />
               </div>
             </form>
 

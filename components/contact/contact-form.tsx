@@ -16,11 +16,16 @@ import {
   Send,
   Sparkles,
 } from "lucide-react"
-import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showValidationErrorAlert,
+} from "@/lib/alerts"
 import { cn } from "@/lib/utils"
 import { CONTACT_CATEGORY_LABELS, type ContactCategory } from "@/types/enums"
 
@@ -45,11 +50,27 @@ export function ContactForm() {
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   async function onSubmit(values: FormValues) {
-    // Demonstration submit — replace with POST /api/public/contact
-    await new Promise((r) => setTimeout(r, 900))
-    console.log("[Casa Impact] Message de contact envoyé:", values)
-    toast.success("Votre message a bien été envoyé !")
-    setSubmitted(true)
+    try {
+      // Demonstration submit — replace with POST /api/public/contact
+      await new Promise((r) => setTimeout(r, 900))
+      console.log("[Casa Impact] Message de contact envoyé:", values)
+      await showSuccessAlert(
+        "Message envoyé !",
+        "Votre message a bien été transmis à l'équipe Casa Impact."
+      )
+      setSubmitted(true)
+    } catch {
+      showErrorAlert("Erreur", "Une erreur est survenue lors de l'envoi de votre message.")
+    }
+  }
+
+  const onInvalid = (formErrors: typeof errors) => {
+    const messages = Object.values(formErrors)
+      .map((e) => e?.message)
+      .filter((m): m is string => Boolean(m))
+    if (messages.length > 0) {
+      showValidationErrorAlert(messages)
+    }
   }
 
   if (submitted) {
@@ -90,7 +111,7 @@ export function ContactForm() {
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onSubmit, onInvalid)}
       className="rounded-3xl border border-border bg-card p-6 sm:p-10 shadow-sm"
     >
       <div className="mb-6 border-b border-border pb-4">
@@ -104,23 +125,29 @@ export function ContactForm() {
 
       <div className="grid gap-5 sm:grid-cols-2">
         {/* Nom */}
-        <Field label="Nom complet" icon={User} error={errors.nom?.message}>
+        <Field label="Nom complet *" icon={User} error={errors.nom?.message}>
           <Input
             {...register("nom")}
             placeholder="Votre prénom et nom"
             aria-invalid={!!errors.nom}
-            className="h-11 rounded-xl"
+            className={cn(
+              "h-11 rounded-xl",
+              errors.nom && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
 
         {/* E-mail */}
-        <Field label="Adresse e-mail" icon={Mail} error={errors.email?.message}>
+        <Field label="Adresse e-mail *" icon={Mail} error={errors.email?.message}>
           <Input
             type="email"
             {...register("email")}
             placeholder="vous@exemple.com"
             aria-invalid={!!errors.email}
-            className="h-11 rounded-xl"
+            className={cn(
+              "h-11 rounded-xl",
+              errors.email && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
 
@@ -129,17 +156,23 @@ export function ContactForm() {
           <Input
             {...register("telephone")}
             placeholder="+221 ..."
-            className="h-11 rounded-xl"
+            className={cn(
+              "h-11 rounded-xl",
+              errors.telephone && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
 
         {/* Objet */}
-        <Field label="Objet de votre message" icon={Layers} error={errors.categorie?.message}>
+        <Field label="Objet de votre message *" icon={Layers} error={errors.categorie?.message}>
           <select
             {...register("categorie")}
             defaultValue=""
             aria-invalid={!!errors.categorie}
-            className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[invalid=true]:border-destructive"
+            className={cn(
+              "flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              errors.categorie && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           >
             <option value="" disabled>
               Sélectionnez un motif
@@ -157,20 +190,26 @@ export function ContactForm() {
           <Input
             {...register("sujet")}
             placeholder="Ex : Proposition de partenariat pour le programme entrepreneuriat"
-            className="h-11 rounded-xl"
+            className={cn(
+              "h-11 rounded-xl",
+              errors.sujet && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
       </div>
 
       {/* Message */}
       <div className="mt-5">
-        <Field label="Votre message" icon={MessageSquare} error={errors.message?.message}>
+        <Field label="Votre message *" icon={MessageSquare} error={errors.message?.message}>
           <Textarea
             {...register("message")}
             rows={5}
             placeholder="Expliquez-nous en détail votre demande ou votre projet..."
             aria-invalid={!!errors.message}
-            className="rounded-2xl resize-none p-4"
+            className={cn(
+              "rounded-2xl resize-none p-4",
+              errors.message && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
       </div>
@@ -216,13 +255,16 @@ function Field({
   children: React.ReactNode
 }) {
   return (
-    <div className={cn("space-y-2", className)}>
-      <Label className="flex items-center gap-1.5 text-xs font-semibold text-foreground uppercase tracking-wide">
-        {Icon && <Icon className="size-3.5 text-primary" />}
+    <div className={cn("space-y-1.5", className)}>
+      <Label className={cn(
+        "flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide",
+        error ? "text-destructive" : "text-foreground"
+      )}>
+        {Icon && <Icon className={cn("size-3.5", error ? "text-destructive" : "text-primary")} />}
         <span>{label}</span>
       </Label>
       {children}
-      {error && <p className="text-xs font-medium text-destructive">{error}</p>}
+      <FormFieldError error={error} />
     </div>
   )
 }

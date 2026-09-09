@@ -80,7 +80,7 @@ export function UsersMobileList({
                 <span className="text-muted-foreground text-[11px]">Rôle :</span>
                 <span className="font-semibold text-foreground flex items-center gap-1">
                   <Shield className="size-3 text-forest" />
-                  <span>{ADMIN_ROLE_LABELS[u.role?.slug] || u.role?.nom}</span>
+                  <span>{(u.role?.slug && ADMIN_ROLE_LABELS[u.role.slug]) || u.role?.nom || "Utilisateur"}</span>
                 </span>
               </div>
               <div className="flex justify-between items-center">

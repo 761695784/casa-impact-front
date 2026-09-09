@@ -1,13 +1,14 @@
 "use client"
 
 import React, { useState } from "react"
-import { Tag } from "lucide-react"
+import { Plus, Tag } from "lucide-react"
 import { useProgramTypes, useUpdateProgramType } from "@/hooks/use-program-types"
 import { ProgramTypesFilterBar } from "@/components/admin/program-types/program-types-filter-bar"
 import { ProgramTypesGrid } from "@/components/admin/program-types/program-types-grid"
 import { ProgramTypeEditDialog } from "@/components/admin/program-types/program-type-edit-dialog"
 import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog"
 import { ErrorState } from "@/components/admin/ui/error-state"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { ProgramType } from "@/types/models"
 
@@ -15,6 +16,7 @@ export default function ProgramTypesListPage() {
   const [search, setSearch] = useState("")
   const [statut, setStatut] = useState("all")
 
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [selectedTypeForEdit, setSelectedTypeForEdit] = useState<ProgramType | null>(null)
   const [selectedTypeForToggle, setSelectedTypeForToggle] = useState<ProgramType | null>(null)
 
@@ -34,7 +36,7 @@ export default function ProgramTypesListPage() {
     <div className="space-y-6 animate-in fade-in-50 duration-300">
       
       {/* 1. Header de la Page */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border/80 pb-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/80 pb-5">
         <div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-forest/10 px-3 py-0.5 text-xs font-semibold text-forest">
             <Tag className="size-3.5" />
@@ -47,6 +49,14 @@ export default function ProgramTypesListPage() {
             Consultez et configurez les formats d'intervention de Casa Impact (Formation, Accompagnement, Événements, Bourses).
           </p>
         </div>
+
+        <Button
+          onClick={() => setIsCreateOpen(true)}
+          className="rounded-full bg-forest text-white hover:bg-forest/90 font-semibold gap-2 shadow-xs shrink-0 self-start sm:self-auto"
+        >
+          <Plus className="size-4" />
+          <span>Nouveau type de programme</span>
+        </Button>
       </div>
 
       {/* 2. Barre de Filtres */}
@@ -99,6 +109,16 @@ export default function ProgramTypesListPage() {
               ? "Aucune typologie ne correspond à vos filtres actuels."
               : "Aucune modalité de programme n'est configurée."}
           </p>
+          {!(search || statut !== "all") && (
+            <Button
+              onClick={() => setIsCreateOpen(true)}
+              size="sm"
+              className="mt-5 rounded-full bg-forest text-white hover:bg-forest/90 font-semibold gap-1.5"
+            >
+              <Plus className="size-4" />
+              <span>Créer un type de programme</span>
+            </Button>
+          )}
         </div>
       ) : (
         <ProgramTypesGrid
@@ -108,11 +128,16 @@ export default function ProgramTypesListPage() {
         />
       )}
 
-      {/* 4. Modale de Modification */}
+      {/* 4. Modale de Création / Modification */}
       <ProgramTypeEditDialog
         programType={selectedTypeForEdit}
-        open={!!selectedTypeForEdit}
-        onOpenChange={(open) => !open && setSelectedTypeForEdit(null)}
+        open={isCreateOpen || !!selectedTypeForEdit}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsCreateOpen(false)
+            setSelectedTypeForEdit(null)
+          }
+        }}
       />
 
       {/* 5. Confirmation d'Activation / Désactivation */}

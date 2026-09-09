@@ -16,12 +16,17 @@ import {
   ArrowRight,
   ShieldCheck,
 } from "lucide-react"
-import { toast } from "sonner"
 import type { ApplicationCall } from "@/types/models"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showValidationErrorAlert,
+} from "@/lib/alerts"
 import { cn } from "@/lib/utils"
 
 const schema = z.object({
@@ -49,12 +54,28 @@ export function ApplicationForm({ call }: { call: ApplicationCall }) {
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   async function onSubmit(values: FormValues) {
-    // Demonstration submit — replace with POST /api/public/applications
-    await new Promise((r) => setTimeout(r, 900))
-    const ref = makeDossierRef()
-    setReference(ref)
-    setSubmittedValues(values)
-    toast.success("Votre dossier de candidature a bien été transmis !")
+    try {
+      // Demonstration submit — replace with POST /api/public/applications
+      await new Promise((r) => setTimeout(r, 900))
+      const ref = makeDossierRef()
+      setReference(ref)
+      setSubmittedValues(values)
+      await showSuccessAlert(
+        "Candidature transmise !",
+        `Votre dossier pour « ${call.titre} » a bien été enregistré.`
+      )
+    } catch {
+      showErrorAlert("Erreur", "Une erreur est survenue lors de l'envoi de votre candidature.")
+    }
+  }
+
+  const onInvalid = (formErrors: typeof errors) => {
+    const messages = Object.values(formErrors)
+      .map((e) => e?.message)
+      .filter((m): m is string => Boolean(m))
+    if (messages.length > 0) {
+      showValidationErrorAlert(messages)
+    }
   }
 
   if (reference && submittedValues) {
@@ -121,7 +142,7 @@ export function ApplicationForm({ call }: { call: ApplicationCall }) {
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onSubmit, onInvalid)}
       className="rounded-3xl border border-border bg-card p-6 sm:p-10 shadow-sm"
     >
       <div className="mb-6 border-b border-border pb-4">
@@ -135,56 +156,71 @@ export function ApplicationForm({ call }: { call: ApplicationCall }) {
 
       <div className="grid gap-5 sm:grid-cols-2">
         {/* Prénom */}
-        <Field label="Prénom" icon={User} error={errors.prenom?.message}>
+        <Field label="Prénom *" icon={User} error={errors.prenom?.message}>
           <Input
             {...register("prenom")}
             placeholder="Ex : Fatou"
             aria-invalid={!!errors.prenom}
-            className="h-11 rounded-xl"
+            className={cn(
+              "h-11 rounded-xl",
+              errors.prenom && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
 
         {/* Nom */}
-        <Field label="Nom de famille" icon={User} error={errors.nom?.message}>
+        <Field label="Nom de famille *" icon={User} error={errors.nom?.message}>
           <Input
             {...register("nom")}
             placeholder="Ex : Sagna"
             aria-invalid={!!errors.nom}
-            className="h-11 rounded-xl"
+            className={cn(
+              "h-11 rounded-xl",
+              errors.nom && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
 
         {/* E-mail */}
-        <Field label="Adresse e-mail" icon={Mail} error={errors.email?.message}>
+        <Field label="Adresse e-mail *" icon={Mail} error={errors.email?.message}>
           <Input
             type="email"
             {...register("email")}
             placeholder="vous@exemple.com"
             aria-invalid={!!errors.email}
-            className="h-11 rounded-xl"
+            className={cn(
+              "h-11 rounded-xl",
+              errors.email && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
 
         {/* Téléphone */}
-        <Field label="Numéro WhatsApp" icon={Phone} error={errors.telephone?.message}>
+        <Field label="Numéro WhatsApp *" icon={Phone} error={errors.telephone?.message}>
           <Input
             {...register("telephone")}
             placeholder="+221 78 ... .. .."
             aria-invalid={!!errors.telephone}
-            className="h-11 rounded-xl"
+            className={cn(
+              "h-11 rounded-xl",
+              errors.telephone && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
       </div>
 
       {/* Motivation */}
       <div className="mt-5">
-        <Field label="Votre motivation & parcours" icon={MessageSquare} error={errors.motivation?.message}>
+        <Field label="Votre motivation & parcours *" icon={MessageSquare} error={errors.motivation?.message}>
           <Textarea
             {...register("motivation")}
             rows={5}
             placeholder="Expliquez vos motivations, vos compétences et ce que vous attendez de ce programme..."
             aria-invalid={!!errors.motivation}
-            className="rounded-2xl resize-none p-4"
+            className={cn(
+              "rounded-2xl resize-none p-4",
+              errors.motivation && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+            )}
           />
         </Field>
       </div>
@@ -249,13 +285,16 @@ function Field({
   children: React.ReactNode
 }) {
   return (
-    <div className="space-y-2">
-      <Label className="flex items-center gap-1.5 text-xs font-semibold text-foreground uppercase tracking-wide">
-        {Icon && <Icon className="size-3.5 text-primary" />}
+    <div className="space-y-1.5">
+      <Label className={cn(
+        "flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide",
+        error ? "text-destructive" : "text-foreground"
+      )}>
+        {Icon && <Icon className={cn("size-3.5", error ? "text-destructive" : "text-primary")} />}
         <span>{label}</span>
       </Label>
       {children}
-      {error && <p className="text-xs font-medium text-destructive">{error}</p>}
+      <FormFieldError error={error} />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useTestimonials } from "@/hooks/use-content"
+import { getTestimonialPhotoUrl } from "@/lib/format"
 import { Quote, Sparkles, ChevronLeft, ChevronRight, Star, ArrowRight, CheckCircle2 } from "lucide-react"
 import { BaobabMark } from "@/components/brand/baobab-mark"
 
@@ -115,7 +116,7 @@ export function HomeTestimonials() {
             </div>
 
             {/* Testimonial Quote Text */}
-            <blockquote className="relative text-base sm:text-xl lg:text-2xl font-display font-medium text-foreground leading-relaxed transition-opacity duration-300">
+            <blockquote className="relative break-words text-base sm:text-xl lg:text-2xl font-display font-medium text-foreground leading-relaxed transition-opacity duration-300 [overflow-wrap:anywhere]">
               « {currentTestimonial.citation} »
             </blockquote>
 
@@ -125,7 +126,7 @@ export function HomeTestimonials() {
                 {/* Photo with Glowing Ring */}
                 <div className="relative size-14 sm:size-16 rounded-full overflow-hidden bg-secondary ring-2 ring-accent/60 shadow-md shrink-0">
                   <Image
-                    src={currentTestimonial.media?.[0]?.url || "/assets/team/placeholder.svg"}
+                    src={getTestimonialPhotoUrl(currentTestimonial) || "/assets/team/placeholder.svg"}
                     alt={currentTestimonial.auteur}
                     fill
                     sizes="64px"

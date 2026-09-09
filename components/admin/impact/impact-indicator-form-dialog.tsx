@@ -20,6 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showValidationErrorAlert,
+  showConfirmAlert,
+} from "@/lib/alerts"
+import { ApiError } from "@/lib/api-client"
 import {
   useCreateImpactIndicator,
   useUpdateImpactIndicator,
@@ -55,6 +63,17 @@ export function ImpactIndicatorFormDialog({
   const [libelle, setLibelle] = useState("")
   const [unite, setUnite] = useState("")
   const [description, setDescription] = useState("")
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[field]
+        return next
+      })
+    }
+  }
 
   // Valeurs (points de mesure) : sous-ressource imbriquée gérée
   // indépendamment de l'indicateur (POST/PUT/DELETE dédiés). On tient une
@@ -75,32 +94,82 @@ export function ImpactIndicatorFormDialog({
       setDescription("")
       setValues([])
     }
+    setErrors({})
   }, [indicator, open])
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
+  const validateForm = (): boolean => {
+    const errs: Record<string, string> = {}
+
+    if (!libelle.trim()) {
+      errs.libelle = "Le libellé de l'indicateur est requis."
+    } else if (libelle.trim().length < 3) {
+      errs.libelle = "Le libellé doit comporter au moins 3 caractères."
+    }
+
+    setErrors(errs)
+    if (Object.keys(errs).length > 0) {
+      showValidationErrorAlert(Object.values(errs))
+      return false
+    }
+    return true
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (!validateForm()) return
+
     const payload: Partial<ImpactIndicator> = {
-      libelle,
-      unite: unite || undefined,
-      description: description || undefined,
+      libelle: libelle.trim(),
+      unite: unite.trim() || undefined,
+      description: description.trim() || undefined,
     }
 
-    if (isEditing && indicator) {
-      await updateMutation.mutateAsync({
-        id: indicator.id,
-        payload,
-      })
-    } else {
-      await createMutation.mutateAsync(
-        payload as Omit<ImpactIndicator, "id">
-      )
-    }
+    try {
+      if (isEditing && indicator) {
+        await updateMutation.mutateAsync({
+          id: indicator.id,
+          payload,
+        })
+        await showSuccessAlert(
+          "Indicateur modifié !",
+          "L'indicateur d'impact a été mis à jour avec succès."
+        )
+      } else {
+        await createMutation.mutateAsync(
+          payload as Omit<ImpactIndicator, "id">
+        )
+        await showSuccessAlert(
+          "Indicateur créé !",
+          "Le nouvel indicateur a été enregistré avec succès."
+        )
+      }
 
-    onOpenChange(false)
-    onSuccess?.()
+      onOpenChange(false)
+      onSuccess?.()
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.errors) {
+        const backendErrors: Record<string, string> = {}
+        const errorMessages: string[] = []
+        Object.entries(err.errors).forEach(([field, messages]) => {
+          backendErrors[field] = messages[0]
+          errorMessages.push(...messages)
+        })
+        setErrors(backendErrors)
+        showValidationErrorAlert(
+          errorMessages.length > 0 ? errorMessages : [err.message]
+        )
+      } else {
+        showErrorAlert(
+          "Erreur d'enregistrement",
+          err instanceof Error
+            ? err.message
+            : "Une erreur est survenue lors de l'enregistrement de l'indicateur."
+        )
+      }
+    }
   }
 
   return (
@@ -124,17 +193,25 @@ export function ImpactIndicatorFormDialog({
 
           <div className="space-y-3.5 rounded-2xl border border-border/80 bg-secondary/30 p-4 sm:p-5">
             <div>
-              <Label htmlFor="ind-libelle" className="text-xs font-semibold">
+              <Label htmlFor="ind-libelle" className={`text-xs font-semibold ${errors.libelle ? "text-destructive" : ""}`}>
                 Libellé de l'indicateur *
               </Label>
               <Input
                 id="ind-libelle"
                 required
                 value={libelle}
-                onChange={(e) => setLibelle(e.target.value)}
+                onChange={(e) => {
+                  setLibelle(e.target.value)
+                  clearError("libelle")
+                }}
                 placeholder="ex. Jeunes & Femmes formés au leadership"
-                className="mt-1.5 h-11 rounded-xl text-sm"
+                className={`mt-1.5 h-11 rounded-xl text-sm ${
+                  errors.libelle
+                    ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                    : ""
+                }`}
               />
+              <FormFieldError error={errors.libelle} />
             </div>
 
             <div>
@@ -247,39 +324,68 @@ function ImpactValuesEditor({
   const cancelEdit = () => setEditingId(null)
 
   const saveEdit = async (valueId: number) => {
-    const updated = await updateMutation.mutateAsync({
-      valueId,
-      indicatorId,
-      payload: {
-        periode: editPeriode || undefined,
-        region: (editRegion || undefined) as Region | undefined,
-        valeur: Number(editValeur) || 0,
-      },
-    })
-    onValuesChange(values.map((v) => (v.id === valueId ? updated : v)))
-    setEditingId(null)
+    if (!editValeur.trim() || isNaN(Number(editValeur))) {
+      showValidationErrorAlert(["La valeur numérique du point de mesure est requise."])
+      return
+    }
+
+    try {
+      const updated = await updateMutation.mutateAsync({
+        valueId,
+        indicatorId,
+        payload: {
+          periode: editPeriode.trim() || undefined,
+          region: (editRegion || undefined) as Region | undefined,
+          valeur: Number(editValeur) || 0,
+        },
+      })
+      onValuesChange(values.map((v) => (v.id === valueId ? updated : v)))
+      setEditingId(null)
+      await showSuccessAlert("Point de mesure modifié", "La valeur a été mise à jour.")
+    } catch {
+      showErrorAlert("Erreur", "Impossible de mettre à jour le point de mesure.")
+    }
   }
 
   const handleDelete = async (valueId: number) => {
-    if (!window.confirm("Supprimer ce point de mesure ?")) return
-    await deleteMutation.mutateAsync({ valueId, indicatorId })
-    onValuesChange(values.filter((v) => v.id !== valueId))
+    const confirmed = await showConfirmAlert(
+      "Supprimer ce point de mesure ?",
+      "Cette action retirera définitivement ce relevé d'impact."
+    )
+    if (!confirmed) return
+
+    try {
+      await deleteMutation.mutateAsync({ valueId, indicatorId })
+      onValuesChange(values.filter((v) => v.id !== valueId))
+      await showSuccessAlert("Supprimé", "Le point de mesure a été retiré.")
+    } catch {
+      showErrorAlert("Erreur", "Impossible de supprimer le point de mesure.")
+    }
   }
 
   const handleAdd = async () => {
-    if (!newValeur.trim()) return
-    const created = await addMutation.mutateAsync({
-      indicatorId,
-      payload: {
-        periode: newPeriode || undefined,
-        region: (newRegion || undefined) as Region | undefined,
-        valeur: Number(newValeur) || 0,
-      },
-    })
-    onValuesChange([...values, created])
-    setNewPeriode("")
-    setNewRegion("")
-    setNewValeur("")
+    if (!newValeur.trim() || isNaN(Number(newValeur))) {
+      showValidationErrorAlert(["Veuillez saisir une valeur numérique valide pour ajouter un point de mesure."])
+      return
+    }
+
+    try {
+      const created = await addMutation.mutateAsync({
+        indicatorId,
+        payload: {
+          periode: newPeriode.trim() || undefined,
+          region: (newRegion || undefined) as Region | undefined,
+          valeur: Number(newValeur) || 0,
+        },
+      })
+      onValuesChange([...values, created])
+      setNewPeriode("")
+      setNewRegion("")
+      setNewValeur("")
+      await showSuccessAlert("Point de mesure ajouté", "Le relevé a été enregistré.")
+    } catch {
+      showErrorAlert("Erreur", "Impossible d'ajouter le point de mesure.")
+    }
   }
 
   return (

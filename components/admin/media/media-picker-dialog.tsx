@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -20,11 +20,9 @@ import {
   Check,
   UploadCloud,
   Layers,
-  Sparkles,
   CheckCircle2,
   X,
   FileText,
-  Plus,
 } from "lucide-react"
 import { MEDIA_CATEGORY_LABELS } from "@/types/enums"
 import type { Media } from "@/types/models"
@@ -61,13 +59,13 @@ export function MediaPickerDialog({
   const [selectedMap, setSelectedMap] = useState<Record<number, Media>>({})
 
   // Quick upload state inside picker
-  const [uploadNom, setUploadNom] = useState("")
-  const [uploadUrl, setUploadUrl] = useState("")
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploadPreview, setUploadPreview] = useState("")
+  const [uploadNom, setUploadNom] = useState("")
   const [uploadCategory, setUploadCategory] = useState<string>("general")
 
   // Initialize selection when opened
-  React.useEffect(() => {
+  useEffect(() => {
     if (open) {
       const initial: Record<number, Media> = {}
       if (selectedUrls.length > 0 && mediaItems.length > 0) {
@@ -83,13 +81,20 @@ export function MediaPickerDialog({
     }
   }, [open, selectedUrls, mediaItems])
 
+  // Libère l'URL objet de prévisualisation du téléversement rapide
+  useEffect(() => {
+    return () => {
+      if (uploadPreview) URL.revokeObjectURL(uploadPreview)
+    }
+  }, [uploadPreview])
+
   // Filtered Media List
   const filteredList = useMemo(() => {
     return mediaItems.filter((m) => {
       const matchesSearch =
         !search.trim() ||
         m.nom?.toLowerCase().includes(search.toLowerCase()) ||
-        m.nom_fichier?.toLowerCase().includes(search.toLowerCase()) ||
+        m.nom_original?.toLowerCase().includes(search.toLowerCase()) ||
         m.alt?.toLowerCase().includes(search.toLowerCase())
 
       const matchesCategory =
@@ -122,36 +127,40 @@ export function MediaPickerDialog({
     onOpenChange(false)
   }
 
+  const handleQuickUploadFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]
+    if (!f) return
+    if (!uploadNom) {
+      const base = f.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ")
+      setUploadNom(base.charAt(0).toUpperCase() + base.slice(1))
+    }
+    setUploadFile(f)
+    setUploadPreview(URL.createObjectURL(f))
+  }
+
   const handleQuickUpload = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!uploadUrl && !uploadPreview) return
-
-    const payload = {
-      nom: uploadNom.trim() || "Photo ajoutée à l'actualité",
-      nom_fichier: "photo-actualite.jpg",
-      url: uploadPreview || uploadUrl,
-      type: "image",
-      categorie: (uploadCategory as any) || "general",
-      statut: "actif" as const,
-      taille: 800000,
-      dimensions: "1920x1080",
-      mime_type: "image/jpeg",
-    }
+    if (!uploadFile) return
 
     try {
-      const created = await createMutation.mutateAsync(payload)
+      const created = await createMutation.mutateAsync({
+        file: uploadFile,
+        nom: uploadNom.trim() || undefined,
+        categorie: (uploadCategory as any) || "general",
+      })
       // Auto select the uploaded item
       if (multiple) {
         setSelectedMap((prev) => ({ ...prev, [created.id]: created }))
       } else {
         setSelectedMap({ [created.id]: created })
       }
-      setUploadNom("")
-      setUploadUrl("")
+      if (uploadPreview) URL.revokeObjectURL(uploadPreview)
+      setUploadFile(null)
       setUploadPreview("")
+      setUploadNom("")
       setActiveTab("browse")
     } catch {
-      // Handled by toast
+      // Géré par le toast de la mutation
     }
   }
 
@@ -233,20 +242,22 @@ export function MediaPickerDialog({
                 >
                   Toutes
                 </button>
-                {Object.entries(MEDIA_CATEGORY_LABELS).map(([key, label]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setSelectedCategory(key)}
-                    className={`rounded-full px-3 py-1.5 text-[11px] font-bold transition-all whitespace-nowrap ${
-                      selectedCategory === key
-                        ? "bg-primary text-white shadow-xs"
-                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+                {Object.entries(MEDIA_CATEGORY_LABELS)
+                  .filter(([key]) => key !== "all")
+                  .map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setSelectedCategory(key)}
+                      className={`rounded-full px-3 py-1.5 text-[11px] font-bold transition-all whitespace-nowrap ${
+                        selectedCategory === key
+                          ? "bg-primary text-white shadow-xs"
+                          : "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
               </div>
             </div>
 
@@ -319,23 +330,11 @@ export function MediaPickerDialog({
           <TabsContent value="upload" className="flex-1 overflow-y-auto pt-4 space-y-4 data-[state=inactive]:hidden">
             <form onSubmit={handleQuickUpload} className="space-y-4 max-w-lg mx-auto p-4 rounded-3xl border border-border bg-card">
               <div>
-                <Label className="text-xs font-semibold">Fichier photo ou URL directe *</Label>
+                <Label className="text-xs font-semibold">Fichier photo *</Label>
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0]
-                    if (!f) return
-                    if (!uploadNom) {
-                      const base = f.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ")
-                      setUploadNom(base.charAt(0).toUpperCase() + base.slice(1))
-                    }
-                    const reader = new FileReader()
-                    reader.onload = (ev) => {
-                      setUploadPreview(ev.target?.result as string)
-                    }
-                    reader.readAsDataURL(f)
-                  }}
+                  onChange={handleQuickUploadFileChange}
                   className="mt-1.5 block w-full text-xs text-muted-foreground file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-forest"
                 />
               </div>
@@ -375,7 +374,7 @@ export function MediaPickerDialog({
 
               <Button
                 type="submit"
-                disabled={createMutation.isPending || (!uploadUrl && !uploadPreview)}
+                disabled={createMutation.isPending || !uploadFile}
                 className="w-full rounded-full bg-primary text-white hover:bg-forest font-bold text-xs"
               >
                 {createMutation.isPending ? "Téléversement..." : "Ajouter et Sélectionner"}

@@ -5,7 +5,7 @@ import Link from "next/link"
 import { ArrowUpRight, Calendar, Clock, Sparkles, Camera } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { NEWS_TYPE_LABELS } from "@/types/enums"
-import { formatDate, resolveMediaUrl } from "@/lib/format"
+import { formatDate, getNewsCoverUrl, getNewsGalleryMedia } from "@/lib/format"
 import type { News } from "@/types/models"
 
 const newsTypeBadgeColors: Record<string, string> = {
@@ -16,8 +16,9 @@ const newsTypeBadgeColors: Record<string, string> = {
 }
 
 export function NewsCard({ article, featured = false }: { article: News; featured?: boolean }) {
-  // Pas de champ `image` direct côté API réelle — visuel via `media` (premier élément, sinon fallback).
-  const cover = resolveMediaUrl(article.media?.[0]?.url) || "/assets/news/default-news.png"
+  // Pas de champ `image` direct côté API réelle — visuel via `media` (collection "cover", sinon fallback).
+  const cover = getNewsCoverUrl(article) || "/assets/news/default-news.png"
+  const galleryCount = getNewsGalleryMedia(article).length
 
   return (
     <Link
@@ -56,10 +57,10 @@ export function NewsCard({ article, featured = false }: { article: News; feature
           </span>
         )}
 
-        {article.media && article.media.length > 0 && (
+        {galleryCount > 0 && (
           <span className="absolute right-3.5 bottom-3.5 inline-flex items-center gap-1 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
             <Camera className="size-3 text-accent" />
-            <span>{article.media.length} photos</span>
+            <span>{galleryCount} photo{galleryCount > 1 ? "s" : ""}</span>
           </span>
         )}
       </div>

@@ -6,10 +6,14 @@ import { Quote, Sparkles, Star, CheckCircle2 } from "lucide-react"
 import { useTestimonials } from "@/hooks/use-content"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
-import { resolveMediaUrl } from "@/lib/format"
+import { getTestimonialPhotoUrl } from "@/lib/format"
 import Link from "next/link"
 
-export function TestimonialsGrid() {
+interface TestimonialsGridProps {
+  onOpenSubmitModal?: () => void
+}
+
+export function TestimonialsGrid({ onOpenSubmitModal }: TestimonialsGridProps = {}) {
   // Le filtre "publié" est déjà appliqué côté service/backend — pas de refiltrage client.
   const { data: testimonials = [] } = useTestimonials()
 
@@ -22,9 +26,15 @@ export function TestimonialsGrid() {
         title="Les premiers témoignages arrivent bientôt"
         description="Bénéficiaires, membres et partenaires partageront ici leur expérience de l'organisation Casa Impact. Vous avez une histoire à raconter ?"
         action={
-          <Button asChild className="rounded-full bg-primary text-white">
-            <Link href="/contact">Partager mon témoignage</Link>
-          </Button>
+          onOpenSubmitModal ? (
+            <Button onClick={onOpenSubmitModal} className="rounded-full bg-primary text-white">
+              Partager mon témoignage
+            </Button>
+          ) : (
+            <Button asChild className="rounded-full bg-primary text-white">
+              <Link href="/contact">Partager mon témoignage</Link>
+            </Button>
+          )
         }
       />
     )
@@ -57,15 +67,15 @@ export function TestimonialsGrid() {
             </div>
 
             {/* Quote Content — le champ réel est `citation` (pas `contenu`) */}
-            <blockquote className="flex-1 text-sm sm:text-base leading-relaxed text-foreground/90 font-medium font-sans">
+            <blockquote className="flex-1 break-words text-sm sm:text-base leading-relaxed text-foreground/90 font-medium font-sans [overflow-wrap:anywhere]">
               « {t.citation} »
             </blockquote>
 
-            {/* Author Profile Footer — pas de `photo` directe, image via `media` (premier élément) */}
+            {/* Author Profile Footer — pas de `photo` directe, image via `media` (collection "photo") */}
             <figcaption className="mt-6 flex items-center gap-3.5 border-t border-border pt-4">
               <div className="relative size-12 overflow-hidden rounded-full bg-secondary ring-2 ring-accent/60 shadow-sm shrink-0">
                 <Image
-                  src={resolveMediaUrl(t.media?.[0]?.url) || "/assets/team/placeholder.svg"}
+                  src={getTestimonialPhotoUrl(t) || "/assets/team/placeholder.svg"}
                   alt={t.auteur}
                   fill
                   sizes="48px"

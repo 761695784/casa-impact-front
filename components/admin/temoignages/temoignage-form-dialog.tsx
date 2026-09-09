@@ -23,8 +23,12 @@ import {
 import { TESTIMONIAL_STATUS_LABELS } from "@/types/enums"
 import { usePrograms } from "@/hooks/use-programs"
 import { useCreateTestimonial, useUpdateTestimonial } from "@/hooks/use-testimonials"
+import { useAttachMedia, useDetachMedia } from "@/hooks/use-media"
 import { MediaPickerDialog } from "@/components/admin/media/media-picker-dialog"
-import { resolveMediaUrl } from "@/lib/format"
+import { showValidationErrorAlert, showSuccessAlert, showErrorAlert } from "@/lib/alerts"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import { ApiError } from "@/lib/api-client"
+import { cn } from "@/lib/utils"
 import { Quote, Loader2, Image as ImageIcon, User } from "lucide-react"
 import type { Testimonial, Media } from "@/types/models"
 import type { TestimonialStatus } from "@/types/enums"
@@ -36,6 +40,8 @@ interface TemoignageFormDialogProps {
   onSuccess?: () => void
 }
 
+const PHOTO_COLLECTION = "photo"
+
 export function TemoignageFormDialog({
   testimonial,
   open,
@@ -46,31 +52,36 @@ export function TemoignageFormDialog({
 
   const createMutation = useCreateTestimonial()
   const updateMutation = useUpdateTestimonial()
+  const attachMutation = useAttachMedia()
+  const detachMutation = useDetachMedia()
 
   const { data: programsData } = usePrograms()
   const programs = programsData?.data || []
 
   const [auteur, setAuteur] = useState("")
-  // Le backend combine fonction + organisation en un seul champ `role_organisation`.
   const [roleOrganisation, setRoleOrganisation] = useState("")
   const [citation, setCitation] = useState("")
-  // NOTE : pas de champ `photo` direct sur Testimonial (voir `media`). Ce
-  // champ sert uniquement à prévisualiser une image existante ; il n'est
-  // PAS envoyé au backend — l'association réelle passe par le module
-  // Médiathèque (TODO : intégration Médiathèque plutôt qu'upload en ligne).
-  const [photo, setPhoto] = useState("")
   const [programId, setProgramId] = useState<string>("")
   const [statut, setStatut] = useState<TestimonialStatus>("publie")
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Photo du témoin — rattachée à la fiche Testimonial via la médiathèque
+  // partagée (collection "photo"), pas via le payload de création/mise à
+  // jour. On garde l'id initial (issu de testimonial.media en édition)
+  // pour ne synchroniser au moment de l'enregistrement que ce qui a
+  // réellement changé (attach du remplacement, detach de l'ancienne).
+  const [photoMedia, setPhotoMedia] = useState<Media | null>(null)
+  const [initialPhotoId, setInitialPhotoId] = useState<number | null>(null)
 
   // Media Picker Dialog state
   const [isPhotoPickerOpen, setIsPhotoPickerOpen] = useState(false)
 
   useEffect(() => {
+    setErrors({})
     if (testimonial) {
       setAuteur(testimonial.auteur || "")
       setRoleOrganisation(testimonial.role_organisation || "")
       setCitation(testimonial.citation || "")
-      setPhoto(resolveMediaUrl(testimonial.media?.[0]?.url) || "")
       setProgramId(
         testimonial.program_id
           ? String(testimonial.program_id)
@@ -79,47 +90,169 @@ export function TemoignageFormDialog({
           : ""
       )
       setStatut(testimonial.statut || "publie")
+
+      const existingMedia = testimonial.media || []
+      const photo =
+        existingMedia.find((m) => m.collection === PHOTO_COLLECTION) || existingMedia[0] || null
+      setPhotoMedia(photo)
+      setInitialPhotoId(photo?.id ?? null)
     } else {
       setAuteur("")
       setRoleOrganisation("")
       setCitation("")
-      setPhoto("")
       setProgramId("")
       setStatut("publie")
+      setPhotoMedia(null)
+      setInitialPhotoId(null)
     }
   }, [testimonial, open])
 
-  const isPending = createMutation.isPending || updateMutation.isPending
+  const isPending =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    attachMutation.isPending ||
+    detachMutation.isPending
+
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const updated = { ...prev }
+        delete updated[field]
+        return updated
+      })
+    }
+  }
 
   const handleSelectPhoto = (selected: Media[]) => {
     if (selected.length > 0) {
-      setPhoto(selected[0].url)
+      setPhotoMedia(selected[0])
     }
+  }
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+
+    if (!auteur.trim()) {
+      newErrors.auteur = "Le nom du témoin est obligatoire."
+    } else if (auteur.trim().length < 2) {
+      newErrors.auteur = "Le nom doit comporter au moins 2 caractères."
+    }
+
+    if (!citation.trim()) {
+      newErrors.citation = "Le texte du témoignage / retour d'expérience est obligatoire."
+    } else if (citation.trim().length < 10) {
+      newErrors.citation = "Le témoignage doit comporter au moins 10 caractères."
+    }
+
+    setErrors(newErrors)
+    return newErrors
+  }
+
+  /**
+   * Synchronise la photo avec la médiathèque une fois la fiche Testimonial
+   * enregistrée (attach/detach uniquement si elle a changé). Une erreur ici
+   * n'annule pas l'enregistrement du témoignage — déjà réussi à ce stade.
+   */
+  const syncPhoto = async (testimonialId: number) => {
+    if (photoMedia?.id === (initialPhotoId ?? undefined)) return
+
+    const tasks: Promise<unknown>[] = []
+
+    if (initialPhotoId && initialPhotoId !== photoMedia?.id) {
+      tasks.push(
+        detachMutation.mutateAsync({
+          mediaId: initialPhotoId,
+          mediableType: "testimonial",
+          mediableId: testimonialId,
+          collection: PHOTO_COLLECTION,
+        })
+      )
+    }
+
+    if (photoMedia) {
+      tasks.push(
+        attachMutation.mutateAsync({
+          mediaId: photoMedia.id,
+          mediableType: "testimonial",
+          mediableId: testimonialId,
+          collection: PHOTO_COLLECTION,
+          ordre: 0,
+        })
+      )
+    }
+
+    if (tasks.length === 0) return
+    await Promise.all(tasks)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // `photo` (Médiathèque) n'est pas un champ du modèle Testimonial : non inclus.
+    const validationErrors = validateForm()
+    if (Object.keys(validationErrors).length > 0) {
+      showValidationErrorAlert("Formulaire de témoignage incomplet", validationErrors)
+      return
+    }
+
     const payload = {
-      auteur,
-      role_organisation: roleOrganisation || undefined,
-      citation,
+      auteur: auteur.trim(),
+      role_organisation: roleOrganisation.trim() || undefined,
+      citation: citation.trim(),
       program_id: programId ? Number(programId) : undefined,
       statut,
     }
 
-    if (isEditing && testimonial) {
-      await updateMutation.mutateAsync({
-        id: testimonial.id,
-        payload,
-      })
-    } else {
-      await createMutation.mutateAsync(payload as Omit<Testimonial, "id">)
-    }
+    try {
+      let testimonialId: number
 
-    onOpenChange(false)
-    onSuccess?.()
+      if (isEditing && testimonial) {
+        const updated = await updateMutation.mutateAsync({
+          id: testimonial.id,
+          payload,
+        })
+        testimonialId = updated.id
+      } else {
+        const created = await createMutation.mutateAsync(payload as Omit<Testimonial, "id">)
+        testimonialId = created.id
+      }
+
+      try {
+        await syncPhoto(testimonialId)
+      } catch (photoErr) {
+        showErrorAlert(
+          "Témoignage enregistré, mais la photo n'a pas pu être rattachée",
+          photoErr instanceof Error
+            ? photoErr.message
+            : "Réessayez de changer la photo depuis la fiche."
+        )
+        onOpenChange(false)
+        onSuccess?.()
+        return
+      }
+
+      showSuccessAlert(
+        isEditing ? "Témoignage mis à jour" : "Témoignage enregistré",
+        isEditing
+          ? `Le témoignage de « ${auteur} » a été modifié avec succès.`
+          : `Le témoignage de « ${auteur} » a été créé avec succès.`
+      )
+      onOpenChange(false)
+      onSuccess?.()
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.errors) {
+        const backendErrors: Record<string, string> = {}
+        Object.entries(err.errors).forEach(([k, msgs]) => {
+          backendErrors[k] = Array.isArray(msgs) ? msgs[0] : String(msgs)
+        })
+        setErrors(backendErrors)
+        showValidationErrorAlert("Erreur de validation", backendErrors)
+      } else {
+        showErrorAlert(
+          "Erreur d'enregistrement",
+          err instanceof Error ? err.message : "Une erreur est survenue lors de l'enregistrement."
+        )
+      }
+    }
   }
 
   return (
@@ -141,7 +274,7 @@ export function TemoignageFormDialog({
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="mt-4 space-y-5">
-            
+
             {/* Section 1 : Identité du Témoin */}
             <div className="space-y-3.5 rounded-2xl border border-border/80 bg-secondary/30 p-4 sm:p-5">
               <div className="flex items-center gap-2">
@@ -154,17 +287,24 @@ export function TemoignageFormDialog({
               </div>
 
               <div>
-                <Label htmlFor="temoin-auteur" className="text-xs font-semibold">
+                <Label htmlFor="temoin-auteur" className={cn("text-xs font-semibold", errors.auteur ? "text-destructive" : "")}>
                   Nom complet du témoin *
                 </Label>
                 <Input
                   id="temoin-auteur"
-                  required
                   value={auteur}
-                  onChange={(e) => setAuteur(e.target.value)}
+                  onChange={(e) => {
+                    setAuteur(e.target.value)
+                    clearError("auteur")
+                  }}
                   placeholder="ex. Amina Diallo"
-                  className="mt-1.5 h-11 rounded-xl text-sm bg-card"
+                  aria-invalid={!!errors.auteur}
+                  className={cn(
+                    "mt-1.5 h-11 rounded-xl text-sm bg-card transition-colors",
+                    errors.auteur ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
+                  )}
                 />
+                <FormFieldError error={errors.auteur} />
               </div>
 
               <div>
@@ -205,12 +345,12 @@ export function TemoignageFormDialog({
                 </Button>
               </div>
 
-              {photo ? (
+              {photoMedia ? (
                 <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-3.5">
                   <div className="flex items-center gap-4">
                     <div className="relative size-16 rounded-full overflow-hidden bg-secondary shrink-0 border-2 border-forest shadow-xs">
                       <img
-                        src={photo}
+                        src={photoMedia.url}
                         alt={auteur || "Photo du témoin"}
                         className="size-full object-cover"
                       />
@@ -221,7 +361,7 @@ export function TemoignageFormDialog({
                         Photo de témoin active
                       </span>
                       <p className="text-xs font-bold text-foreground truncate">
-                        {photo}
+                        {photoMedia.nom || photoMedia.nom_original}
                       </p>
                       <div className="flex items-center gap-2 mt-1.5">
                         <Button
@@ -237,7 +377,7 @@ export function TemoignageFormDialog({
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => setPhoto("")}
+                          onClick={() => setPhotoMedia(null)}
                           className="h-7 rounded-lg text-xs font-semibold px-2 text-destructive hover:bg-destructive/10"
                         >
                           Retirer
@@ -276,18 +416,25 @@ export function TemoignageFormDialog({
               </div>
 
               <div>
-                <Label htmlFor="temoin-citation" className="text-xs font-semibold">
+                <Label htmlFor="temoin-citation" className={cn("text-xs font-semibold", errors.citation ? "text-destructive" : "")}>
                   Citation / Retour d'expérience *
                 </Label>
                 <Textarea
                   id="temoin-citation"
-                  required
                   rows={4}
                   value={citation}
-                  onChange={(e) => setCitation(e.target.value)}
+                  onChange={(e) => {
+                    setCitation(e.target.value)
+                    clearError("citation")
+                  }}
                   placeholder="Rédigez le texte du témoignage vécu avec Casa Impact..."
-                  className="mt-1.5 rounded-xl text-xs bg-card"
+                  aria-invalid={!!errors.citation}
+                  className={cn(
+                    "mt-1.5 rounded-xl text-xs bg-card transition-colors",
+                    errors.citation ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
+                  )}
                 />
+                <FormFieldError error={errors.citation} />
               </div>
 
               <div>
@@ -295,10 +442,11 @@ export function TemoignageFormDialog({
                   Programme associé (facultatif)
                 </Label>
                 <Select value={programId} onValueChange={(val) => setProgramId(val || "")}>
-                  <SelectTrigger id="temoin-prog" className="mt-1.5 h-10 rounded-xl text-xs bg-card truncate">
+                  <SelectTrigger id="temoin-prog" className="mt-1.5 h-10 w-full rounded-xl text-xs bg-card truncate">
                     <SelectValue placeholder="Aucun programme" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl text-xs max-w-xs">
+                  <SelectContent className="rounded-2xl text-xs w-full min-w-[240px]">
+                    <SelectItem value="none">Aucun programme spécifique</SelectItem>
                     {programs.map((p) => (
                       <SelectItem key={p.id} value={String(p.id)}>
                         {p.titre}
@@ -313,7 +461,7 @@ export function TemoignageFormDialog({
                   Statut de publication *
                 </Label>
                 <Select value={statut} onValueChange={(val) => setStatut(val as TestimonialStatus)}>
-                  <SelectTrigger id="temoin-statut" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
+                  <SelectTrigger id="temoin-statut" className="mt-1.5 h-10 w-full rounded-xl text-xs bg-card">
                     <SelectValue placeholder="Statut" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl text-xs">
@@ -361,7 +509,7 @@ export function TemoignageFormDialog({
         open={isPhotoPickerOpen}
         onOpenChange={setIsPhotoPickerOpen}
         multiple={false}
-        selectedUrls={photo ? [photo] : []}
+        selectedUrls={photoMedia ? [photoMedia.url] : []}
         onSelect={handleSelectPhoto}
         title="Choisir la photo du témoin"
         description="Sélectionnez un portrait officiel ou une photo d'immersion pour illustrer ce témoignage."

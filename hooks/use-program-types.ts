@@ -27,6 +27,27 @@ export function useProgramType(id: number | string) {
   })
 }
 
+export function useCreateProgramType() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: Omit<ProgramType, "id">) =>
+      programTypesService.createProgramType(payload),
+    onSuccess: (created) => {
+      toast.success("Type de programme créé avec succès", {
+        description: created.nom,
+      })
+      queryClient.invalidateQueries({ queryKey: PROGRAM_TYPES_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] })
+    },
+    onError: (err: unknown) => {
+      toast.error("Erreur lors de la création du type de programme", {
+        description: err instanceof Error ? err.message : "Une erreur est survenue.",
+      })
+    },
+  })
+}
+
 export function useUpdateProgramType() {
   const queryClient = useQueryClient()
 
@@ -49,6 +70,26 @@ export function useUpdateProgramType() {
     },
     onError: (err: unknown) => {
       toast.error("Erreur lors de la mise à jour du type de programme", {
+        description: err instanceof Error ? err.message : "Une erreur est survenue.",
+      })
+    },
+  })
+}
+
+export function useDeleteProgramType() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => programTypesService.deleteProgramType(id),
+    onSuccess: () => {
+      toast.success("Type de programme supprimé")
+      queryClient.invalidateQueries({ queryKey: PROGRAM_TYPES_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] })
+    },
+    onError: (err: unknown) => {
+      // Le 409 backend (type encore utilisé par un programme) remonte ici
+      // via son message déjà clair (voir programTypesService.deleteProgramType).
+      toast.error("Impossible de supprimer ce type de programme", {
         description: err instanceof Error ? err.message : "Une erreur est survenue.",
       })
     },

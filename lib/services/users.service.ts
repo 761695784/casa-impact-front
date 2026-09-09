@@ -55,8 +55,9 @@ export const usersService = {
         const q = search.toLowerCase()
         filtered = filtered.filter(
           (u) =>
-            u.nom.toLowerCase().includes(q) ||
-            u.prenom?.toLowerCase().includes(q) ||
+            (u.nom?.toLowerCase().includes(q) ?? false) ||
+            (u.name?.toLowerCase().includes(q) ?? false) ||
+            (u.prenom?.toLowerCase().includes(q) ?? false) ||
             u.email.toLowerCase().includes(q)
         )
       }

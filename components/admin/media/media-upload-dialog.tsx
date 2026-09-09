@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useCreateMedia } from "@/hooks/use-media"
-import { UploadCloud, Image as ImageIcon, FileText, Loader2, X, Check } from "lucide-react"
+import { UploadCloud, FileText, Loader2, X, Check } from "lucide-react"
 import { MEDIA_CATEGORY_LABELS } from "@/types/enums"
 import type { Media } from "@/types/models"
 
@@ -39,93 +39,78 @@ export function MediaUploadDialog({
   const createMutation = useCreateMedia()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [file, setFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState("")
   const [nom, setNom] = useState("")
-  const [url, setUrl] = useState("")
-  const [nomFichier, setNomFichier] = useState("")
-  const [type, setType] = useState<"image" | "document">("image")
   const [categorie, setCategorie] = useState<"banniere" | "portrait" | "logo" | "document" | "general">("general")
   const [alt, setAlt] = useState("")
-  const [description, setDescription] = useState("")
-  const [previewUrl, setPreviewUrl] = useState("")
-  const [taille, setTaille] = useState<number>(0)
+  const [legende, setLegende] = useState("")
   const [dimensions, setDimensions] = useState<string>("")
 
+  const isImage = file ? file.type.startsWith("image/") : true
+
+  // Libère l'URL objet créée pour la prévisualisation quand elle change ou
+  // que le dialog se ferme, pour éviter les fuites mémoire.
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
+
   const resetForm = () => {
+    setFile(null)
+    setPreviewUrl("")
     setNom("")
-    setUrl("")
-    setNomFichier("")
-    setType("image")
     setCategorie("general")
     setAlt("")
-    setDescription("")
-    setPreviewUrl("")
-    setTaille(0)
+    setLegende("")
     setDimensions("")
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const selected = e.target.files?.[0]
+    if (!selected) return
 
-    const isImage = file.type.startsWith("image/")
-    setType(isImage ? "image" : "document")
-    setNomFichier(file.name)
-    setTaille(file.size)
+    setFile(selected)
+    setDimensions("")
 
     if (!nom) {
-      // Auto generate title from filename without extension
-      const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ")
+      const baseName = selected.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ")
       setNom(baseName.charAt(0).toUpperCase() + baseName.slice(1))
     }
 
-    if (isImage) {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        const result = event.target?.result as string
-        setUrl(result)
-        setPreviewUrl(result)
+    const objectUrl = URL.createObjectURL(selected)
+    setPreviewUrl(objectUrl)
 
-        // Read dimensions
-        const img = new Image()
-        img.onload = () => {
-          setDimensions(`${img.naturalWidth}x${img.naturalHeight}`)
-        }
-        img.src = result
+    if (selected.type.startsWith("image/")) {
+      const img = new Image()
+      img.onload = () => {
+        setDimensions(`${img.naturalWidth}x${img.naturalHeight}`)
       }
-      reader.readAsDataURL(file)
+      img.src = objectUrl
     } else {
-      setUrl(`/documents/${file.name}`)
-      setPreviewUrl("")
-      setCategorie("document")
+      setCategorie((prev) => (prev === "general" ? "document" : prev))
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!url && !previewUrl) return
-
-    const payload = {
-      nom: nom.trim() || nomFichier || "Nouveau média",
-      nom_fichier: nomFichier || "media-file.jpg",
-      url: previewUrl || url,
-      type,
-      categorie,
-      alt: alt.trim() || nom.trim() || undefined,
-      description: description.trim() || undefined,
-      taille: taille || 500000,
-      dimensions: dimensions || (type === "image" ? "1920x1080" : undefined),
-      mime_type: type === "image" ? "image/jpeg" : "application/pdf",
-      statut: "actif" as const,
-    }
+    if (!file) return
 
     try {
-      const created = await createMutation.mutateAsync(payload)
+      const created = await createMutation.mutateAsync({
+        file,
+        nom: nom.trim() || undefined,
+        alt: alt.trim() || undefined,
+        legende: legende.trim() || undefined,
+        categorie,
+      })
       resetForm()
       onOpenChange(false)
       onSuccess?.(created)
     } catch (err) {
-      // Handled by mutation toast
+      // Géré par le toast de la mutation
     }
   }
 
@@ -151,7 +136,7 @@ export function MediaUploadDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-5">
-          {/* Drag & Drop / File Input Box */}
+          {/* Zone de dépôt / sélection de fichier */}
           <div>
             <input
               ref={fileInputRef}
@@ -161,7 +146,7 @@ export function MediaUploadDialog({
               className="hidden"
               id="media-file-upload"
             />
-            {!previewUrl && !url ? (
+            {!file ? (
               <label
                 htmlFor="media-file-upload"
                 className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-primary/30 bg-secondary/30 p-8 text-center cursor-pointer hover:bg-secondary/60 hover:border-primary/60 transition-all group"
@@ -173,13 +158,13 @@ export function MediaUploadDialog({
                   Cliquez pour choisir une photo ou un document
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  PNG, JPG, WEBP, PDF jusqu'à 25 Mo
+                  PNG, JPG, WEBP, PDF jusqu'à 5 Mo
                 </p>
               </label>
             ) : (
               <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-4">
                 <div className="flex items-center gap-4">
-                  {type === "image" && previewUrl ? (
+                  {isImage && previewUrl ? (
                     <div className="relative size-20 rounded-2xl overflow-hidden bg-secondary shrink-0 border border-border">
                       <img
                         src={previewUrl}
@@ -195,26 +180,26 @@ export function MediaUploadDialog({
 
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-foreground truncate">
-                      {nomFichier || "Fichier sélectionné"}
+                      {file.name}
                     </p>
                     {dimensions && (
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Dimensions : {dimensions} px
                       </p>
                     )}
-                    {taille > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        Poids : {(taille / (1024 * 1024)).toFixed(2)} Mo
-                      </p>
-                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Poids : {(file.size / (1024 * 1024)).toFixed(2)} Mo
+                    </p>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => {
+                      if (previewUrl) URL.revokeObjectURL(previewUrl)
+                      setFile(null)
                       setPreviewUrl("")
-                      setUrl("")
-                      setNomFichier("")
+                      setDimensions("")
+                      if (fileInputRef.current) fileInputRef.current.value = ""
                     }}
                     className="flex size-8 items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                   >
@@ -223,23 +208,6 @@ export function MediaUploadDialog({
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Saisie manuelle alternative URL */}
-          <div>
-            <Label htmlFor="media-url-input" className="text-xs font-semibold">
-              Ou chemin / URL de l'image
-            </Label>
-            <Input
-              id="media-url-input"
-              value={url.startsWith("data:") ? "" : url}
-              onChange={(e) => {
-                setUrl(e.target.value)
-                setPreviewUrl(e.target.value)
-              }}
-              placeholder="ex. /assets/hero/DSC08016%20copie.jpg"
-              className="mt-1.5 h-10 rounded-xl text-xs bg-card"
-            />
           </div>
 
           {/* Form Fields */}
@@ -270,11 +238,13 @@ export function MediaUploadDialog({
                   <SelectValue placeholder="Catégorie" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl text-xs">
-                  {Object.entries(MEDIA_CATEGORY_LABELS).map(([k, label]) => (
-                    <SelectItem key={k} value={k}>
-                      {label}
-                    </SelectItem>
-                  ))}
+                  {Object.entries(MEDIA_CATEGORY_LABELS)
+                    .filter(([k]) => k !== "all")
+                    .map(([k, label]) => (
+                      <SelectItem key={k} value={k}>
+                        {label}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -294,14 +264,14 @@ export function MediaUploadDialog({
           </div>
 
           <div>
-            <Label htmlFor="media-desc" className="text-xs font-semibold">
+            <Label htmlFor="media-legende" className="text-xs font-semibold">
               Légende ou Description détaillée (optionnel)
             </Label>
             <Textarea
-              id="media-desc"
+              id="media-legende"
               rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={legende}
+              onChange={(e) => setLegende(e.target.value)}
               placeholder="Précisez le contexte, les personnes présentes ou le lieu de la photo..."
               className="mt-1.5 rounded-xl resize-none text-xs"
             />
@@ -318,13 +288,13 @@ export function MediaUploadDialog({
             </Button>
             <Button
               type="submit"
-              disabled={createMutation.isPending || (!url && !previewUrl)}
+              disabled={createMutation.isPending || !file}
               className="rounded-full bg-primary text-white hover:bg-forest font-semibold gap-2 shadow-xs"
             >
               {createMutation.isPending ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  <span>Enregistrement...</span>
+                  <span>Téléversement...</span>
                 </>
               ) : (
                 <>

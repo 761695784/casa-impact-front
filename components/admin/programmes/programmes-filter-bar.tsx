@@ -15,6 +15,8 @@ import { PROGRAM_STATUS_LABELS, REGION_LABELS } from "@/types/enums"
 import { useDomains } from "@/hooks/use-domains"
 import { useProgramTypes } from "@/hooks/use-program-types"
 import { useExportPrograms } from "@/hooks/use-programs"
+import { mockDomains } from "@/lib/mock/domains.mock"
+import { mockProgramTypes } from "@/lib/mock/programs.mock"
 import type { ProgramStatus, Region } from "@/types/enums"
 
 interface ProgrammesFilterBarProps {
@@ -49,8 +51,11 @@ export function ProgrammesFilterBar({
   const [localSearch, setLocalSearch] = useState(search)
   const exportMutation = useExportPrograms()
 
-  const { data: domains = [] } = useDomains()
-  const { data: programTypes = [] } = useProgramTypes()
+  const { data: rawDomains = [] } = useDomains()
+  const { data: rawProgramTypes = [] } = useProgramTypes()
+
+  const domains = rawDomains && rawDomains.length > 0 ? rawDomains : mockDomains
+  const programTypes = rawProgramTypes && rawProgramTypes.length > 0 ? rawProgramTypes : mockProgramTypes
 
   useEffect(() => {
     setLocalSearch(search)

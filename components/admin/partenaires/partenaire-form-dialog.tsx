@@ -20,6 +20,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showValidationErrorAlert,
+} from "@/lib/alerts"
+import { ApiError } from "@/lib/api-client"
 import { PARTNER_STATUS_LABELS, PARTNER_TYPE_LABELS } from "@/types/enums"
 import { useCreatePartner, useUpdatePartner, useUploadPartnerLogo } from "@/hooks/use-partners"
 import { getPartnerLogoUrl } from "@/lib/format"
@@ -52,6 +59,17 @@ export function PartenaireFormDialog({
   const [lien, setLien] = useState("")
   const [ordre, setOrdre] = useState<string>("1")
   const [statut, setStatut] = useState<PartnerStatus>("actif")
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[field]
+        return next
+      })
+    }
+  }
 
   // Logo : fichier sélectionné localement (non encore envoyé) + aperçu
   const [logoFile, setLogoFile] = useState<File | null>(null)
@@ -78,6 +96,7 @@ export function PartenaireFormDialog({
       setLogoFile(null)
       setLogoPreview(undefined)
     }
+    setErrors({})
   }, [partner, open])
 
   const isPending =
@@ -96,37 +115,106 @@ export function PartenaireFormDialog({
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
+  const validateForm = (): boolean => {
+    const errs: Record<string, string> = {}
+
+    if (!nom.trim()) {
+      errs.nom = "Le nom officiel de l'organisation est requis."
+    } else if (nom.trim().length < 2) {
+      errs.nom = "Le nom doit comporter au moins 2 caractères."
+    }
+
+    if (!type) {
+      errs.type = "Veuillez sélectionner un type de partenariat."
+    }
+
+    if (lien.trim()) {
+      try {
+        new URL(lien.trim())
+      } catch {
+        if (!lien.trim().startsWith("http://") && !lien.trim().startsWith("https://")) {
+          errs.lien = "Le lien web doit commencer par http:// ou https://"
+        }
+      }
+    }
+
+    if (ordre && Number(ordre) < 1) {
+      errs.ordre = "L'ordre d'affichage doit être supérieur ou égal à 1."
+    }
+
+    setErrors(errs)
+    if (Object.keys(errs).length > 0) {
+      showValidationErrorAlert(Object.values(errs))
+      return false
+    }
+    return true
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (!validateForm()) return
+
     const payload = {
-      nom,
+      nom: nom.trim(),
       type,
-      description: description || undefined,
-      lien: lien || undefined,
+      description: description.trim() || undefined,
+      lien: lien.trim() || undefined,
       ordre: Number(ordre) || 1,
       statut,
     }
 
-    if (isEditing && partner) {
-      await updateMutation.mutateAsync({
-        id: partner.id,
-        payload,
-      })
+    try {
+      if (isEditing && partner) {
+        await updateMutation.mutateAsync({
+          id: partner.id,
+          payload,
+        })
 
-      if (logoFile) {
-        await uploadLogoMutation.mutateAsync({ partnerId: partner.id, file: logoFile })
+        if (logoFile) {
+          await uploadLogoMutation.mutateAsync({ partnerId: partner.id, file: logoFile })
+        }
+
+        await showSuccessAlert(
+          "Partenaire modifié !",
+          "Les informations du partenaire ont été mises à jour avec succès."
+        )
+      } else {
+        const newPartner = await createMutation.mutateAsync(payload as Omit<Partner, "id">)
+
+        if (logoFile) {
+          await uploadLogoMutation.mutateAsync({ partnerId: newPartner.id, file: logoFile })
+        }
+
+        await showSuccessAlert(
+          "Partenaire ajouté !",
+          "Le partenaire a été enregistré avec succès."
+        )
       }
-    } else {
-      const newPartner = await createMutation.mutateAsync(payload as Omit<Partner, "id">)
 
-      if (logoFile) {
-        await uploadLogoMutation.mutateAsync({ partnerId: newPartner.id, file: logoFile })
+      onOpenChange(false)
+      onSuccess?.()
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.errors) {
+        const backendErrors: Record<string, string> = {}
+        const errorMessages: string[] = []
+        Object.entries(err.errors).forEach(([field, messages]) => {
+          backendErrors[field] = messages[0]
+          errorMessages.push(...messages)
+        })
+        setErrors(backendErrors)
+        showValidationErrorAlert(
+          errorMessages.length > 0 ? errorMessages : [err.message]
+        )
+      } else {
+        showErrorAlert(
+          "Erreur d'enregistrement",
+          err instanceof Error
+            ? err.message
+            : "Une erreur est survenue lors de l'enregistrement du partenaire."
+        )
       }
     }
-
-    onOpenChange(false)
-    onSuccess?.()
   }
 
   return (
@@ -160,26 +248,47 @@ export function PartenaireFormDialog({
             </div>
 
             <div>
-              <Label htmlFor="partner-nom" className="text-xs font-semibold">
+              <Label htmlFor="partner-nom" className={`text-xs font-semibold ${errors.nom ? "text-destructive" : ""}`}>
                 Nom officiel de l'organisation *
               </Label>
               <Input
                 id="partner-nom"
                 required
                 value={nom}
-                onChange={(e) => setNom(e.target.value)}
+                onChange={(e) => {
+                  setNom(e.target.value)
+                  clearError("nom")
+                }}
                 placeholder="ex. Agence Régionale de Développement (ARD)"
-                className="mt-1.5 h-11 rounded-xl text-sm bg-card"
+                className={`mt-1.5 h-11 rounded-xl text-sm bg-card ${
+                  errors.nom
+                    ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                    : ""
+                }`}
               />
+              <FormFieldError error={errors.nom} />
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <Label htmlFor="partner-type" className="text-xs font-semibold">
+                <Label htmlFor="partner-type" className={`text-xs font-semibold ${errors.type ? "text-destructive" : ""}`}>
                   Typologie de partenariat *
                 </Label>
-                <Select value={type} onValueChange={(val) => setType(val as PartnerType)}>
-                  <SelectTrigger id="partner-type" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
+                <Select
+                  value={type}
+                  onValueChange={(val) => {
+                    setType(val as PartnerType)
+                    clearError("type")
+                  }}
+                >
+                  <SelectTrigger
+                    id="partner-type"
+                    className={`mt-1.5 h-10 w-full rounded-xl text-xs bg-card ${
+                      errors.type
+                        ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                        : ""
+                    }`}
+                  >
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl text-xs">
@@ -190,10 +299,11 @@ export function PartenaireFormDialog({
                     ))}
                   </SelectContent>
                 </Select>
+                <FormFieldError error={errors.type} />
               </div>
 
               <div>
-                <Label htmlFor="partner-ordre" className="text-xs font-semibold">
+                <Label htmlFor="partner-ordre" className={`text-xs font-semibold ${errors.ordre ? "text-destructive" : ""}`}>
                   Ordre d'affichage
                 </Label>
                 <Input
@@ -201,9 +311,17 @@ export function PartenaireFormDialog({
                   type="number"
                   min={1}
                   value={ordre}
-                  onChange={(e) => setOrdre(e.target.value)}
-                  className="mt-1.5 h-10 rounded-xl text-xs bg-card"
+                  onChange={(e) => {
+                    setOrdre(e.target.value)
+                    clearError("ordre")
+                  }}
+                  className={`mt-1.5 h-10 rounded-xl text-xs bg-card ${
+                    errors.ordre
+                      ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                      : ""
+                  }`}
                 />
+                <FormFieldError error={errors.ordre} />
               </div>
             </div>
 
@@ -222,17 +340,25 @@ export function PartenaireFormDialog({
             </div>
 
             <div>
-              <Label htmlFor="partner-lien" className="text-xs font-semibold">
+              <Label htmlFor="partner-lien" className={`text-xs font-semibold ${errors.lien ? "text-destructive" : ""}`}>
                 Lien site web officiel
               </Label>
               <Input
                 id="partner-lien"
                 type="url"
                 value={lien}
-                onChange={(e) => setLien(e.target.value)}
+                onChange={(e) => {
+                  setLien(e.target.value)
+                  clearError("lien")
+                }}
                 placeholder="https://www.organisation-partenaire.sn"
-                className="mt-1.5 h-10 rounded-xl text-xs bg-card"
+                className={`mt-1.5 h-10 rounded-xl text-xs bg-card ${
+                  errors.lien
+                    ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                    : ""
+                }`}
               />
+              <FormFieldError error={errors.lien} />
             </div>
           </div>
 

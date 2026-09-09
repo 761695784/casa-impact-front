@@ -70,3 +70,50 @@ export function getPartnerLogoUrl(partner: {
   return resolveMediaUrl(partner.media?.find((m) => m.collection === "logo")?.url)
 }
 
+/**
+ * Résout l'image de couverture d'une actualité à partir de sa collection
+ * de médias (App\Http\Resources\NewsResource::media, pivot
+ * media_attachments) : l'entrée dont `collection === 'cover'`. Repli sur
+ * le premier média disponible pour les rares articles créés avant
+ * l'introduction de cette collection dédiée. Ne PAS utiliser `media?.[0]`
+ * directement : quand couverture et album sont attachés dans le même
+ * enregistrement, l'ordre entre les deux n'est pas garanti (voir
+ * ActualiteFormDialog::syncMedia, qui les attache en parallèle) et un
+ * article pouvait alors afficher sa première photo de galerie à la place
+ * de sa vraie couverture, voire aucune image du tout si `media` n'était
+ * pas chargé par l'API (liste publique corrigée le 2026-09-09).
+ */
+export function getNewsCoverUrl(news: {
+  media?: { collection?: string; url: string }[]
+}): string | undefined {
+  const media = news.media || []
+  const cover = media.find((m) => m.collection === "cover") || media[0]
+  return resolveMediaUrl(cover?.url)
+}
+
+/**
+ * Photos d'album d'une actualité, couverture exclue (déjà affichée
+ * séparément dans le hero de la fiche détail) — évite de la voir dupliquée
+ * dans la galerie photo de l'article.
+ */
+export function getNewsGalleryMedia<T extends { collection?: string }>(news: {
+  media?: T[]
+}): T[] {
+  return (news.media || []).filter((m) => m.collection !== "cover")
+}
+
+/**
+ * Résout la photo d'un témoin à partir de sa collection de médias
+ * (App\Http\Resources\TestimonialResource::media, pivot media_attachments) :
+ * l'entrée dont `collection === 'photo'`, repli sur le premier média
+ * disponible. Même principe et même raison que `getNewsCoverUrl` — ne pas
+ * se fier à `media?.[0]` seul.
+ */
+export function getTestimonialPhotoUrl(testimonial: {
+  media?: { collection?: string; url: string }[]
+}): string | undefined {
+  const media = testimonial.media || []
+  const photo = media.find((m) => m.collection === "photo") || media[0]
+  return resolveMediaUrl(photo?.url)
+}
+

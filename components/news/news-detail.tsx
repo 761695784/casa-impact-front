@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button"
 import { NewsGallery } from "@/components/news/news-gallery"
 import { Badge } from "@/components/ui/badge"
 import { NEWS_TYPE_LABELS } from "@/types/enums"
-import { formatDate, resolveMediaUrl } from "@/lib/format"
+import { formatDate, getNewsCoverUrl, getNewsGalleryMedia } from "@/lib/format"
 import { NewsCard } from "@/components/cards/news-card"
 import { BaobabMark } from "@/components/brand/baobab-mark"
 import { toast } from "sonner"
@@ -68,8 +68,9 @@ export function NewsDetail({ slug }: { slug: string }) {
   }
 
   const currentArticle = article
-  // Pas de champ `image` direct côté API réelle — visuel via `media` (premier élément, sinon fallback).
-  const cover = resolveMediaUrl(currentArticle.media?.[0]?.url) || "/assets/hero/DSC08016%20copie.jpg"
+  // Pas de champ `image` direct côté API réelle — visuel via `media` (collection "cover", sinon fallback).
+  const cover = getNewsCoverUrl(currentArticle) || "/assets/hero/DSC08016%20copie.jpg"
+  const galleryMedia = getNewsGalleryMedia(currentArticle)
 
   const shareOnSocial = (platform: string) => {
     if (typeof window === "undefined") return
@@ -223,9 +224,9 @@ export function NewsDetail({ slug }: { slug: string }) {
               ))}
             </div>
 
-            {/* Photo Gallery with Lightbox if available — `media` (pas `medias`) */}
-            {currentArticle.media && currentArticle.media.length > 0 && (
-              <NewsGallery medias={currentArticle.media} />
+            {/* Photo Gallery with Lightbox if available — couverture exclue, déjà affichée dans le hero */}
+            {galleryMedia.length > 0 && (
+              <NewsGallery medias={galleryMedia} />
             )}
 
             {/* Author / Publisher Footnote */}

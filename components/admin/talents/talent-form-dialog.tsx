@@ -23,9 +23,15 @@ import {
 import { TALENT_STATUS_LABELS, REGION_LABELS } from "@/types/enums"
 import { useDomains } from "@/hooks/use-domains"
 import { useCreateTalent, useUpdateTalent } from "@/hooks/use-talents"
+import { mockDomains } from "@/lib/mock/domains.mock"
 import { MediaPickerDialog } from "@/components/admin/media/media-picker-dialog"
 import { resolveMediaUrl } from "@/lib/format"
-import { Sparkles, Loader2, Image as ImageIcon, User } from "lucide-react"
+import { showValidationErrorAlert, showSuccessAlert, showErrorAlert } from "@/lib/alerts"
+import { FormFieldError } from "@/components/ui/form-field-error"
+import { ApiError } from "@/lib/api-client"
+import { cn } from "@/lib/utils"
+import { Image as ImageIcon, Sparkles, Loader2, User } from "lucide-react"
+import { toast } from "sonner"
 import type { Talent, Media } from "@/types/models"
 import type { TalentStatus, Region } from "@/types/enums"
 
@@ -47,25 +53,30 @@ export function TalentFormDialog({
   const createMutation = useCreateTalent()
   const updateMutation = useUpdateTalent()
 
-  const { data: domains = [] } = useDomains()
+  const { data: rawDomains = [] } = useDomains()
+  const domainList = React.useMemo(() => {
+    const base = rawDomains && rawDomains.length > 0 ? [...rawDomains] : [...mockDomains]
+    if (talent?.domain && !base.some((d) => String(d.id) === String(talent.domain?.id))) {
+      base.push(talent.domain)
+    }
+    return base
+  }, [rawDomains, talent])
 
   const [nom, setNom] = useState("")
   const [slug, setSlug] = useState("")
   const [region, setRegion] = useState<Region>("ziguinchor")
   const [presentation, setPresentation] = useState("")
   const [parcours, setParcours] = useState("")
-  // NOTE: pas de champ `photo` direct sur Talent (voir `media`). Ce champ
-  // sert uniquement à prévisualiser une image existante ; il n'est PAS
-  // envoyé au backend — l'association réelle passe par le module
-  // Médiathèque (TODO : intégration Médiathèque plutôt qu'upload en ligne).
   const [photo, setPhoto] = useState("")
   const [domainId, setDomainId] = useState<string>("")
   const [statut, setStatut] = useState<TalentStatus>("publie")
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   // Media Picker Dialog State
   const [isPhotoPickerOpen, setIsPhotoPickerOpen] = useState(false)
 
   useEffect(() => {
+    setErrors({})
     if (talent) {
       setNom(talent.nom || "")
       setSlug(talent.slug || "")
@@ -95,37 +106,95 @@ export function TalentFormDialog({
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const updated = { ...prev }
+        delete updated[field]
+        return updated
+      })
+    }
+  }
+
   const handleSelectPhoto = (selected: Media[]) => {
     if (selected.length > 0) {
       setPhoto(selected[0].url)
     }
   }
 
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+
+    if (!nom.trim()) {
+      newErrors.nom = "Le nom complet du talent est obligatoire."
+    } else if (nom.trim().length < 2) {
+      newErrors.nom = "Le nom doit comporter au moins 2 caractères."
+    }
+
+    if (!presentation.trim()) {
+      newErrors.presentation = "La présentation synthétique est obligatoire."
+    } else if (presentation.trim().length < 10) {
+      newErrors.presentation = "La présentation doit comporter au moins 10 caractères."
+    }
+
+    if (!parcours.trim()) {
+      newErrors.parcours = "Le détail du parcours est obligatoire."
+    } else if (parcours.trim().length < 20) {
+      newErrors.parcours = "Le parcours doit comporter au moins 20 caractères."
+    }
+
+    setErrors(newErrors)
+    return newErrors
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    const validationErrors = validateForm()
+    if (Object.keys(validationErrors).length > 0) {
+      showValidationErrorAlert("Formulaire de talent incomplet", validationErrors)
+      return
+    }
+
     // `photo` (Médiathèque) n'est pas un champ du modèle Talent : non inclus.
     const payload = {
-      nom,
-      slug: slug || undefined,
+      nom: nom.trim(),
+      slug: slug.trim() || undefined,
       region,
-      presentation: presentation || undefined,
-      parcours: parcours || undefined,
+      presentation: presentation.trim() || undefined,
+      parcours: parcours.trim() || undefined,
       domain_id: domainId ? Number(domainId) : undefined,
       statut,
     }
 
-    if (isEditing && talent) {
-      await updateMutation.mutateAsync({
-        id: talent.id,
-        payload,
-      })
-    } else {
-      await createMutation.mutateAsync(payload as Omit<Talent, "id">)
+    try {
+      if (isEditing && talent) {
+        await updateMutation.mutateAsync({
+          id: talent.id,
+          payload,
+        })
+        showSuccessAlert("Profil mis à jour", `Le profil de « ${nom} » a été modifié avec succès.`)
+      } else {
+        await createMutation.mutateAsync(payload as Omit<Talent, "id">)
+        showSuccessAlert("Talent enregistré", `Le profil de « ${nom} » a été créé avec succès.`)
+      }
+      onOpenChange(false)
+      onSuccess?.()
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.errors) {
+        const backendErrors: Record<string, string> = {}
+        Object.entries(err.errors).forEach(([k, msgs]) => {
+          backendErrors[k] = Array.isArray(msgs) ? msgs[0] : String(msgs)
+        })
+        setErrors(backendErrors)
+        showValidationErrorAlert("Erreur de validation", backendErrors)
+      } else {
+        showErrorAlert(
+          "Erreur d'enregistrement",
+          err instanceof Error ? err.message : "Une erreur est survenue lors de l'enregistrement."
+        )
+      }
     }
-
-    onOpenChange(false)
-    onSuccess?.()
   }
 
   return (
@@ -160,17 +229,24 @@ export function TalentFormDialog({
               </div>
 
               <div>
-                <Label htmlFor="talent-nom" className="text-xs font-semibold">
+                <Label htmlFor="talent-nom" className={cn("text-xs font-semibold", errors.nom ? "text-destructive" : "")}>
                   Nom complet du talent *
                 </Label>
                 <Input
                   id="talent-nom"
-                  required
                   value={nom}
-                  onChange={(e) => setNom(e.target.value)}
+                  onChange={(e) => {
+                    setNom(e.target.value)
+                    clearError("nom")
+                  }}
                   placeholder="ex. Fatoumata Dramé"
-                  className="mt-1.5 h-11 rounded-xl text-sm bg-card"
+                  aria-invalid={!!errors.nom}
+                  className={cn(
+                    "mt-1.5 h-11 rounded-xl text-sm bg-card transition-colors",
+                    errors.nom ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
+                  )}
                 />
+                <FormFieldError error={errors.nom} />
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
@@ -179,7 +255,7 @@ export function TalentFormDialog({
                     Région *
                   </Label>
                   <Select value={region} onValueChange={(val) => setRegion(val as Region)}>
-                    <SelectTrigger id="talent-region" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
+                    <SelectTrigger id="talent-region" className="mt-1.5 h-10 w-full rounded-xl text-xs bg-card">
                       <SelectValue placeholder="Région" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl text-xs">
@@ -197,13 +273,13 @@ export function TalentFormDialog({
                     Domaine d'intervention lié
                   </Label>
                   <Select value={domainId} onValueChange={(val) => setDomainId(val || "")}>
-                    <SelectTrigger id="talent-dom" className="mt-1.5 h-10 rounded-xl text-xs bg-card truncate">
+                    <SelectTrigger id="talent-dom" className="mt-1.5 h-10 w-full rounded-xl text-xs bg-card truncate">
                       <SelectValue placeholder="Aucun domaine" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-2xl text-xs max-w-xs">
-                      {domains.map((d) => (
+                    <SelectContent className="rounded-2xl text-xs w-full min-w-[240px]">
+                      {domainList.map((d) => (
                         <SelectItem key={d.id} value={String(d.id)}>
-                          {d.nom}
+                          0{d.ordre || d.id}. {d.nom}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -307,31 +383,47 @@ export function TalentFormDialog({
               </div>
 
               <div>
-                <Label htmlFor="talent-presentation" className="text-xs font-semibold">
-                  Présentation courte / Accroche (synthèse percutante)
+                <Label htmlFor="talent-presentation" className={cn("text-xs font-semibold", errors.presentation ? "text-destructive" : "")}>
+                  Présentation courte / Accroche (synthèse percutante) *
                 </Label>
                 <Textarea
                   id="talent-presentation"
                   rows={2}
                   value={presentation}
-                  onChange={(e) => setPresentation(e.target.value)}
+                  onChange={(e) => {
+                    setPresentation(e.target.value)
+                    clearError("presentation")
+                  }}
                   placeholder="Une ou deux phrases synthétisant l'impact du talent..."
-                  className="mt-1.5 rounded-xl resize-none text-xs bg-card"
+                  aria-invalid={!!errors.presentation}
+                  className={cn(
+                    "mt-1.5 rounded-xl resize-none text-xs bg-card transition-colors",
+                    errors.presentation ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
+                  )}
                 />
+                <FormFieldError error={errors.presentation} />
               </div>
 
               <div>
-                <Label htmlFor="talent-parcours" className="text-xs font-semibold">
-                  Parcours détaillé & Réalisations
+                <Label htmlFor="talent-parcours" className={cn("text-xs font-semibold", errors.parcours ? "text-destructive" : "")}>
+                  Parcours détaillé & Réalisations *
                 </Label>
                 <Textarea
                   id="talent-parcours"
                   rows={4}
                   value={parcours}
-                  onChange={(e) => setParcours(e.target.value)}
+                  onChange={(e) => {
+                    setParcours(e.target.value)
+                    clearError("parcours")
+                  }}
                   placeholder="Racontez les étapes clés, études, création d'entreprise ou distinctions..."
-                  className="mt-1.5 rounded-xl text-xs bg-card"
+                  aria-invalid={!!errors.parcours}
+                  className={cn(
+                    "mt-1.5 rounded-xl text-xs bg-card transition-colors",
+                    errors.parcours ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
+                  )}
                 />
+                <FormFieldError error={errors.parcours} />
               </div>
             </div>
 
@@ -351,7 +443,7 @@ export function TalentFormDialog({
                   Statut de publication *
                 </Label>
                 <Select value={statut} onValueChange={(val) => setStatut(val as TalentStatus)}>
-                  <SelectTrigger id="talent-statut" className="mt-1.5 h-10 rounded-xl text-xs bg-card">
+                  <SelectTrigger id="talent-statut" className="mt-1.5 h-10 w-full rounded-xl text-xs bg-card">
                     <SelectValue placeholder="Statut" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl text-xs">

@@ -230,7 +230,7 @@ export default function AdminMediathequePage() {
         open={!!deletingMedia}
         onOpenChange={(open) => !open && setDeletingMedia(null)}
         title="Supprimer ce média ?"
-        description={`Confirmez-vous la suppression de ${deletingMedia?.nom || deletingMedia?.nom_fichier} ? Cette action retirera le fichier de la médiathèque.`}
+        description={`Confirmez-vous la suppression de ${deletingMedia?.nom || deletingMedia?.nom_original} ? Cette action retirera le fichier de TOUTES les fiches où il est utilisé.`}
         confirmText="Supprimer"
         variant="destructive"
         isLoading={deleteMutation.isPending}

@@ -5,6 +5,9 @@ import { toast } from "sonner"
 import {
   mediaService,
   type ListMediaParams,
+  type CreateMediaParams,
+  type AttachMediaParams,
+  type DetachMediaParams,
 } from "@/lib/services/media.service"
 import type { Media } from "@/types/models"
 
@@ -31,10 +34,10 @@ export function useCreateMedia() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (payload: Omit<Media, "id">) => mediaService.createMedia(payload),
+    mutationFn: (params: CreateMediaParams) => mediaService.createMedia(params),
     onSuccess: (created) => {
       toast.success("Média ajouté avec succès à la médiathèque", {
-        description: created.nom || created.nom_fichier,
+        description: created.nom || created.nom_original,
       })
       queryClient.invalidateQueries({ queryKey: MEDIA_QUERY_KEY })
     },
@@ -51,11 +54,18 @@ export function useUpdateMedia() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: Partial<Media> }) =>
-      mediaService.updateMedia(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: number
+      payload: Partial<
+        Pick<Media, "nom" | "alt" | "legende" | "categorie" | "statut">
+      >
+    }) => mediaService.updateMedia(id, payload),
     onSuccess: (updated) => {
       toast.success("Média mis à jour avec succès", {
-        description: updated.nom || updated.nom_fichier,
+        description: updated.nom || updated.nom_original,
       })
       queryClient.invalidateQueries({ queryKey: MEDIA_QUERY_KEY })
       queryClient.invalidateQueries({
@@ -86,5 +96,24 @@ export function useDeleteMedia() {
           err instanceof Error ? err.message : "Une erreur est survenue.",
       })
     },
+  })
+}
+
+/**
+ * Rattache une photo de la bibliothèque à une fiche (ex. couverture ou
+ * album d'une actualité). Silencieux par défaut (pas de toast) : utilisé
+ * en série lors de l'enregistrement d'un formulaire, où une notification
+ * globale de succès est déjà affichée pour l'ensemble de l'opération.
+ */
+export function useAttachMedia() {
+  return useMutation({
+    mutationFn: (params: AttachMediaParams) => mediaService.attachMedia(params),
+  })
+}
+
+/** Détache une photo d'une fiche (elle reste dans la médiathèque). */
+export function useDetachMedia() {
+  return useMutation({
+    mutationFn: (params: DetachMediaParams) => mediaService.detachMedia(params),
   })
 }

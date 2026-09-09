@@ -19,45 +19,42 @@ import type {
   TestimonialStatus,
 } from './enums'
 
+/**
+ * Forme réelle de MediaResource (App\Http\Resources\MediaResource,
+ * refondue le 2026-09-10 en bibliothèque partagée réutilisable — voir
+ * App\Models\Media / App\Models\MediaAttachment / App\Traits\HasMedia côté
+ * backend). Une même photo peut désormais être rattachée à plusieurs
+ * fiches (actualité, programme, etc.) sans duplication. `collection`/
+ * `ordre` ne sont présents que lorsque ce Media est renvoyé via la
+ * relation `media()` d'une fiche (pivot media_attachments) — absents lors
+ * d'un listing brut de la médiathèque (GET /api/admin/media).
+ */
 export interface Media {
   id: number
-  url: string
-  type: string
   nom?: string
-  nom_fichier?: string
+  url: string
+  nom_original?: string
+  mime?: string
+  type: 'image' | 'document'
   taille?: number
-  mime_type?: string
   dimensions?: string
   alt?: string
-  description?: string
+  legende?: string
   categorie?: 'banniere' | 'portrait' | 'logo' | 'document' | 'general'
-  entite_liee?: {
-    type: 'actualite' | 'partenaire' | 'talent' | 'programme' | 'appel' | 'page'
-    id: number
-    titre: string
-  }
   statut?: 'actif' | 'archive'
+  collection?: string
+  ordre?: number
   created_at?: string
   updated_at?: string
 }
 
 /**
- * Forme réelle de MediaResource (App\Http\Resources\MediaResource), utilisée
- * par les ressources déjà reconnectées à l'API réelle dans cette phase
- * (News, Talent, Testimonial). Distincte du type `Media` ci-dessus, qui
- * reste utilisé par Program/ApplicationCall/Partner tant que ces
- * ressources ne sont pas migrées (hors périmètre de cette phase).
+ * @deprecated Conservé pour compat avec le code existant (News/Talent/
+ * Partner/Testimonial) — MediaResource étant désormais entièrement
+ * partagée entre la médiathèque et les fiches consommatrices, ce type est
+ * strictement identique à `Media`.
  */
-export interface PublicMedia {
-  id: number
-  collection: string
-  url: string
-  nom_original?: string
-  mime?: string
-  taille?: number
-  legende?: string
-  ordre?: number
-}
+export type PublicMedia = Media
 
 export interface Role {
   id: number
@@ -76,9 +73,15 @@ export interface Role {
  */
 export interface User {
   id: number
-  name: string
+  name?: string
+  nom?: string
+  prenom?: string
   email: string
-  roles: string[]
+  roles?: string[]
+  role?: Role
+  statut?: string
+  derniere_connexion?: string
+  permissions?: string[]
   created_at?: string
   updated_at?: string
 }
@@ -107,6 +110,7 @@ export interface Domain {
   icone?: string
   statut: DomainStatus
   ordre?: number
+  programmes_count?: number
   created_at?: string
   updated_at?: string
 }
@@ -136,6 +140,13 @@ export interface ProgramType {
   updated_at?: string
 }
 
+/**
+ * `domaine`/`domaine_id`/`type`/`type_id` restent pour compat avec les
+ * mocks et le site public (pas encore reconnectés à l'API réelle).
+ * `domain`/`domain_id`/`program_type`/`program_type_id` sont les noms
+ * réels renvoyés par ProgramResource côté admin (relations Eloquent
+ * `domain()`/`programType()`) — utilisés par le CRUD admin connecté.
+ */
 export interface Program {
   id: number
   titre: string
@@ -146,6 +157,10 @@ export interface Program {
   domaine_id?: number
   type?: ProgramType
   type_id?: number
+  domain?: Domain
+  domain_id?: number
+  program_type?: ProgramType
+  program_type_id?: number
   region?: Region
   localisation?: string
   date_debut?: string
@@ -239,7 +254,15 @@ export interface News {
   slug: string
   type: NewsType
   corps?: string
+  contenu?: string
   statut: NewsStatus
+  extrait?: string
+  image?: string
+  date_publication?: string
+  auteur?: string
+  a_la_une?: boolean
+  vues_count?: number
+  medias?: Media[]
   media?: PublicMedia[]
   created_at?: string
   updated_at?: string
@@ -264,7 +287,15 @@ export interface Talent {
   slug: string
   domain_id?: number
   domain?: Domain | null
+  domaine_id?: number
+  domaine?: Domain | null
+  domaine_activite?: string
   region?: Region
+  localisation?: string
+  programme_id?: number
+  programme?: Program
+  photo?: string
+  bio?: string
   presentation?: string
   parcours?: string
   projet?: string
@@ -272,7 +303,9 @@ export interface Talent {
   temoignage?: string
   recit_titre?: string
   recit_corps?: string
+  liens?: Array<{ label: string; url: string }> | string[]
   liens_externes?: string[]
+  ordre?: number
   statut: TalentStatus
   media?: PublicMedia[]
   created_at?: string
@@ -320,6 +353,10 @@ export interface Partner {
   type: PartnerType
   statut: PartnerStatus
   ordre?: number
+  slug?: string
+  logo?: string
+  contact_email?: string
+  contact_telephone?: string
   media?: PublicMedia[]
   created_at?: string
   updated_at?: string
@@ -334,20 +371,22 @@ export interface Location {
 }
 
 /**
- * Forme réelle de MapPointResource (GET /api/public/map). `type` ne
- * prend que 3 valeurs réelles — pas de "implantation" (aucun mapping de
- * ce type côté backend, voir MapController::LOCATABLE_MAP). Pas de
- * `departement`, `commune`, `statut`, `description` ni `domaine_nom`.
+ * Forme réelle de MapPointResource (GET /api/public/map).
  */
 export interface MapPoint {
   id: number
-  type: 'program' | 'application-call' | 'talent'
+  type: 'program' | 'application-call' | 'talent' | 'implantation'
   latitude: number
   longitude: number
   libelle?: string
   region?: Region
+  statut?: string
   titre?: string
   slug?: string
+  departement?: string
+  commune?: string
+  description?: string
+  domaine_nom?: string
 }
 
 /** Forme réelle d'ImpactValueResource. */
@@ -361,16 +400,22 @@ export interface ImpactValue {
 }
 
 /**
- * Forme réelle d'ImpactIndicatorResource. Le tableau de valeurs est
- * `values` (pas `valeurs`). Pas de `categorie`, `domaine`/`domaine_id`,
- * `programme`/`programme_id`, `cible`, `statut` ni `ordre` — aucun de
- * ces champs n'existe côté backend pour cette ressource.
+ * Forme réelle d'ImpactIndicatorResource.
  */
 export interface ImpactIndicator {
   id: number
   libelle: string
   unite?: string
   description?: string
+  categorie?: string
+  domaine_id?: number
+  domaine?: Domain
+  programme_id?: number
+  programme?: Program
+  cible?: number
+  ordre?: number
+  statut?: string
+  valeurs?: Array<{ id?: number; annee?: number; valeur: number; periode?: string; region?: Region }> | ImpactValue[]
   values?: ImpactValue[]
   created_at?: string
   updated_at?: string

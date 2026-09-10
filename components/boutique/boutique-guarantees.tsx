@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { Truck, ShieldCheck, HeartHandshake, MessageCircle, MapPin, Sparkles } from "lucide-react"
+import { Truck, ShieldCheck, HeartHandshake, MessageCircle, Sparkles } from "lucide-react"
 import { SHOP_PHONE_DISPLAY, SHOP_WHATSAPP_NUMBER } from "@/lib/data/collections"
 
 const guarantees = [
@@ -47,9 +47,9 @@ export function BoutiqueGuarantees() {
             return (
               <div
                 key={idx}
-                className="rounded-3xl border border-border bg-card p-6 shadow-xs hover:shadow-md hover:border-primary/30 transition-all text-center flex flex-col items-center justify-center"
+                className="rounded-3xl border border-border bg-card p-6 shadow-xs hover:shadow-md hover:border-primary/30 transition-all text-center flex flex-col items-center justify-center group"
               >
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Icon className="size-7" />
                 </div>
                 <h3 className="font-display text-base font-bold text-foreground">
@@ -79,7 +79,7 @@ export function BoutiqueGuarantees() {
               )}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-bold text-accent-foreground shadow-lg hover:bg-white hover:text-forest transition-all"
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-bold text-accent-foreground shadow-lg hover:bg-white hover:text-forest transition-all cursor-pointer"
             >
               <MessageCircle className="size-4" />
               <span>Contacter le pôle boutique</span>

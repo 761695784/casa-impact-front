@@ -1,12 +1,24 @@
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import Link from "next/link"
-import { ShoppingBag, Sparkles, MessageCircle, Truck, ShieldCheck, HeartHandshake, ChevronRight } from "lucide-react"
+import { ShoppingBag, Sparkles, MessageCircle, Truck, ShieldCheck, HeartHandshake, ChevronRight, Rotate3d } from "lucide-react"
 import { BaobabMark } from "@/components/brand/baobab-mark"
-import { SHOP_PHONE_DISPLAY, SHOP_WHATSAPP_NUMBER } from "@/lib/data/collections"
+import { SHOP_PHONE_DISPLAY, SHOP_WHATSAPP_NUMBER, products, Product } from "@/lib/data/collections"
+import { ThreeProductCanvas } from "./three-product-canvas"
+import { ProductOrderModal } from "./product-order-modal"
 
 export function BoutiqueHero() {
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const featuredProduct = products[0] // Polo Officiel Vert (Homme)
+
+  const handleOrderHeroProduct = () => {
+    setSelectedProduct(featuredProduct)
+    setIsModalOpen(true)
+  }
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-[#024424] via-forest to-[#012d17] text-white pt-8 pb-12 sm:pt-10 sm:pb-16 lg:pt-12 lg:pb-20">
       {/* Background Decorative Baobab Watermark */}
@@ -48,7 +60,7 @@ export function BoutiqueHero() {
             </h1>
 
             <p className="text-base sm:text-lg text-white/85 max-w-2xl leading-relaxed font-sans">
-              Découvrez les collections exclusives de Casa Impact : polos brodés, t-shirts collectors, casquettes et goodies officiels. Chaque acquisition soutient directement nos actions de formation et d’accompagnement des jeunes en Casamance.
+              Découvrez les collections exclusives de Casa Impact : polos brodés, t-shirts collectors, casquettes et goodies officiels en rendu 3D WebGL temps réel. Chaque acquisition soutient directement nos actions de formation et d’accompagnement des jeunes en Casamance.
             </p>
 
             {/* Quick Actions & WhatsApp Callout */}
@@ -59,7 +71,7 @@ export function BoutiqueHero() {
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 rounded-full bg-accent px-6 py-3.5 text-sm sm:text-base font-bold text-accent-foreground shadow-lg shadow-accent/25 transition-all duration-300 hover:bg-white hover:text-forest hover:scale-[1.02] active:scale-98 whitespace-nowrap"
+                className="inline-flex items-center gap-2.5 rounded-full bg-accent px-6 py-3.5 text-sm sm:text-base font-bold text-accent-foreground shadow-lg shadow-accent/25 transition-all duration-300 hover:bg-white hover:text-forest hover:scale-[1.02] active:scale-98 whitespace-nowrap cursor-pointer"
               >
                 <MessageCircle className="size-5 text-[#024424] shrink-0" />
                 <span>Commander sur WhatsApp</span>
@@ -67,7 +79,7 @@ export function BoutiqueHero() {
 
               <a
                 href="#catalogue"
-                className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-5 py-3.5 text-sm sm:text-base font-semibold text-white backdrop-blur-md transition-all duration-300 hover:bg-white/20 hover:border-white/40"
+                className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-5 py-3.5 text-sm sm:text-base font-semibold text-white backdrop-blur-md transition-all duration-300 hover:bg-white/20 hover:border-white/40 cursor-pointer"
               >
                 <ShoppingBag className="size-4 text-accent" />
                 <span>Explorer la collection</span>
@@ -91,21 +103,26 @@ export function BoutiqueHero() {
             </div>
           </div>
 
-          {/* Right Column: Hero Visual Highlight */}
+          {/* Right Column: Hero Visual Highlight with Real Three.js WebGL Scene */}
           <div className="lg:col-span-5">
             <div className="relative rounded-3xl border border-white/20 bg-white/10 p-4 sm:p-6 backdrop-blur-xl shadow-2xl overflow-hidden group">
-              <div className="absolute top-3 right-3 z-10">
+              <div className="absolute top-3.5 right-3.5 z-10">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-accent text-accent-foreground text-xs font-extrabold px-3 py-1 shadow-md">
-                  <Sparkles className="size-3" />
-                  Collection 2026
+                  <Rotate3d className="size-3" />
+                  Three.js 3D Live
                 </span>
               </div>
 
-              <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-white/5 flex items-center justify-center">
-                <img
-                  src="/assets/collections/polo-vert-homme.png"
-                  alt="Polo Officiel Casa Impact"
-                  className="size-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+              {/* Three.js Hero 3D Stage */}
+              <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-black/20 flex items-center justify-center">
+                <ThreeProductCanvas
+                  imageUrl={featuredProduct.image}
+                  title={featuredProduct.title}
+                  isHero={true}
+                  showParticles={true}
+                  showPedestal={true}
+                  autoRotateSpeed={1}
+                  hoverIntensity={0.8}
                 />
               </div>
 
@@ -119,15 +136,29 @@ export function BoutiqueHero() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="font-display text-xl font-extrabold text-accent">
+                  <span className="font-display text-xl font-extrabold text-accent block">
                     10 000 FCFA
                   </span>
+                  <button
+                    type="button"
+                    onClick={handleOrderHeroProduct}
+                    className="mt-1 text-[11px] font-bold text-white/80 hover:text-white underline decoration-accent underline-offset-2 cursor-pointer"
+                  >
+                    Commander ce modèle →
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modal */}
+      <ProductOrderModal
+        product={selectedProduct}
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+      />
     </section>
   )
 }

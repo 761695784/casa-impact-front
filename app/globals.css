@@ -234,10 +234,52 @@
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
+@keyframes float-3d-slow {
+  0% {
+    transform: perspective(1000px) rotateY(-10deg) rotateX(4deg) translateY(0px) scale(1);
+  }
+  25% {
+    transform: perspective(1000px) rotateY(8deg) rotateX(-5deg) translateY(-10px) scale(1.03);
+  }
+  50% {
+    transform: perspective(1000px) rotateY(14deg) rotateX(3deg) translateY(-5px) scale(1.05);
+  }
+  75% {
+    transform: perspective(1000px) rotateY(-6deg) rotateX(6deg) translateY(-12px) scale(1.03);
+  }
+  100% {
+    transform: perspective(1000px) rotateY(-10deg) rotateX(4deg) translateY(0px) scale(1);
+  }
+}
+
+@keyframes shadow-3d-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(0.8);
+    opacity: 0.22;
+  }
+}
+
+.animate-float-3d {
+  animation: float-3d-slow 7s ease-in-out infinite;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.animate-shadow-3d {
+  animation: shadow-3d-pulse 7s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee,
   .animate-ken-burns,
-  .animate-pulse-glow {
+  .animate-pulse-glow,
+  .animate-float-3d,
+  .animate-shadow-3d {
     animation: none;
   }
   *, *::before, *::after {

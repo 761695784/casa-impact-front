@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react"
 import { products, productCategories, Product } from "@/lib/data/collections"
 import { ProductCard } from "./product-card"
 import { ProductOrderModal } from "./product-order-modal"
-import { Search, Sparkles, Filter, ShoppingBag } from "lucide-react"
+import { Search, Sparkles, ShoppingBag } from "lucide-react"
 
 export function BoutiqueCatalog() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
@@ -57,8 +57,9 @@ export function BoutiqueCatalog() {
               return (
                 <button
                   key={cat.id}
+                  type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`rounded-full px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
+                  className={`rounded-full px-4 py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                     isActive
                       ? "bg-primary text-white shadow-md shadow-primary/20 scale-105"
                       : "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border"
@@ -83,13 +84,14 @@ export function BoutiqueCatalog() {
           </div>
         </div>
 
-        {/* Product Grid */}
+        {/* Product Grid with Autonomous 3D Moving Images */}
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {filteredProducts.map((product) => (
+            {filteredProducts.map((product, idx) => (
               <ProductCard
                 key={product.id}
                 product={product}
+                index={idx}
                 onSelectProduct={handleOpenOrder}
               />
             ))}
@@ -104,11 +106,12 @@ export function BoutiqueCatalog() {
               Essayez de modifier votre recherche ou sélectionnez une autre catégorie.
             </p>
             <button
+              type="button"
               onClick={() => {
                 setSelectedCategory("all")
                 setSearchQuery("")
               }}
-              className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-sm"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-sm cursor-pointer"
             >
               Réinitialiser les filtres
             </button>

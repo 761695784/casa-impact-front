@@ -45,9 +45,9 @@ export function AboutIntro() {
             {institution.intro}
           </p>
 
-          <p className="mt-4 text-base font-semibold leading-relaxed text-foreground/90">
+          {/* <p className="mt-4 text-base font-semibold leading-relaxed text-foreground/90">
             {institution.conclusion}
-          </p>
+          </p> */}
 
           {/* Core Foundation Highlights */}
           <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">

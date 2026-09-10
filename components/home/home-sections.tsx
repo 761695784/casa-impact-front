@@ -314,7 +314,7 @@ export function HomeOpportunitiesPrograms() {
               </h3>
             </div>
             <Link
-              href="/appels-a-candidatures"
+              href="/opportunites#appels"
               className="text-xs font-semibold text-primary hover:underline shrink-0 inline-flex items-center gap-1 self-start sm:self-auto"
             >
               <span>Tous les appels</span>

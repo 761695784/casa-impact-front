@@ -1,4 +1,5 @@
-import { DATA_SOURCE, API_URL } from "@/lib/config"
+import { DATA_SOURCE } from "@/lib/config"
+import { apiFetch } from "@/lib/api-client"
 import { mockApplicationCalls } from "@/lib/mock/application-calls.mock"
 import { mockPrograms } from "@/lib/mock/programs.mock"
 import type { ApplicationCall, PaginatedResponse } from "@/types/models"
@@ -24,6 +25,53 @@ function generateSlug(titre: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "")
+}
+
+/**
+ * App\Http\Resources\ApplicationCallResource (backend) renvoie `lieu`,
+ * `date_debut`, `program`/`program_id` — le frontend est typé sur
+ * `localisation`, `date_ouverture`, `programme`/`programme_id` (mêmes
+ * noms hérités que pour Program/Domain). `toApiPayload` traduit vers le
+ * backend à l'envoi, `withLegacyNames` traduit la réponse au retour —
+ * aucun renommage côté serveur, cf. App\Http\Requests\Admin\
+ * Store/UpdateApplicationCallRequest (`program_id` requis, pas
+ * `programme_id`).
+ */
+function toApiPayload(payload: Partial<ApplicationCall>): Record<string, unknown> {
+  const body: Record<string, unknown> = {}
+  if (payload.titre !== undefined) body.titre = payload.titre
+  if (payload.slug !== undefined) body.slug = payload.slug
+  if (payload.description !== undefined) body.description = payload.description
+  if (payload.resume !== undefined) body.resume = payload.resume
+  if (payload.region !== undefined) body.region = payload.region
+  if (payload.localisation !== undefined) body.lieu = payload.localisation
+  if (payload.date_ouverture !== undefined) body.date_debut = payload.date_ouverture
+  if (payload.date_limite !== undefined) body.date_limite = payload.date_limite
+  if (payload.nombre_places !== undefined) body.nombre_places = payload.nombre_places
+  if (payload.statut !== undefined) body.statut = payload.statut
+  if (payload.documents_requis !== undefined) body.documents_requis = payload.documents_requis
+
+  const programId = payload.programme_id ?? payload.programme?.id
+  if (programId !== undefined) body.program_id = programId
+
+  return body
+}
+
+function withLegacyNames(
+  c: ApplicationCall & {
+    lieu?: string
+    date_debut?: string
+    program?: ApplicationCall["programme"]
+    program_id?: number
+  }
+): ApplicationCall {
+  return {
+    ...c,
+    localisation: c.lieu ?? c.localisation,
+    date_ouverture: c.date_debut ?? c.date_ouverture,
+    programme: c.program ?? c.programme,
+    programme_id: c.program_id ?? c.programme_id,
+  }
 }
 
 export const applicationCallsService = {
@@ -90,28 +138,16 @@ export const applicationCallsService = {
     if (search) queryParams.set("search", search)
     if (statut && statut !== "all") queryParams.set("statut", statut)
     if (region && region !== "all") queryParams.set("region", region)
-    if (programme_id && programme_id !== "all") queryParams.set("programme_id", String(programme_id))
+    if (programme_id && programme_id !== "all") queryParams.set("program_id", String(programme_id))
     queryParams.set("page", String(page))
     queryParams.set("per_page", String(per_page))
 
-    const res = await fetch(`${API_URL}/api/admin/application-calls?${queryParams.toString()}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Laravel Sanctum SPA
-    })
+    const json = await apiFetch<PaginatedResponse<ApplicationCall>>(
+      `/api/admin/application-calls?${queryParams.toString()}`,
+      { method: "GET" }
+    )
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors du chargement des appels à candidatures (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data ? json : { data: json.data || json, meta: json.meta }
+    return { ...json, data: json.data.map(withLegacyNames) }
   },
 
   /**
@@ -127,21 +163,13 @@ export const applicationCallsService = {
       return delay<ApplicationCall>(found)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/application-calls/${id}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
+    const json = await apiFetch<{ data?: ApplicationCall } | ApplicationCall>(
+      `/api/admin/application-calls/${id}`,
+      { method: "GET" }
+    )
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Impossible de charger l'appel #${id} (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const raw = (json as { data?: ApplicationCall }).data ?? (json as ApplicationCall)
+    return withLegacyNames(raw)
   },
 
   /**
@@ -171,25 +199,13 @@ export const applicationCallsService = {
       return delay<ApplicationCall>(newCall)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/application-calls`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
+    const json = await apiFetch<{ data?: ApplicationCall } | ApplicationCall>(
+      `/api/admin/application-calls`,
+      { method: "POST", body: toApiPayload(payload) }
+    )
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la création de l'appel (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const raw = (json as { data?: ApplicationCall }).data ?? (json as ApplicationCall)
+    return withLegacyNames(raw)
   },
 
   /**
@@ -223,25 +239,13 @@ export const applicationCallsService = {
       return delay<ApplicationCall>(updated)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/application-calls/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
+    const json = await apiFetch<{ data?: ApplicationCall } | ApplicationCall>(
+      `/api/admin/application-calls/${id}`,
+      { method: "PUT", body: toApiPayload(payload) }
+    )
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la mise à jour de l'appel (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const raw = (json as { data?: ApplicationCall }).data ?? (json as ApplicationCall)
+    return withLegacyNames(raw)
   },
 
   /**
@@ -257,25 +261,15 @@ export const applicationCallsService = {
       return delay<boolean>(true)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/application-calls/${id}`, {
-      method: "DELETE",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la suppression de l'appel (HTTP ${res.status})`
-      )
-    }
-
+    await apiFetch<void>(`/api/admin/application-calls/${id}`, { method: "DELETE" })
     return true
   },
 
   /**
    * Exportation des appels à candidatures en CSV
    * Endpoint : GET /api/admin/application-calls/export
+   * (Réponse binaire — passe par `fetch` directement, `apiFetch` est
+   * taillé pour du JSON. GET n'a pas besoin du header CSRF.)
    */
   exportApplicationCalls: async (
     params: Omit<ListApplicationCallsParams, "page" | "per_page"> = {}
@@ -296,12 +290,13 @@ export const applicationCallsService = {
         type: "text/csv;charset=utf-8;",
       })
     } else {
+      const { API_URL } = await import("@/lib/config")
       const queryParams = new URLSearchParams()
       if (params.search) queryParams.set("search", params.search)
       if (params.statut && params.statut !== "all") queryParams.set("statut", params.statut)
       if (params.region && params.region !== "all") queryParams.set("region", params.region)
       if (params.programme_id && params.programme_id !== "all")
-        queryParams.set("programme_id", String(params.programme_id))
+        queryParams.set("program_id", String(params.programme_id))
 
       const res = await fetch(
         `${API_URL}/api/admin/application-calls/export?${queryParams.toString()}`,

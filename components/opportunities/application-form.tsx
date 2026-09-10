@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import {
@@ -11,61 +11,162 @@ import {
   User,
   Mail,
   Phone,
+  MapPin,
   MessageSquare,
   Sparkles,
   ArrowRight,
   ShieldCheck,
+  Hourglass,
+  GraduationCap,
+  Briefcase,
+  CheckCircle,
 } from "lucide-react"
 import type { ApplicationCall } from "@/types/models"
+import type { Region } from "@/types/enums"
+import { REGION_LABELS } from "@/types/enums"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { FormFieldError } from "@/components/ui/form-field-error"
 import {
   showSuccessAlert,
   showErrorAlert,
   showValidationErrorAlert,
 } from "@/lib/alerts"
+import { ApiError } from "@/lib/api-client"
+import { publicApplicationsService } from "@/lib/services/public-applications.service"
 import { cn } from "@/lib/utils"
+
+// Pas d'énumération côté backend pour ces deux champs (simple string,
+// voir StoreApplicationRequest) — options éditoriales côté frontend
+// uniquement, la valeur envoyée reste une chaîne libre.
+const TRANCHE_AGE_OPTIONS = [
+  { value: "moins-18", label: "Moins de 18 ans" },
+  { value: "18-25", label: "18 - 25 ans" },
+  { value: "26-35", label: "26 - 35 ans" },
+  { value: "36-45", label: "36 - 45 ans" },
+  { value: "46-plus", label: "46 ans et plus" },
+]
+
+const NIVEAU_ETUDES_OPTIONS = [
+  { value: "aucun", label: "Aucun diplôme" },
+  { value: "bepc", label: "BEPC / Brevet" },
+  { value: "baccalaureat", label: "Baccalauréat" },
+  { value: "licence", label: "Licence / Bac+3" },
+  { value: "master", label: "Master / Bac+5" },
+  { value: "doctorat", label: "Doctorat" },
+  { value: "autre", label: "Autre" },
+]
+
+const SITUATION_PROFESSIONNELLE_OPTIONS = [
+  { value: "etudiant", label: "Étudiant(e)" },
+  { value: "sans-emploi", label: "Sans emploi" },
+  { value: "employe", label: "Employé(e)" },
+  { value: "entrepreneur", label: "Entrepreneur / Indépendant(e)" },
+  { value: "autre", label: "Autre" },
+]
 
 const schema = z.object({
   prenom: z.string().min(2, "Veuillez renseigner votre prénom."),
   nom: z.string().min(2, "Veuillez renseigner votre nom."),
   email: z.string().email("Adresse e-mail invalide."),
   telephone: z.string().min(6, "Numéro de téléphone invalide."),
+  region: z.enum(["ziguinchor", "sedhiou", "kolda"], {
+    errorMap: () => ({ message: "Veuillez sélectionner votre région." }),
+  }),
+  lieu: z.string().optional(),
+  tranche_age: z.string().min(1, "Veuillez sélectionner votre tranche d'âge."),
+  niveau_etudes: z.string().min(1, "Veuillez sélectionner votre niveau d'études."),
+  situation_professionnelle: z.string().optional(),
   motivation: z.string().min(20, "Décrivez votre motivation en quelques lignes (20 caractères min.)."),
+  competences: z.string().optional(),
+  experience: z.string().optional(),
+  projet: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof schema>
 
-function makeDossierRef() {
-  return `CAND-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`
-}
-
 export function ApplicationForm({ call }: { call: ApplicationCall }) {
   const [reference, setReference] = useState<string | null>(null)
+  const [waitlisted, setWaitlisted] = useState(false)
   const [submittedValues, setSubmittedValues] = useState<FormValues | null>(null)
+  const [documents, setDocuments] = useState<Record<string, File | null>>({})
+  const [documentErrors, setDocumentErrors] = useState<Record<string, string>>({})
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
+  const requiredDocuments = (call.documents_requis || []).filter((d) => d.requis)
+
   async function onSubmit(values: FormValues) {
+    // Les documents obligatoires ne sont pas dans le schéma zod (clés
+    // dynamiques par appel) — validés séparément juste avant l'envoi.
+    const missing: Record<string, string> = {}
+    requiredDocuments.forEach((doc) => {
+      if (!documents[doc.cle]) {
+        missing[doc.cle] = `Le document « ${doc.libelle} » est requis.`
+      }
+    })
+    if (Object.keys(missing).length > 0) {
+      setDocumentErrors(missing)
+      showValidationErrorAlert(Object.values(missing))
+      return
+    }
+    setDocumentErrors({})
+
     try {
-      // Demonstration submit — replace with POST /api/public/applications
-      await new Promise((r) => setTimeout(r, 900))
-      const ref = makeDossierRef()
-      setReference(ref)
+      const providedDocuments: Record<string, File> = {}
+      Object.entries(documents).forEach(([cle, file]) => {
+        if (file) providedDocuments[cle] = file
+      })
+
+      const confirmation = await publicApplicationsService.submitApplication({
+        application_call_id: call.id,
+        nom: values.nom.trim(),
+        prenom: values.prenom.trim(),
+        email: values.email.trim(),
+        telephone: values.telephone.trim(),
+        region: values.region as Region,
+        lieu: values.lieu?.trim() || undefined,
+        tranche_age: values.tranche_age,
+        niveau_etudes: values.niveau_etudes,
+        situation_professionnelle: values.situation_professionnelle || undefined,
+        motivation: values.motivation.trim(),
+        competences: values.competences?.trim() || undefined,
+        experience: values.experience?.trim() || undefined,
+        projet: values.projet?.trim() || undefined,
+        documents: Object.keys(providedDocuments).length > 0 ? providedDocuments : undefined,
+      })
+
+      setReference(confirmation.reference)
+      setWaitlisted(confirmation.statut === "en_liste_attente")
       setSubmittedValues(values)
       await showSuccessAlert(
         "Candidature transmise !",
         `Votre dossier pour « ${call.titre} » a bien été enregistré.`
       )
-    } catch {
-      showErrorAlert("Erreur", "Une erreur est survenue lors de l'envoi de votre candidature.")
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.errors) {
+        const messages = Object.values(err.errors).flat()
+        showValidationErrorAlert(messages.length > 0 ? messages : [err.message])
+      } else {
+        showErrorAlert(
+          "Erreur",
+          err instanceof Error ? err.message : "Une erreur est survenue lors de l'envoi de votre candidature."
+        )
+      }
     }
   }
 
@@ -97,6 +198,12 @@ export function ApplicationForm({ call }: { call: ApplicationCall }) {
         <p className="mx-auto mt-3 max-w-lg text-sm sm:text-base leading-relaxed text-muted-foreground">
           Votre candidature au programme <strong>« {call.titre} »</strong> a bien été enregistrée.
         </p>
+
+        {waitlisted && (
+          <p className="mx-auto mt-3 max-w-lg text-xs sm:text-sm font-semibold text-amber-700 bg-amber-500/10 border border-amber-500/30 rounded-2xl px-4 py-2">
+            Le nombre de places disponibles est atteint : votre dossier a été placé en liste d'attente et sera examiné si une place se libère.
+          </p>
+        )}
 
         {/* Reference Badge */}
         <div className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-primary/30 bg-primary/10 px-6 py-3 font-mono text-xl font-bold text-primary shadow-inner">
@@ -207,6 +314,118 @@ export function ApplicationForm({ call }: { call: ApplicationCall }) {
             )}
           />
         </Field>
+
+        {/* Région */}
+        <Field label="Région *" icon={MapPin} error={errors.region?.message}>
+          <Controller
+            name="region"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger
+                  className={cn(
+                    "h-11 w-full rounded-xl",
+                    errors.region && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                  )}
+                >
+                  <SelectValue placeholder="Sélectionner votre région" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl">
+                  {(Object.keys(REGION_LABELS) as Region[]).map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {REGION_LABELS[r]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </Field>
+
+        {/* Ville / localité */}
+        <Field label="Ville / localité">
+          <Input
+            {...register("lieu")}
+            placeholder="Ex : Ziguinchor centre"
+            className="h-11 rounded-xl"
+          />
+        </Field>
+
+        {/* Tranche d'âge */}
+        <Field label="Tranche d'âge *" icon={Hourglass} error={errors.tranche_age?.message}>
+          <Controller
+            name="tranche_age"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger
+                  className={cn(
+                    "h-11 w-full rounded-xl",
+                    errors.tranche_age && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                  )}
+                >
+                  <SelectValue placeholder="Sélectionner votre tranche d'âge" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl">
+                  {TRANCHE_AGE_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </Field>
+
+        {/* Niveau d'études */}
+        <Field label="Niveau d'études *" icon={GraduationCap} error={errors.niveau_etudes?.message}>
+          <Controller
+            name="niveau_etudes"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger
+                  className={cn(
+                    "h-11 w-full rounded-xl",
+                    errors.niveau_etudes && "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"
+                  )}
+                >
+                  <SelectValue placeholder="Sélectionner votre niveau d'études" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl">
+                  {NIVEAU_ETUDES_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </Field>
+
+        {/* Situation professionnelle */}
+        <Field label="Situation professionnelle" icon={Briefcase}>
+          <Controller
+            name="situation_professionnelle"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger className="h-11 w-full rounded-xl">
+                  <SelectValue placeholder="Sélectionner (facultatif)" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl">
+                  {SITUATION_PROFESSIONNELLE_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </Field>
       </div>
 
       {/* Motivation */}
@@ -225,24 +444,87 @@ export function ApplicationForm({ call }: { call: ApplicationCall }) {
         </Field>
       </div>
 
-      {/* Required Documents Notice */}
+      {/* Compétences & expérience (facultatif) */}
+      <div className="mt-5 grid gap-5 sm:grid-cols-2">
+        <Field label="Compétences clés">
+          <Textarea
+            {...register("competences")}
+            rows={3}
+            placeholder="Ex : gestion de projet, prise de parole, comptabilité..."
+            className="rounded-2xl resize-none p-4"
+          />
+        </Field>
+        <Field label="Expérience pertinente">
+          <Textarea
+            {...register("experience")}
+            rows={3}
+            placeholder="Expériences professionnelles, associatives ou de formation en lien avec cet appel..."
+            className="rounded-2xl resize-none p-4"
+          />
+        </Field>
+      </div>
+
+      {/* Projet (facultatif) */}
+      <div className="mt-5">
+        <Field label="Votre projet">
+          <Textarea
+            {...register("projet")}
+            rows={3}
+            placeholder="Si votre candidature porte sur un projet précis, décrivez-le brièvement..."
+            className="rounded-2xl resize-none p-4"
+          />
+        </Field>
+      </div>
+
+      {/* Required Documents Upload */}
       {call.documents_requis && call.documents_requis.length > 0 && (
         <div className="mt-6 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-5">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
             <UploadCloud className="size-4" />
-            Documents justificatifs à fournir lors de l'entretien :
+            Documents justificatifs à joindre :
           </p>
-          <ul className="mt-3 grid gap-2 sm:grid-cols-2 text-xs text-foreground/80">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {call.documents_requis.map((doc) => (
-              <li key={doc.cle} className="flex items-center gap-2">
-                <span className="size-1.5 rounded-full bg-primary shrink-0" />
-                <span>{doc.libelle}</span>
-                {doc.formats?.length ? (
-                  <span className="text-[10px] text-muted-foreground">({doc.formats.join(", ")})</span>
-                ) : null}
-              </li>
+              <div key={doc.cle} className="space-y-1.5">
+                <Label
+                  className={cn(
+                    "flex items-center gap-1.5 text-xs font-semibold",
+                    documentErrors[doc.cle] ? "text-destructive" : "text-foreground"
+                  )}
+                >
+                  <span>
+                    {doc.libelle}
+                    {doc.requis ? " *" : " (facultatif)"}
+                  </span>
+                  {documents[doc.cle] && <CheckCircle className="size-3.5 text-emerald-600" />}
+                </Label>
+                <input
+                  type="file"
+                  accept={doc.formats?.map((f) => `.${f}`).join(",")}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null
+                    setDocuments((prev) => ({ ...prev, [doc.cle]: file }))
+                    if (file) {
+                      setDocumentErrors((prev) => {
+                        const next = { ...prev }
+                        delete next[doc.cle]
+                        return next
+                      })
+                    }
+                  }}
+                  className={cn(
+                    "block w-full rounded-xl border bg-background text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary hover:file:bg-primary/20",
+                    documentErrors[doc.cle] ? "border-destructive" : "border-border"
+                  )}
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  {doc.formats?.length ? `Formats acceptés : ${doc.formats.join(", ")}` : "PDF, JPG, PNG, DOC, DOCX"}
+                  {doc.taille_max ? ` • ${doc.taille_max} Mo max` : ""}
+                </p>
+                <FormFieldError error={documentErrors[doc.cle]} />
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
 

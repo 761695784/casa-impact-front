@@ -1,6 +1,7 @@
-import { DATA_SOURCE, API_URL } from "@/lib/config"
+import { DATA_SOURCE } from "@/lib/config"
+import { apiFetch } from "@/lib/api-client"
 import { mockApplications } from "@/lib/mock/applications.mock"
-import type { Application, PaginatedResponse } from "@/types/models"
+import type { Application, ApplicationCall, ApplicationDocumentFile, PaginatedResponse } from "@/types/models"
 import type { ApplicationStatus, Region } from "@/types/enums"
 
 export interface ListApplicationsParams {
@@ -14,6 +15,109 @@ export interface ListApplicationsParams {
 
 function delay<T>(data: T, ms = 120): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(data), ms))
+}
+
+/**
+ * App\Http\Resources\Admin\ApplicationResource (backend) renvoie
+ * `nom`/`prenom`/`email`/`telephone`/`lieu`/`situation_professionnelle`/
+ * `application_call_id`/`application_call`/`projet`, alors que les
+ * composants admin (candidatures-table, page de détail) sont écrits pour
+ * `candidat_nom`/`candidat_email`/`candidat_telephone`/`ville`/`profession`/
+ * `appel_id`/`appel`/`projet_description`. Ce pont fait la traduction sans
+ * toucher au backend — même approche que `withLegacyNames` dans
+ * application-calls.service.ts et content.service.ts.
+ *
+ * Deux limites connues côté backend, non résolues par ce mapping (le
+ * champ n'existe simplement pas dans la réponse API) :
+ * - `notes_internes` : aucune colonne/validation côté serveur
+ *   (App\Http\Requests\Admin\UpdateApplicationRequest n'accepte que
+ *   `statut`) — la note saisie dans la modale n'est donc jamais persistée.
+ * - `promu` / `promoted_at` : App\Http\Resources\Admin\ApplicationResource
+ *   ne les expose pas ; `promote()` se contente de faire repasser le
+ *   statut de `en_liste_attente` à `nouvelle`, sans état "promu" dédié.
+ */
+function withLegacyCallNames(
+  c:
+    | (Partial<ApplicationCall> & {
+        lieu?: string
+        date_debut?: string
+        program?: ApplicationCall["programme"]
+        program_id?: number
+      })
+    | null
+    | undefined
+): ApplicationCall | undefined {
+  if (!c || c.id === undefined) return undefined
+  return {
+    ...c,
+    localisation: c.lieu ?? c.localisation,
+    date_ouverture: c.date_debut ?? c.date_ouverture,
+    programme: c.program ?? c.programme,
+    programme_id: c.program_id ?? c.programme_id,
+  } as ApplicationCall
+}
+
+interface RawApplicationDocument {
+  id?: number
+  cle?: string
+  type?: string
+  libelle?: string
+  nom_original?: string
+  nom_fichier?: string
+  taille?: number
+  mime?: string
+  mime_type?: string
+  created_at?: string
+  date_upload?: string
+  url?: string
+}
+
+function withLegacyDocuments(
+  docs: RawApplicationDocument[] | undefined
+): ApplicationDocumentFile[] | undefined {
+  if (!docs) return undefined
+  return docs.map((d) => ({
+    // La route de téléchargement (GET .../documents/{document}/download)
+    // attend l'ID réel du document — App\Http\Resources\Admin\
+    // ApplicationDocumentResource n'expose pas de "clé" nommée comme
+    // ApplicationCall.documents_requis, seulement `id`/`type`.
+    cle: d.cle ?? String(d.id ?? ""),
+    libelle: d.libelle ?? d.type ?? "Document",
+    nom_fichier: d.nom_fichier ?? d.nom_original ?? "document",
+    url: d.url,
+    taille: d.taille,
+    mime_type: d.mime_type ?? d.mime,
+    date_upload: d.date_upload ?? d.created_at,
+  }))
+}
+
+interface RawApplication extends Application {
+  nom?: string
+  prenom?: string
+  email?: string
+  telephone?: string
+  lieu?: string
+  situation_professionnelle?: string
+  application_call_id?: number
+  application_call?: Parameters<typeof withLegacyCallNames>[0]
+  projet?: string
+  documents?: RawApplicationDocument[]
+}
+
+function withLegacyNames(a: RawApplication): Application {
+  const nomComplet = [a.prenom, a.nom].filter(Boolean).join(" ").trim()
+  return {
+    ...a,
+    candidat_nom: nomComplet || a.candidat_nom,
+    candidat_email: a.email ?? a.candidat_email,
+    candidat_telephone: a.telephone ?? a.candidat_telephone,
+    ville: a.lieu ?? a.ville,
+    profession: a.situation_professionnelle ?? a.profession,
+    projet_description: a.projet ?? a.projet_description,
+    appel_id: a.application_call_id ?? a.appel_id,
+    appel: withLegacyCallNames(a.application_call) ?? a.appel,
+    documents: withLegacyDocuments(a.documents) ?? (a.documents as unknown as ApplicationDocumentFile[] | undefined),
+  }
 }
 
 export const applicationsService = {
@@ -84,24 +188,12 @@ export const applicationsService = {
     queryParams.set("page", String(page))
     queryParams.set("per_page", String(per_page))
 
-    const res = await fetch(`${API_URL}/api/admin/applications?${queryParams.toString()}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Laravel Sanctum SPA
-    })
+    const json = await apiFetch<PaginatedResponse<RawApplication>>(
+      `/api/admin/applications?${queryParams.toString()}`,
+      { method: "GET" }
+    )
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors du chargement des candidatures (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data ? json : { data: json.data || json, meta: json.meta }
+    return { ...json, data: json.data.map(withLegacyNames) }
   },
 
   /**
@@ -117,26 +209,21 @@ export const applicationsService = {
       return delay<Application>(found)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/applications/${id}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
+    const json = await apiFetch<{ data?: RawApplication } | RawApplication>(
+      `/api/admin/applications/${id}`,
+      { method: "GET" }
+    )
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Impossible de charger la candidature #${id} (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const raw = (json as { data?: RawApplication }).data ?? (json as RawApplication)
+    return withLegacyNames(raw)
   },
 
   /**
    * Mise à jour du statut et des notes internes
    * Endpoint : PUT /api/admin/applications/{id}
+   *
+   * Note : `notes_internes` est envoyé mais ignoré côté backend — voir le
+   * commentaire au-dessus de `withLegacyNames`.
    */
   updateApplicationStatus: async (
     id: number,
@@ -159,25 +246,13 @@ export const applicationsService = {
       return delay<Application>(mockApplications[index])
     }
 
-    const res = await fetch(`${API_URL}/api/admin/applications/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
+    const json = await apiFetch<{ data?: RawApplication } | RawApplication>(
+      `/api/admin/applications/${id}`,
+      { method: "PUT", body: payload }
+    )
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la mise à jour du statut (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const raw = (json as { data?: RawApplication }).data ?? (json as RawApplication)
+    return withLegacyNames(raw)
   },
 
   /**
@@ -199,21 +274,13 @@ export const applicationsService = {
       return delay<Application>(mockApplications[index])
     }
 
-    const res = await fetch(`${API_URL}/api/admin/applications/${id}/promote`, {
-      method: "POST",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
+    const json = await apiFetch<{ data?: RawApplication } | RawApplication>(
+      `/api/admin/applications/${id}/promote`,
+      { method: "POST" }
+    )
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la promotion de la candidature (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const raw = (json as { data?: RawApplication }).data ?? (json as RawApplication)
+    return withLegacyNames(raw)
   },
 
   /**
@@ -229,25 +296,17 @@ export const applicationsService = {
       return delay<boolean>(true)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/applications/${id}`, {
-      method: "DELETE",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la suppression (HTTP ${res.status})`
-      )
-    }
-
+    await apiFetch<void>(`/api/admin/applications/${id}`, { method: "DELETE" })
     return true
   },
 
   /**
    * Téléchargement sécurisé d'un document joint
    * Endpoint : GET /api/admin/applications/{id}/documents/{doc}/download
+   * (Réponse binaire — passe par `fetch` directement, `apiFetch` est taillé
+   * pour du JSON. GET n'a pas besoin du header CSRF.) `documentKey` doit
+   * être l'ID du document (voir `withLegacyDocuments` ci-dessus, qui
+   * remappe `cle` sur `id` faute de clé nommée côté backend).
    */
   downloadDocument: async (
     applicationId: number,
@@ -263,6 +322,7 @@ export const applicationsService = {
       blob = new Blob([mockContent], { type: "application/pdf" })
       filename = `${documentKey}_candidature_${applicationId}.pdf`
     } else {
+      const { API_URL } = await import("@/lib/config")
       const res = await fetch(
         `${API_URL}/api/admin/applications/${applicationId}/documents/${documentKey}/download`,
         {
@@ -299,6 +359,8 @@ export const applicationsService = {
   /**
    * Exportation des candidatures en CSV / Excel
    * Endpoint : GET /api/admin/applications/export
+   * (Réponse binaire — passe par `fetch` directement, `apiFetch` est taillé
+   * pour du JSON. GET n'a pas besoin du header CSRF.)
    */
   exportApplications: async (
     params: Omit<ListApplicationsParams, "page" | "per_page"> = {}
@@ -316,10 +378,11 @@ export const applicationsService = {
         )
         .join("\n")
 
-      blob = new Blob(["\uFEFF" + headers + rows], {
+      blob = new Blob([String.fromCharCode(0xfeff) + headers + rows], {
         type: "text/csv;charset=utf-8;",
       })
     } else {
+      const { API_URL } = await import("@/lib/config")
       const queryParams = new URLSearchParams()
       if (params.search) queryParams.set("search", params.search)
       if (params.statut && params.statut !== "all") queryParams.set("statut", params.statut)

@@ -28,11 +28,13 @@ import type {
 /**
  * Content service — point d'accès unique pour le contenu public.
  *
- * Portée volontairement partielle pour cette phase : Actualités, Talents,
- * Témoignages, Impact, Cartographie, Partenaires et Domaines sont
- * branchés sur la vraie API (`DATA_SOURCE === 'api'`). Programmes/Types
- * de programme et Appels à candidatures restent sur les mocks pour
- * l'instant — ne pas les rebrancher sans instruction explicite.
+ * Tout le contenu (Actualités, Talents, Témoignages, Impact, Cartographie,
+ * Partenaires, Domaines, Programmes, Types de programme, Appels à
+ * candidatures) est branché sur la vraie API en mode `DATA_SOURCE ===
+ * 'api'`. Programmes/Types de programme/Appels à candidatures viennent
+ * d'être rebranchés (2026-09-09) — jusque-là ils restaient volontairement
+ * sur les mocks le temps que leur backend (CRUD Programmes/Domaines/Types,
+ * puis Appels à candidatures) soit construit et aligné avec le frontend.
  */
 
 function delay<T>(data: T, ms = 100): Promise<T> {
@@ -40,6 +42,47 @@ function delay<T>(data: T, ms = 100): Promise<T> {
 }
 
 const MAX_PER_PAGE = "per_page=100"
+
+/**
+ * Le backend expose ses propres noms canoniques (`domain`/`domain_id`,
+ * `program_type`/`program_type_id`, voir ProgramResource) tandis que les
+ * composants publics déjà en place (cartes, filtres, fiche détail) parlent
+ * encore de `domaine`/`domaine_id`, `type`/`type_id` — même pont que côté
+ * admin (`programsService.withLegacyNames`).
+ */
+function withLegacyProgramNames(p: Program): Program {
+  return {
+    ...p,
+    domaine: p.domain ?? p.domaine,
+    domaine_id: p.domain_id ?? p.domaine_id,
+    type: p.program_type ?? p.type,
+    type_id: p.program_type_id ?? p.type_id,
+  }
+}
+
+/**
+ * Idem pour les appels à candidatures : le backend renvoie `lieu`,
+ * `date_debut`, `program`/`program_id` (voir ApplicationCallResource)
+ * tandis que le frontend public (cartes, filtres, fiche détail) attend
+ * `localisation`, `date_ouverture`, `programme`/`programme_id` — même pont
+ * que côté admin (`applicationCallsService.withLegacyNames`).
+ */
+function withLegacyCallNames(
+  c: ApplicationCall & {
+    lieu?: string
+    date_debut?: string
+    program?: ApplicationCall["programme"]
+    program_id?: number
+  }
+): ApplicationCall {
+  return {
+    ...c,
+    localisation: c.lieu ?? c.localisation,
+    date_ouverture: c.date_debut ?? c.date_ouverture,
+    programme: c.program ?? c.programme,
+    programme_id: c.program_id ?? c.programme_id,
+  }
+}
 
 export const contentService = {
   // Domaines — non paginé côté backend (référentiel fixe de 6 entrées).
@@ -61,15 +104,46 @@ export const contentService = {
     }
   },
 
-  // Programmes / Types de programme — hors périmètre de cette phase, restent sur les mocks.
-  listProgramTypes: () => delay<ProgramType[]>(mockProgramTypes),
-  listPrograms: () => delay<Program[]>(mockPrograms),
-  getProgram: (slug: string) => delay<Program | undefined>(mockPrograms.find((p) => p.slug === slug)),
+  // Programmes
+  listProgramTypes: async (): Promise<ProgramType[]> => {
+    if (DATA_SOURCE === "mock") return delay<ProgramType[]>(mockProgramTypes)
+    const res = await apiFetch<CollectionResponse<ProgramType>>("/api/public/program-types")
+    return res.data
+  },
+  listPrograms: async (): Promise<Program[]> => {
+    if (DATA_SOURCE === "mock") return delay<Program[]>(mockPrograms)
+    const res = await apiFetch<PaginatedResponse<Program>>(`/api/public/programs?${MAX_PER_PAGE}`)
+    return res.data.map(withLegacyProgramNames)
+  },
+  getProgram: async (slug: string): Promise<Program | undefined> => {
+    if (DATA_SOURCE === "mock") return delay<Program | undefined>(mockPrograms.find((p) => p.slug === slug))
+    try {
+      const res = await apiFetch<SingleResponse<Program>>(`/api/public/programs/${encodeURIComponent(slug)}`)
+      return withLegacyProgramNames(res.data)
+    } catch {
+      return undefined
+    }
+  },
 
-  // Appels à candidatures — hors périmètre de cette phase, reste sur les mocks.
-  listApplicationCalls: () => delay<ApplicationCall[]>(mockApplicationCalls),
-  getApplicationCall: (slug: string) =>
-    delay<ApplicationCall | undefined>(mockApplicationCalls.find((c) => c.slug === slug)),
+  // Appels à candidatures
+  listApplicationCalls: async (): Promise<ApplicationCall[]> => {
+    if (DATA_SOURCE === "mock") return delay<ApplicationCall[]>(mockApplicationCalls)
+    const res = await apiFetch<PaginatedResponse<ApplicationCall>>(`/api/public/application-calls?${MAX_PER_PAGE}`)
+    return res.data.map(withLegacyCallNames)
+  },
+  getApplicationCall: async (slug: string): Promise<ApplicationCall | undefined> => {
+    if (DATA_SOURCE === "mock") {
+      return delay<ApplicationCall | undefined>(mockApplicationCalls.find((c) => c.slug === slug))
+    }
+    try {
+      const res = await apiFetch<SingleResponse<ApplicationCall>>(
+        `/api/public/application-calls/${encodeURIComponent(slug)}`
+      )
+      return withLegacyCallNames(res.data)
+    } catch {
+      return undefined
+    }
+  },
 
   // Actualités
   listNews: async (): Promise<News[]> => {

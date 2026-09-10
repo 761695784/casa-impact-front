@@ -73,7 +73,7 @@ export const footerNav = {
   ],
   participer: [
     { label: 'Boutique officielle', href: '/boutique' },
-    { label: 'Appels à candidatures', href: '/appels-a-candidatures' },
+    { label: 'Appels à candidatures', href: '/opportunites#appels' },
     { label: 'Nous rejoindre', href: '/adherer' },
     { label: 'Talents', href: '/talents' },
     { label: 'Témoignages', href: '/temoignages' },

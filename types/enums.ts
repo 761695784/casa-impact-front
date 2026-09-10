@@ -54,6 +54,7 @@ export type ContributionDomain =
   | 'pole_support'
   | 'commission_scientifique'
   | 'coordination_regionale'
+  | 'comite_des_sages'
 
 export type ContributionType =
   | 'membre_actif'
@@ -107,6 +108,7 @@ export const CONTRIBUTION_DOMAIN_LABELS: Record<ContributionDomain, string> = {
   pole_support: 'Pôle Support',
   commission_scientifique: 'Commission scientifique',
   coordination_regionale: 'Coordination régionale',
+  comite_des_sages: 'Comité des Sages',
 }
 
 export const CONTRIBUTION_TYPE_LABELS: Record<ContributionType, string> = {

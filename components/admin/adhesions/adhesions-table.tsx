@@ -93,7 +93,7 @@ export function AdhesionsTable({
                       href={`/admin/adhesions/${m.id}`}
                       className="font-mono font-bold text-foreground hover:text-primary transition-colors text-xs"
                     >
-                      {m.reference || `ADH-#${m.id}`}
+                      {m.numero_membre || `ADH-#${m.id}`}
                     </Link>
                     <span className="text-[11px] text-muted-foreground block">
                       {m.created_at ? formatDate(m.created_at) : "—"}
@@ -108,9 +108,9 @@ export function AdhesionsTable({
                       href={`/admin/adhesions/${m.id}`}
                       className="relative size-10 rounded-xl overflow-hidden bg-secondary shrink-0 border border-border group"
                     >
-                      {m.photo ? (
+                      {m.photo_url ? (
                         <img
-                          src={m.photo}
+                          src={m.photo_url}
                           alt={m.nom_complet}
                           className="size-full object-cover transition-transform group-hover:scale-110"
                         />
@@ -166,30 +166,35 @@ export function AdhesionsTable({
                 {/* 4. Pôle d'engagement */}
                 <TableCell>
                   <span className="rounded-md bg-secondary/80 px-2 py-0.5 text-[11px] font-medium text-foreground block truncate max-w-[170px]">
-                    {CONTRIBUTION_DOMAIN_LABELS[m.domaine_contribution] ||
-                      m.domaine_contribution}
+                    {(m.domaine_contribution && CONTRIBUTION_DOMAIN_LABELS[m.domaine_contribution]) ||
+                      m.domaine_contribution ||
+                      "Non renseigné"}
                   </span>
                 </TableCell>
 
-                {/* 5. Cotisation */}
+                {/* 5. Cotisation — le montant est fixe (1 000 FCFA, voir
+                    config('casaimpact.wave_amount') côté backend, jamais
+                    renvoyé par l'API) ; l'état du règlement se lit
+                    directement sur `statut`, pas sur un champ dédié
+                    (inexistant côté backend). */}
                 <TableCell>
                   <div className="space-y-0.5">
                     <span className="font-mono font-bold text-xs text-foreground block">
-                      {formatNumber(m.montant || 1000)} FCFA
+                      {formatNumber(1000)} FCFA
                     </span>
                     <span
                       className={`inline-block rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase ${
-                        m.paiement_statut === "paye"
+                        m.statut === "validee"
                           ? "bg-emerald-500/10 text-emerald-700"
-                          : m.paiement_statut === "echoue"
+                          : m.statut === "refusee"
                           ? "bg-rose-500/10 text-rose-700"
                           : "bg-amber-500/10 text-amber-700"
                       }`}
                     >
-                      {m.paiement_statut === "paye"
+                      {m.statut === "validee"
                         ? "Cotisation Réglée"
-                        : m.paiement_statut === "echoue"
-                        ? "Paiement Échoué"
+                        : m.statut === "refusee"
+                        ? "Sans suite"
                         : "En Attente"}
                     </span>
                   </div>

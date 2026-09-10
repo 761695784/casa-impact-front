@@ -21,7 +21,6 @@ export default function AdminAdhesionsPage() {
   const [search, setSearch] = useState("")
   const [statut, setStatut] = useState("all")
   const [region, setRegion] = useState("all")
-  const [paiementStatut, setPaiementStatut] = useState("all")
 
   // Modal dialog states
   const [validatingMembership, setValidatingMembership] =
@@ -41,7 +40,6 @@ export default function AdminAdhesionsPage() {
     search,
     statut,
     region,
-    paiement_statut: paiementStatut,
   })
 
   const validateMutation = useValidateMembership()
@@ -52,7 +50,6 @@ export default function AdminAdhesionsPage() {
     setSearch("")
     setStatut("all")
     setRegion("all")
-    setPaiementStatut("all")
   }
 
   // Summary counts computed dynamically
@@ -133,11 +130,9 @@ export default function AdminAdhesionsPage() {
         search={search}
         statut={statut}
         region={region}
-        paiementStatut={paiementStatut}
         onSearchChange={setSearch}
         onStatutChange={setStatut}
         onRegionChange={setRegion}
-        onPaiementStatutChange={setPaiementStatut}
         onReset={handleReset}
         totalCount={memberships.length}
       />
@@ -169,17 +164,11 @@ export default function AdminAdhesionsPage() {
             Aucune demande d'adhésion trouvée
           </h3>
           <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-            {search ||
-            statut !== "all" ||
-            region !== "all" ||
-            paiementStatut !== "all"
+            {search || statut !== "all" || region !== "all"
               ? "Aucun résultat ne correspond aux filtres appliqués."
               : "Aucune demande d'adhésion n'a été enregistrée pour l'instant."}
           </p>
-          {(search ||
-            statut !== "all" ||
-            region !== "all" ||
-            paiementStatut !== "all") && (
+          {(search || statut !== "all" || region !== "all") && (
             <Button
               variant="outline"
               size="sm"
@@ -217,7 +206,7 @@ export default function AdminAdhesionsPage() {
         open={!!validatingMembership}
         onOpenChange={(open) => !open && setValidatingMembership(null)}
         title="Valider cette adhésion ?"
-        description={`Confirmez-vous la réception du règlement (1 000 FCFA) et l'activation du statut de membre officiel pour ${validatingMembership?.nom_complet} (${validatingMembership?.reference}) ?`}
+        description={`Confirmez-vous la réception du règlement (1 000 FCFA) et l'activation du statut de membre officiel pour ${validatingMembership?.nom_complet} (${validatingMembership?.numero_membre}) ?`}
         confirmText="Valider l'adhésion"
         variant="default"
         isLoading={validateMutation.isPending}
@@ -251,7 +240,7 @@ export default function AdminAdhesionsPage() {
         open={!!deletingMembership}
         onOpenChange={(open) => !open && setDeletingMembership(null)}
         title="Supprimer définitivement cette adhésion ?"
-        description={`Cette action est irréversible. La demande de ${deletingMembership?.nom_complet} (${deletingMembership?.reference}) sera effacée de la base.`}
+        description={`Cette action est irréversible. La demande de ${deletingMembership?.nom_complet} (${deletingMembership?.numero_membre}) sera effacée de la base.`}
         confirmText="Supprimer"
         variant="destructive"
         isLoading={deleteMutation.isPending}

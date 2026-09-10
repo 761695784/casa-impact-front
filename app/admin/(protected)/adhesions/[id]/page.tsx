@@ -2,7 +2,6 @@
 
 import React, { useState, use } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
@@ -42,8 +41,10 @@ import {
   useValidateMembership,
   useRejectMembership,
   useDeleteMembership,
+  useDownloadMembershipCard,
 } from "@/hooks/use-memberships"
 import { BaobabMark } from "@/components/brand/baobab-mark"
+import { MembershipCardPreview } from "@/components/membership/membership-card-preview"
 import { toast } from "sonner"
 
 interface PageProps {
@@ -71,6 +72,7 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
   const validateMutation = useValidateMembership()
   const rejectMutation = useRejectMembership()
   const deleteMutation = useDeleteMembership()
+  const downloadCardMutation = useDownloadMembershipCard()
 
   if (isLoading) {
     return (
@@ -117,7 +119,7 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
     )
   }
 
-  const memberPhoto = membership.photo || "/assets/team/fatoumata-drame.jpg"
+  const memberPhoto = membership.photo_url || "/assets/team/fatoumata-drame.jpg"
 
   return (
     <div className="space-y-6 max-w-5xl animate-in fade-in-50 duration-300">
@@ -144,7 +146,7 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
             {membership.nom_complet}
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-            Référence {membership.reference || `#${membership.id}`} • Demandée le{" "}
+            Référence {membership.numero_membre || `#${membership.id}`} • Demandée le{" "}
             {membership.created_at ? formatDate(membership.created_at) : "—"}
           </p>
         </div>
@@ -196,9 +198,9 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
               onClick={() => setIsPhotoModalOpen(true)}
               className="relative size-28 sm:size-32 rounded-3xl overflow-hidden border-2 border-forest/20 shadow-md bg-secondary cursor-pointer"
             >
-              {membership.photo ? (
+              {membership.photo_url ? (
                 <img
-                  src={membership.photo}
+                  src={membership.photo_url}
                   alt={membership.nom_complet}
                   className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
@@ -224,7 +226,7 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
           <div className="flex-1 text-center sm:text-left space-y-2">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <span className="font-mono text-xs font-bold text-forest bg-forest/10 px-2.5 py-0.5 rounded-full">
-                {membership.reference || `#${membership.id}`}
+                {membership.numero_membre || `#${membership.id}`}
               </span>
               <StatusBadge status={membership.statut} />
               <span className="text-xs text-muted-foreground">
@@ -285,45 +287,25 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
             </CardHeader>
             <CardContent className="pt-5 space-y-4">
               <p className="text-xs text-muted-foreground">
-                Aperçu du modèle officiel de carte de membre avec la photo d'identité et les attributs du titulaire.
+                {membership.statut === "validee"
+                  ? "Aperçu fidèle de la carte réellement envoyée à cet adhérent (mêmes données, couleurs et mise en page que le PDF)."
+                  : "Aperçu de la carte telle qu'elle sera générée dès que cette adhésion sera validée."}
               </p>
 
-              {/* Member Card Mockup Visual */}
-              <div className="relative aspect-[16/10] w-full max-w-lg mx-auto overflow-hidden rounded-2xl bg-secondary shadow-xl border border-border">
-                <Image
-                  src="/assets/Carte-membres.png"
-                  alt="Carte de membre Casa Impact"
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 500px"
-                  className="object-cover"
+              {/* Reproduction fidèle de la vraie carte PDF (MembershipCardService),
+                  avec les données réelles de cet adhérent — plus de visuel
+                  générique statique. */}
+              <div className="w-full">
+                <MembershipCardPreview
+                  data={{
+                    numero_membre: membership.numero_membre || `#${membership.id}`,
+                    nom_complet: membership.nom_complet,
+                    photo_url: membership.photo_url,
+                    region: membership.region,
+                    type_contribution: membership.type_contribution,
+                    date: membership.validated_at || membership.created_at,
+                  }}
                 />
-
-                {/* Overlaid Dynamic Badge on Preview */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent p-4 flex flex-col justify-end text-white">
-                  <div className="flex items-center gap-3">
-                    <div className="relative size-12 rounded-xl overflow-hidden border-2 border-white bg-black/40 shrink-0">
-                      {membership.photo ? (
-                        <img
-                          src={membership.photo}
-                          alt={membership.nom_complet}
-                          className="size-full object-cover"
-                        />
-                      ) : (
-                        <div className="size-full flex items-center justify-center bg-white/20">
-                          <User className="size-6 text-white" />
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-white drop-shadow">
-                        {membership.nom_complet}
-                      </p>
-                      <p className="text-[11px] text-white/80 font-mono">
-                        N° {membership.reference || `ADH-2026-0${membership.id}`} • {MEMBERSHIP_REGION_LABELS[membership.region] || membership.region}
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -343,8 +325,10 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
                     Pôle / Commission choisi
                   </span>
                   <span className="font-bold text-foreground mt-0.5 block">
-                    {CONTRIBUTION_DOMAIN_LABELS[membership.domaine_contribution] ||
-                      membership.domaine_contribution}
+                    {(membership.domaine_contribution &&
+                      CONTRIBUTION_DOMAIN_LABELS[membership.domaine_contribution]) ||
+                      membership.domaine_contribution ||
+                      "Non renseigné"}
                   </span>
                 </div>
                 <div>
@@ -352,8 +336,10 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
                     Type de contribution
                   </span>
                   <span className="font-bold text-foreground mt-0.5 block">
-                    {CONTRIBUTION_TYPE_LABELS[membership.type_contribution] ||
-                      membership.type_contribution}
+                    {(membership.type_contribution &&
+                      CONTRIBUTION_TYPE_LABELS[membership.type_contribution]) ||
+                      membership.type_contribution ||
+                      "Non renseigné"}
                   </span>
                 </div>
               </div>
@@ -386,7 +372,7 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
                   Montant de la carte de membre
                 </span>
                 <span className="font-mono font-bold text-lg text-foreground block">
-                  {formatNumber(membership.montant || 1000)} FCFA
+                  {formatNumber(1000)} FCFA
                 </span>
               </div>
 
@@ -396,20 +382,45 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
                 </span>
                 <span
                   className={`inline-block rounded-md px-2 py-0.5 text-xs font-bold uppercase ${
-                    membership.paiement_statut === "paye"
+                    membership.statut === "validee"
                       ? "bg-emerald-500/10 text-emerald-700"
-                      : membership.paiement_statut === "echoue"
+                      : membership.statut === "refusee"
                       ? "bg-rose-500/10 text-rose-700"
                       : "bg-amber-500/10 text-amber-700"
                   }`}
                 >
-                  {membership.paiement_statut === "paye"
+                  {membership.statut === "validee"
                     ? "Cotisation Réglée"
-                    : membership.paiement_statut === "echoue"
-                    ? "Paiement Échoué"
+                    : membership.statut === "refusee"
+                    ? "Sans suite"
                     : "En Attente de règlement"}
                 </span>
               </div>
+
+              {membership.statut === "validee" && (
+                <div className="pt-2 border-t border-border/50">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={downloadCardMutation.isPending}
+                    onClick={() =>
+                      downloadCardMutation.mutate({
+                        id: membership.id,
+                        numeroMembre: membership.numero_membre,
+                      })
+                    }
+                    className="w-full rounded-full text-xs gap-1.5 font-semibold"
+                  >
+                    <Download className="size-3.5" />
+                    <span>
+                      {downloadCardMutation.isPending
+                        ? "Génération de la carte..."
+                        : "Télécharger la carte (PDF)"}
+                    </span>
+                  </Button>
+                </div>
+              )}
 
               <div className="pt-2 border-t border-border/50 space-y-2 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1.5">
@@ -481,9 +492,9 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
       <Dialog open={isPhotoModalOpen} onOpenChange={setIsPhotoModalOpen}>
         <DialogContent className="max-w-md p-6 rounded-3xl text-center bg-card border-border">
           <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-secondary border border-border shadow-md mb-4">
-            {membership.photo ? (
+            {membership.photo_url ? (
               <img
-                src={membership.photo}
+                src={membership.photo_url}
                 alt={membership.nom_complet}
                 className="size-full object-cover"
               />
@@ -498,7 +509,7 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
             {membership.nom_complet}
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Photo d'identité officielle • Référence {membership.reference || `#${membership.id}`}
+            Photo d'identité officielle • Référence {membership.numero_membre || `#${membership.id}`}
           </p>
           <Button
             type="button"
@@ -516,7 +527,7 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
         open={confirmValidate}
         onOpenChange={setConfirmValidate}
         title="Valider cette adhésion ?"
-        description={`Confirmez-vous la validation de l'adhésion de ${membership.nom_complet} (${membership.reference}) ?`}
+        description={`Confirmez-vous la validation de l'adhésion de ${membership.nom_complet} (${membership.numero_membre}) ?`}
         confirmText="Valider l'adhésion"
         variant="default"
         isLoading={validateMutation.isPending}

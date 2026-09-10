@@ -22,10 +22,10 @@ import {
   UploadCloud,
   X,
 } from "lucide-react"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import { FormFieldError } from "@/components/ui/form-field-error"
 import {
   showSuccessAlert,
@@ -34,6 +34,9 @@ import {
 } from "@/lib/alerts"
 import { cn } from "@/lib/utils"
 import { contactInfo } from "@/lib/config"
+import { ApiError } from "@/lib/api-client"
+import { publicMembershipService } from "@/lib/services/public-membership.service"
+import { MembershipCardPreview } from "@/components/membership/membership-card-preview"
 import {
   MEMBERSHIP_REGION_LABELS,
   CONTRIBUTION_DOMAIN_LABELS,
@@ -43,27 +46,42 @@ import {
   type ContributionType,
 } from "@/types/enums"
 
-const schema = z.object({
-  nom_complet: z.string().min(2, "Veuillez renseigner votre nom complet."),
-  email: z.string().email("Adresse e-mail invalide."),
-  telephone: z.string().min(6, "Numéro de téléphone invalide."),
-  profession: z.string().optional(),
-  region: z.string().min(1, "Veuillez sélectionner votre région ou localisation."),
-  departement: z.string().optional(),
-  domaine_contribution: z.string().min(1, "Veuillez sélectionner un domaine de contribution."),
-  type_contribution: z.string().min(1, "Veuillez sélectionner un type d'engagement."),
-})
+const CASAMANCE_REGIONS = new Set(["ziguinchor", "sedhiou", "kolda"])
+
+const schema = z
+  .object({
+    nom_complet: z.string().min(2, "Veuillez renseigner votre nom complet."),
+    email: z.string().email("Adresse e-mail invalide."),
+    telephone: z.string().min(6, "Numéro de téléphone invalide."),
+    profession: z.string().optional(),
+    region: z.string().min(1, "Veuillez sélectionner votre région ou localisation."),
+    departement: z.string().optional(),
+    domaine_contribution: z.string().min(1, "Veuillez sélectionner un domaine de contribution."),
+    type_contribution: z.string().min(1, "Veuillez sélectionner un type d'engagement."),
+  })
+  .superRefine((data, ctx) => {
+    // Miroir de MembershipRegion::estEnCasamance() côté backend — le
+    // département n'est obligatoire que pour Ziguinchor/Sédhiou/Kolda
+    // (voir StoreMembershipRequest::rules()).
+    if (CASAMANCE_REGIONS.has(data.region) && !data.departement?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["departement"],
+        message: "Veuillez indiquer votre département (obligatoire pour la Casamance).",
+      })
+    }
+  })
 
 type FormValues = z.infer<typeof schema>
 
-function makeRef() {
-  return `CI-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`
-}
-
 export function MembershipForm() {
-  const [reference, setReference] = useState<string | null>(null)
+  const [numeroMembre, setNumeroMembre] = useState<string | null>(null)
   const [submittedValues, setSubmittedValues] = useState<FormValues | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoError, setPhotoError] = useState<string | null>(null)
+  const [engagementMoral, setEngagementMoral] = useState(false)
+  const [engagementError, setEngagementError] = useState<string | null>(null)
 
   const {
     register,
@@ -75,11 +93,13 @@ export function MembershipForm() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (file.size > 5 * 1024 * 1024) {
-      showErrorAlert("Fichier trop volumineux", "La photo ne doit pas dépasser 5 Mo.")
+    if (file.size > 10 * 1024 * 1024) {
+      showErrorAlert("Fichier trop volumineux", "La photo ne doit pas dépasser 10 Mo.")
       return
     }
 
+    setPhotoFile(file)
+    setPhotoError(null)
     const reader = new FileReader()
     reader.onload = () => {
       setPhotoPreview(reader.result as string)
@@ -89,18 +109,56 @@ export function MembershipForm() {
   }
 
   async function onSubmit(values: FormValues) {
+    let hasError = false
+    if (!photoFile) {
+      setPhotoError("Une photo d'identité est requise pour votre carte de membre.")
+      hasError = true
+    }
+    if (!engagementMoral) {
+      setEngagementError("Vous devez accepter l'engagement moral pour continuer.")
+      hasError = true
+    }
+    if (hasError || !photoFile) {
+      showValidationErrorAlert(
+        [
+          !photoFile ? "Une photo d'identité est requise." : null,
+          !engagementMoral ? "Vous devez accepter l'engagement moral." : null,
+        ].filter((m): m is string => Boolean(m))
+      )
+      return
+    }
+
     try {
-      // Simulated submit delay
-      await new Promise((r) => setTimeout(r, 900))
-      const ref = makeRef()
-      setReference(ref)
+      const confirmation = await publicMembershipService.submitMembership({
+        nom_complet: values.nom_complet,
+        email: values.email,
+        telephone: values.telephone,
+        profession: values.profession,
+        region: values.region as MembershipRegion,
+        departement: values.departement,
+        domaine_contribution: values.domaine_contribution as ContributionDomain,
+        type_contribution: values.type_contribution as ContributionType,
+        photo: photoFile,
+        engagement_moral: engagementMoral,
+      })
+
+      setNumeroMembre(confirmation.numero_membre)
       setSubmittedValues(values)
       await showSuccessAlert(
         "Adhésion enregistrée !",
         "Votre demande d'adhésion a été enregistrée avec succès."
       )
-    } catch {
-      showErrorAlert("Erreur", "Une erreur est survenue lors de l'enregistrement de votre adhésion.")
+    } catch (err) {
+      if (err instanceof ApiError && err.errors) {
+        showValidationErrorAlert(Object.values(err.errors).flat())
+      } else {
+        showErrorAlert(
+          "Erreur",
+          err instanceof Error
+            ? err.message
+            : "Une erreur est survenue lors de l'enregistrement de votre adhésion."
+        )
+      }
     }
   }
 
@@ -113,9 +171,9 @@ export function MembershipForm() {
     }
   }
 
-  if (reference && submittedValues) {
+  if (numeroMembre && submittedValues) {
     const whatsappUrl = `https://wa.me/221781033063?text=${encodeURIComponent(
-      `Bonjour Casa Impact, je viens de soumettre ma demande d'adhésion au nom de ${submittedValues.nom_complet} (Réf : ${reference}). Voici ma capture de paiement de 1 000 FCFA.`
+      `Bonjour Casa Impact, je viens de soumettre ma demande d'adhésion au nom de ${submittedValues.nom_complet} (Réf : ${numeroMembre}). Voici ma capture de paiement de 1 000 FCFA.`
     )}`
 
     return (
@@ -139,46 +197,31 @@ export function MembershipForm() {
 
         {/* Reference Badge */}
         <div className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-primary/30 bg-primary/10 px-6 py-3 font-mono text-xl font-bold text-primary shadow-inner">
-          <span>{reference}</span>
+          <span>{numeroMembre}</span>
         </div>
 
-        {/* Official Card Preview Mockup */}
+        {/* Aperçu de la vraie carte (reproduction fidèle du PDF réellement
+            généré une fois l'adhésion validée) — avec les données que tu
+            viens de saisir, pas un visuel générique. */}
         <div className="mx-auto mt-8 max-w-md rounded-2xl border border-border bg-card p-5 text-left shadow-sm">
           <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
             <Sparkles className="size-3.5 text-accent" />
-            <span>Votre Carte de Membre Numérique Officielle :</span>
+            <span>Aperçu de votre future Carte de Membre :</span>
           </h4>
 
-          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-secondary shadow-md border border-border">
-            <Image
-              src="/assets/Carte-membres.png"
-              alt="Carte de membre Casa Impact"
-              fill
-              className="object-cover"
-            />
-            {/* Dynamic member overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent p-3.5 flex flex-col justify-end text-white">
-              <div className="flex items-center gap-3">
-                <div className="relative size-11 rounded-lg overflow-hidden border border-white/80 bg-black/40 shrink-0">
-                  {photoPreview ? (
-                    <img src={photoPreview} alt="Portrait" className="size-full object-cover" />
-                  ) : (
-                    <div className="size-full flex items-center justify-center bg-white/20">
-                      <User className="size-5 text-white" />
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-white truncate drop-shadow">
-                    {submittedValues.nom_complet}
-                  </p>
-                  <p className="text-[10px] text-white/80 font-mono">
-                    N° {reference} • {MEMBERSHIP_REGION_LABELS[submittedValues.region as MembershipRegion] || submittedValues.region}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <MembershipCardPreview
+            data={{
+              numero_membre: numeroMembre,
+              nom_complet: submittedValues.nom_complet,
+              photo_url: photoPreview,
+              region: submittedValues.region as MembershipRegion,
+              type_contribution: submittedValues.type_contribution as ContributionType,
+              date: new Date().toISOString(),
+            }}
+          />
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Cette carte officielle (avec votre photo) vous sera envoyée par e-mail dès validation de votre paiement.
+          </p>
         </div>
 
         {/* Next Steps Checklist Box */}
@@ -237,9 +280,11 @@ export function MembershipForm() {
             <Button
               variant="outline"
               onClick={() => {
-                setReference(null)
+                setNumeroMembre(null)
                 setSubmittedValues(null)
                 setPhotoPreview(null)
+                setPhotoFile(null)
+                setEngagementMoral(false)
               }}
               className="w-full sm:w-auto rounded-full"
             >
@@ -367,11 +412,14 @@ export function MembershipForm() {
           />
         </Field>
 
-        {/* Photo d'Identité pour la Carte de Membre (Optionnel) */}
+        {/* Photo d'Identité pour la Carte de Membre (Obligatoire) */}
         <div className="sm:col-span-2 space-y-2 rounded-2xl border border-dashed border-border bg-secondary/20 p-4">
-          <Label className="flex items-center gap-1.5 text-xs font-semibold text-foreground uppercase tracking-wide">
-            <Camera className="size-3.5 text-forest" />
-            <span>Photo d'identité pour votre carte de membre (Facultatif)</span>
+          <Label className={cn(
+            "flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide",
+            photoError ? "text-destructive" : "text-foreground"
+          )}>
+            <Camera className={cn("size-3.5", photoError ? "text-destructive" : "text-forest")} />
+            <span>Photo d'identité pour votre carte de membre *</span>
           </Label>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 pt-1">
@@ -380,7 +428,10 @@ export function MembershipForm() {
                 <img src={photoPreview} alt="Aperçu portrait" className="size-full object-cover" />
                 <button
                   type="button"
-                  onClick={() => setPhotoPreview(null)}
+                  onClick={() => {
+                    setPhotoPreview(null)
+                    setPhotoFile(null)
+                  }}
                   className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-destructive text-white shadow-xs"
                 >
                   <X className="size-3" />
@@ -404,10 +455,11 @@ export function MembershipForm() {
                 />
               </label>
               <p className="text-[11px] text-muted-foreground mt-1">
-                Formats acceptés : JPG, PNG, WEBP (Max. 5 Mo). Cette photo figurera sur votre carte de membre.
+                Formats acceptés : JPG, PNG, WEBP (Max. 10 Mo). Cette photo figurera sur votre carte de membre.
               </p>
             </div>
           </div>
+          <FormFieldError error={photoError ?? undefined} />
         </div>
 
         {/* Domaine de contribution */}
@@ -461,6 +513,33 @@ export function MembershipForm() {
             ))}
           </SelectField>
         </Field>
+
+        {/* Engagement moral (obligatoire) */}
+        <div className="sm:col-span-2 flex items-start gap-3 rounded-2xl border border-dashed border-border bg-secondary/20 p-4">
+          <Checkbox
+            checked={engagementMoral}
+            onCheckedChange={(checked) => {
+              setEngagementMoral(checked)
+              if (checked) setEngagementError(null)
+            }}
+            className="mt-0.5"
+          />
+          <div className="space-y-1">
+            <Label
+              className={cn(
+                "text-xs sm:text-sm font-medium leading-relaxed cursor-pointer",
+                engagementError ? "text-destructive" : "text-foreground"
+              )}
+              onClick={() => {
+                setEngagementMoral((v) => !v)
+                if (!engagementMoral) setEngagementError(null)
+              }}
+            >
+              Je m'engage moralement à respecter les valeurs, l'éthique et les statuts de Casa Impact, et à contribuer activement à ses actions dans ma région. *
+            </Label>
+            <FormFieldError error={engagementError ?? undefined} />
+          </div>
+        </div>
       </div>
 
       {/* Submit Button */}

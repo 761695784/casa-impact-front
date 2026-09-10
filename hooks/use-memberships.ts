@@ -7,6 +7,7 @@ import {
   type ListMembershipsParams,
 } from "@/lib/services/memberships.service"
 import type { Membership } from "@/types/models"
+import type { MembershipStatus } from "@/types/enums"
 
 export const MEMBERSHIPS_QUERY_KEY = ["admin", "memberships"]
 
@@ -36,7 +37,7 @@ export function useUpdateMembership() {
       payload,
     }: {
       id: number
-      payload: Partial<Membership>
+      payload: { statut?: MembershipStatus | string; admin_note?: string }
     }) => membershipsService.updateMembership(id, payload),
     onSuccess: (updated) => {
       toast.success("Adhésion mise à jour", {
@@ -57,6 +58,12 @@ export function useUpdateMembership() {
   })
 }
 
+/**
+ * Valider = passer `statut` à `validee` via update() — déclenche côté
+ * serveur la génération de la carte + l'envoi de l'email
+ * MembershipValidated (voir memberships.service.ts, il n'existe pas de
+ * route /validate dédiée).
+ */
 export function useValidateMembership() {
   const queryClient = useQueryClient()
 
@@ -117,6 +124,25 @@ export function useDeleteMembership() {
     },
     onError: (err: unknown) => {
       toast.error("Erreur lors de la suppression de l'adhésion", {
+        description:
+          err instanceof Error ? err.message : "Une erreur est survenue.",
+      })
+    },
+  })
+}
+
+/**
+ * Téléchargement de la carte de membre PDF (GET .../card) — déclenche le
+ * téléchargement navigateur directement depuis membershipsService.downloadCard
+ * (voir ce service : la réponse est un PDF binaire, pas du JSON, donc pas de
+ * données à mettre en cache côté React Query ici).
+ */
+export function useDownloadMembershipCard() {
+  return useMutation({
+    mutationFn: ({ id, numeroMembre }: { id: number; numeroMembre?: string }) =>
+      membershipsService.downloadCard(id, numeroMembre),
+    onError: (err: unknown) => {
+      toast.error("Impossible de télécharger la carte de membre", {
         description:
           err instanceof Error ? err.message : "Une erreur est survenue.",
       })

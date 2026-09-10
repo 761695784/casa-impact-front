@@ -21,11 +21,9 @@ interface AdhesionsFilterBarProps {
   search: string
   statut: string
   region: string
-  paiementStatut: string
   onSearchChange: (val: string) => void
   onStatutChange: (val: string) => void
   onRegionChange: (val: string) => void
-  onPaiementStatutChange: (val: string) => void
   onReset: () => void
   totalCount?: number
 }
@@ -34,11 +32,9 @@ export function AdhesionsFilterBar({
   search,
   statut,
   region,
-  paiementStatut,
   onSearchChange,
   onStatutChange,
   onRegionChange,
-  onPaiementStatutChange,
   onReset,
   totalCount,
 }: AdhesionsFilterBarProps) {
@@ -57,23 +53,19 @@ export function AdhesionsFilterBar({
     return () => clearTimeout(timer)
   }, [localSearch, search, onSearchChange])
 
-  const hasActiveFilters =
-    search !== "" ||
-    statut !== "all" ||
-    region !== "all" ||
-    paiementStatut !== "all"
+  const hasActiveFilters = search !== "" || statut !== "all" || region !== "all"
 
   return (
     <div className="space-y-3 rounded-3xl border border-border bg-card p-4 sm:p-5 shadow-2xs">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        
+
         {/* Search Input with Debounce */}
         <div className="relative flex-1 min-w-[240px]">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
-            placeholder="Rechercher par nom, email, téléphone, référence, département..."
+            placeholder="Rechercher par nom, email, téléphone, numéro de membre..."
             className="h-10 rounded-full pl-9 pr-9 text-xs sm:text-sm bg-background"
           />
           {localSearch && (
@@ -92,7 +84,7 @@ export function AdhesionsFilterBar({
 
         {/* Filter Selects & Reset */}
         <div className="flex flex-wrap items-center gap-2.5">
-          
+
           {/* Statut Adhésion */}
           <div className="w-[160px]">
             <Select value={statut} onValueChange={(val) => onStatutChange(val || "all")}>
@@ -123,21 +115,6 @@ export function AdhesionsFilterBar({
                     {MEMBERSHIP_REGION_LABELS[key]}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Statut Paiement */}
-          <div className="w-[140px]">
-            <Select value={paiementStatut} onValueChange={(val) => onPaiementStatutChange(val || "all")}>
-              <SelectTrigger className="h-10 rounded-full text-xs bg-background">
-                <SelectValue placeholder="Tous paiements" />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl text-xs">
-                <SelectItem value="all">Tous paiements</SelectItem>
-                <SelectItem value="paye">Cotisation réglée</SelectItem>
-                <SelectItem value="en_attente">En attente (1 000 F)</SelectItem>
-                <SelectItem value="echoue">Échoué / Annulé</SelectItem>
               </SelectContent>
             </Select>
           </div>

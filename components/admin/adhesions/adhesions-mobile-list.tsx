@@ -35,7 +35,7 @@ export function AdhesionsMobileList({
           {/* Header Card */}
           <div className="flex items-center justify-between border-b border-border/60 pb-3">
             <span className="font-mono text-xs font-bold text-forest">
-              {m.reference || `ADH-#${m.id}`}
+              {m.numero_membre || `ADH-#${m.id}`}
             </span>
             <StatusBadge status={m.statut} />
           </div>
@@ -46,9 +46,9 @@ export function AdhesionsMobileList({
               href={`/admin/adhesions/${m.id}`}
               className="relative size-12 rounded-2xl overflow-hidden bg-secondary shrink-0 border border-border shadow-xs"
             >
-              {m.photo ? (
+              {m.photo_url ? (
                 <img
-                  src={m.photo}
+                  src={m.photo_url}
                   alt={m.nom_complet}
                   className="size-full object-cover"
                 />
@@ -94,13 +94,15 @@ export function AdhesionsMobileList({
             <div>
               <span className="text-[11px] text-muted-foreground block">Cotisation</span>
               <span className="font-mono font-bold text-foreground block mt-0.5">
-                {formatNumber(m.montant || 1000)} FCFA
+                {formatNumber(1000)} FCFA
               </span>
             </div>
             <div className="col-span-2 pt-1 border-t border-border/40">
               <span className="text-[11px] text-muted-foreground block">Engagement</span>
               <span className="font-medium text-foreground text-[11px] line-clamp-1 mt-0.5">
-                {CONTRIBUTION_DOMAIN_LABELS[m.domaine_contribution] || m.domaine_contribution}
+                {(m.domaine_contribution && CONTRIBUTION_DOMAIN_LABELS[m.domaine_contribution]) ||
+                  m.domaine_contribution ||
+                  "Non renseigné"}
               </span>
             </div>
           </div>

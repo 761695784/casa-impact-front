@@ -26,6 +26,8 @@ import {
   showErrorAlert,
   showValidationErrorAlert,
 } from "@/lib/alerts"
+import { ApiError } from "@/lib/api-client"
+import { publicContactService } from "@/lib/services/public-contact.service"
 import { cn } from "@/lib/utils"
 import { CONTACT_CATEGORY_LABELS, type ContactCategory } from "@/types/enums"
 
@@ -51,16 +53,28 @@ export function ContactForm() {
 
   async function onSubmit(values: FormValues) {
     try {
-      // Demonstration submit — replace with POST /api/public/contact
-      await new Promise((r) => setTimeout(r, 900))
-      console.log("[Casa Impact] Message de contact envoyé:", values)
+      await publicContactService.submitContactMessage({
+        categorie: values.categorie as ContactCategory,
+        nom: values.nom,
+        email: values.email,
+        telephone: values.telephone,
+        sujet: values.sujet,
+        message: values.message,
+      })
       await showSuccessAlert(
         "Message envoyé !",
         "Votre message a bien été transmis à l'équipe Casa Impact."
       )
       setSubmitted(true)
-    } catch {
-      showErrorAlert("Erreur", "Une erreur est survenue lors de l'envoi de votre message.")
+    } catch (err) {
+      if (err instanceof ApiError && err.errors) {
+        showValidationErrorAlert(err.errors)
+      } else {
+        showErrorAlert(
+          "Erreur",
+          err instanceof Error ? err.message : "Une erreur est survenue lors de l'envoi de votre message."
+        )
+      }
     }
   }
 

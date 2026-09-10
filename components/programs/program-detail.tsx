@@ -22,7 +22,6 @@ import {
   Building2,
   FileCheck,
   Target,
-  User,
 } from "lucide-react"
 import { toast } from "sonner"
 import { useProgram, usePrograms, useApplicationCalls } from "@/hooks/use-content"
@@ -458,47 +457,6 @@ export function ProgramDetail({ slug }: { slug: string }) {
                 )}
               </div>
             </div>
-
-            {/* Alumni / Participant Testimonial */}
-            {meta.alumni && (
-              <div className="rounded-3xl border border-primary/30 bg-gradient-to-br from-forest via-forest to-forest/90 p-8 sm:p-10 text-white shadow-xl">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-accent mb-4">
-                  <Sparkles className="size-3.5 text-accent" />
-                  <span>Retour d'expérience</span>
-                </div>
-
-                <blockquote className="text-base sm:text-lg leading-relaxed text-white/90 italic font-normal">
-                  « {meta.alumni.quote} »
-                </blockquote>
-
-                <div className="mt-6 flex items-center gap-4 pt-6 border-t border-white/15">
-                  <div className="relative size-12 shrink-0 overflow-hidden rounded-full border-2 border-accent bg-black/30 flex items-center justify-center">
-                    {meta.alumni.avatar ? (
-                      <Image
-                        src={meta.alumni.avatar}
-                        alt={meta.alumni.name}
-                        fill
-                        unoptimized
-                        className="object-cover"
-                      />
-                    ) : (
-                      <User className="size-6 text-accent" />
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="font-display text-sm font-bold text-white">
-                      {meta.alumni.name}
-                    </h4>
-                    <p className="text-xs text-white/75">
-                      {meta.alumni.role} • {meta.alumni.city}
-                    </p>
-                    <p className="text-[11px] text-accent font-medium mt-0.5">
-                      {meta.alumni.promotion}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
 
           </div>
 

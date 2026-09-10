@@ -1,4 +1,5 @@
-import { DATA_SOURCE, API_URL } from "@/lib/config"
+import { apiFetch } from "@/lib/api-client"
+import { API_URL, DATA_SOURCE } from "@/lib/config"
 import { mockMemberships } from "@/lib/mock/memberships.mock"
 import type { Membership } from "@/types/models"
 import type { MembershipStatus, MembershipRegion } from "@/types/enums"
@@ -7,27 +8,32 @@ export interface ListMembershipsParams {
   search?: string
   statut?: MembershipStatus | "all" | string
   region?: MembershipRegion | "all" | string
-  paiement_statut?: string
+  source?: string
 }
 
 function delay<T>(data: T, ms = 100): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(data), ms))
 }
 
+/**
+ * Service Adhésions (admin) — aligné sur les routes réelles :
+ *   GET    /api/admin/memberships             (index, paginé)
+ *   GET    /api/admin/memberships/{id}         (show)
+ *   PUT    /api/admin/memberships/{id}         (update : SEULS statut/admin_note)
+ *   DELETE /api/admin/memberships/{id}         (destroy)
+ *   GET    /api/admin/memberships/{id}/card    (téléchargement carte PDF)
+ *
+ * Il n'existe PAS de routes /validate ou /reject côté backend — valider ou
+ * refuser une adhésion passe par update() avec `statut`, voir
+ * Admin\MembershipController::update() (passage à `validee` déclenche
+ * automatiquement la génération de la carte + l'email MembershipValidated
+ * côté serveur).
+ */
 export const membershipsService = {
-  /**
-   * Liste des adhésions
-   * Endpoint : GET /api/admin/memberships
-   */
   listMemberships: async (
     params: ListMembershipsParams = {}
   ): Promise<Membership[]> => {
-    const {
-      search = "",
-      statut = "all",
-      region = "all",
-      paiement_statut = "all",
-    } = params
+    const { search = "", statut = "all", region = "all", source } = params
 
     if (DATA_SOURCE === "mock") {
       let filtered = [...mockMemberships]
@@ -39,7 +45,7 @@ export const membershipsService = {
             m.nom_complet.toLowerCase().includes(q) ||
             m.email.toLowerCase().includes(q) ||
             m.telephone.toLowerCase().includes(q) ||
-            m.reference?.toLowerCase().includes(q) ||
+            m.numero_membre?.toLowerCase().includes(q) ||
             m.profession?.toLowerCase().includes(q) ||
             m.departement?.toLowerCase().includes(q)
         )
@@ -53,10 +59,6 @@ export const membershipsService = {
         filtered = filtered.filter((m) => m.region === region)
       }
 
-      if (paiement_statut && paiement_statut !== "all") {
-        filtered = filtered.filter((m) => m.paiement_statut === paiement_statut)
-      }
-
       filtered.sort(
         (a, b) =>
           new Date(b.created_at || "").getTime() -
@@ -65,47 +67,23 @@ export const membershipsService = {
       return delay<Membership[]>(filtered)
     }
 
-    // MODE API RÉEL : Aucun fallback silencieux
     const queryParams = new URLSearchParams()
     if (search) queryParams.set("search", search)
     if (statut && statut !== "all") queryParams.set("statut", statut)
     if (region && region !== "all") queryParams.set("region", region)
-    if (paiement_statut && paiement_statut !== "all")
-      queryParams.set("paiement_statut", paiement_statut)
+    if (source) queryParams.set("source", source)
+    queryParams.set("per_page", "100")
 
-    const url = `${API_URL}/api/admin/memberships${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`
-
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Laravel Sanctum SPA
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors du chargement des adhésions (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data: Membership[] }>(
+      `/api/admin/memberships?${queryParams.toString()}`
+    )
+    return json.data || (json as unknown as Membership[])
   },
 
-  /**
-   * Détail d'une adhésion
-   * Endpoint : GET /api/admin/memberships/{id}
-   */
   getMembership: async (id: number | string): Promise<Membership> => {
     if (DATA_SOURCE === "mock") {
       const found = mockMemberships.find(
-        (m) => m.id === Number(id) || m.reference === String(id)
+        (m) => m.id === Number(id) || m.numero_membre === String(id)
       )
       if (!found) {
         throw new Error("Adhésion introuvable")
@@ -113,31 +91,17 @@ export const membershipsService = {
       return delay<Membership>(found)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/memberships/${id}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Impossible de charger l'adhésion #${id} (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data: Membership }>(`/api/admin/memberships/${id}`)
+    return json.data
   },
 
   /**
-   * Mise à jour d'une adhésion
-   * Endpoint : PUT /api/admin/memberships/{id}
+   * Seuls `statut` et `admin_note` sont acceptés par le backend
+   * (UpdateMembershipRequest) — voir Admin\MembershipController::update().
    */
   updateMembership: async (
     id: number,
-    payload: Partial<Membership>
+    payload: { statut?: MembershipStatus | string; admin_note?: string }
   ): Promise<Membership> => {
     if (DATA_SOURCE === "mock") {
       const index = mockMemberships.findIndex((m) => m.id === Number(id))
@@ -147,6 +111,7 @@ export const membershipsService = {
       const updated: Membership = {
         ...existing,
         ...payload,
+        statut: (payload.statut as MembershipStatus) ?? existing.statut,
         updated_at: new Date().toISOString(),
       }
 
@@ -154,109 +119,26 @@ export const membershipsService = {
       return delay<Membership>(updated)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/memberships/${id}`, {
+    const json = await apiFetch<{ data: Membership }>(`/api/admin/memberships/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
+      body: payload,
     })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors de la mise à jour de l'adhésion (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    return json.data
   },
 
   /**
-   * Validation d'une adhésion
-   * Endpoint : POST /api/admin/memberships/{id}/validate
+   * Valider une adhésion = update() avec statut=validee. Déclenche côté
+   * serveur la génération de la carte + l'email MembershipValidated.
    */
-  validateMembership: async (id: number): Promise<Membership> => {
-    if (DATA_SOURCE === "mock") {
-      const index = mockMemberships.findIndex((m) => m.id === Number(id))
-      if (index === -1) throw new Error("Adhésion introuvable")
-
-      mockMemberships[index] = {
-        ...mockMemberships[index],
-        statut: "validee",
-        paiement_statut: "paye",
-        updated_at: new Date().toISOString(),
-      }
-      return delay<Membership>(mockMemberships[index])
-    }
-
-    const res = await fetch(`${API_URL}/api/admin/memberships/${id}/validate`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors de la validation de l'adhésion (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
-  },
+  validateMembership: (id: number): Promise<Membership> =>
+    membershipsService.updateMembership(id, { statut: "validee" }),
 
   /**
-   * Refus d'une adhésion
-   * Endpoint : POST /api/admin/memberships/{id}/reject
+   * Refuser une adhésion = update() avec statut=refusee.
    */
-  rejectMembership: async (id: number): Promise<Membership> => {
-    if (DATA_SOURCE === "mock") {
-      const index = mockMemberships.findIndex((m) => m.id === Number(id))
-      if (index === -1) throw new Error("Adhésion introuvable")
+  rejectMembership: (id: number): Promise<Membership> =>
+    membershipsService.updateMembership(id, { statut: "refusee" }),
 
-      mockMemberships[index] = {
-        ...mockMemberships[index],
-        statut: "refusee",
-        updated_at: new Date().toISOString(),
-      }
-      return delay<Membership>(mockMemberships[index])
-    }
-
-    const res = await fetch(`${API_URL}/api/admin/memberships/${id}/reject`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors du refus de l'adhésion (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
-  },
-
-  /**
-   * Suppression d'une adhésion
-   * Endpoint : DELETE /api/admin/memberships/{id}
-   */
   deleteMembership: async (id: number): Promise<boolean> => {
     if (DATA_SOURCE === "mock") {
       const index = mockMemberships.findIndex((m) => m.id === Number(id))
@@ -266,20 +148,45 @@ export const membershipsService = {
       return delay<boolean>(true)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/memberships/${id}`, {
-      method: "DELETE",
-      headers: { Accept: "application/json" },
+    await apiFetch(`/api/admin/memberships/${id}`, { method: "DELETE" })
+    return true
+  },
+
+  /**
+   * Téléchargement de la carte de membre PDF (adhésion déjà validée
+   * uniquement — le backend renvoie 409 sinon). apiFetch ne convient pas
+   * ici : il ne parse que du JSON, cette réponse est un PDF binaire. Même
+   * principe que applicationsService.previewDocument (CSRF pas nécessaire,
+   * GET est une méthode sûre).
+   */
+  downloadCard: async (id: number, numeroMembre?: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/api/admin/memberships/${id}/card`, {
+      method: "GET",
+      headers: { Accept: "application/pdf" },
       credentials: "include",
     })
 
     if (!res.ok) {
-      const err = await res.json().catch(() => null)
+      const contentType = res.headers.get("content-type") || ""
+      const payload = contentType.includes("application/json")
+        ? await res.json().catch(() => null)
+        : null
       throw new Error(
-        err?.message ||
-          `Erreur lors de la suppression de l'adhésion (HTTP ${res.status})`
+        payload?.message ||
+          (res.status === 409
+            ? "Cette adhésion n'est pas encore validée."
+            : `Impossible de télécharger la carte (HTTP ${res.status})`)
       )
     }
 
-    return true
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `carte-membre-${numeroMembre || id}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
   },
 }

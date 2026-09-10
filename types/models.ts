@@ -437,27 +437,47 @@ export interface ContactMessage {
   updated_at?: string
 }
 
+/**
+ * Forme réelle de Admin\MembershipResource. `numero_membre` (pas
+ * `reference`) est le numéro de dossier, fixé par le serveur
+ * (MembershipReferenceGenerator). `photo_url` (pas `photo`) est déjà une
+ * URL absolue (`asset('storage/...')`), jamais un chemin disque. Pas de
+ * `montant`/`paiement_statut` : aucune colonne de ce type en base — voir
+ * Membership::$fillable côté backend, le statut de cotisation se lit sur
+ * `statut` lui-même (en_attente_paiement / validee / refusee), la
+ * cotisation est un montant fixe (1 000 FCFA, config('casaimpact.wave_amount')
+ * côté backend, jamais renvoyé par l'API).
+ */
 export interface Membership {
   id: number
+  numero_membre: string
+  statut: MembershipStatus
   nom_complet: string
   email: string
   telephone: string
   profession?: string
   region: MembershipRegion
   departement?: string
-  domaine_contribution: ContributionDomain
-  type_contribution: ContributionType
-  photo?: string
-  statut: MembershipStatus
-  reference?: string
-  montant?: number
-  paiement_statut?: 'en_attente' | 'paye' | 'echoue'
+  domaine_contribution?: ContributionDomain
+  type_contribution?: ContributionType
+  photo_url?: string | null
+  engagement_moral?: boolean
+  suggestions_competences?: string
+  source?: string
+  admin_note?: string
+  validated_at?: string | null
+  validated_by?: number | null
   created_at?: string
   updated_at?: string
 }
 
+/**
+ * Forme réelle de Public\MembershipConfirmationResource — volontairement
+ * minimale (numero_membre + statut initial), même principe que
+ * ApplicationConfirmation.
+ */
 export interface MembershipConfirmation {
-  reference: string
+  numero_membre: string
   statut: MembershipStatus
   message?: string
 }

@@ -210,6 +210,7 @@ export function MembershipForm() {
           </h4>
 
           <MembershipCardPreview
+            blurred
             data={{
               numero_membre: numeroMembre,
               nom_complet: submittedValues.nom_complet,
@@ -220,7 +221,7 @@ export function MembershipForm() {
             }}
           />
           <p className="mt-3 text-[11px] text-muted-foreground">
-            Cette carte officielle (avec votre photo) vous sera envoyée par e-mail dès validation de votre paiement.
+            Cette carte officielle (avec votre photo) vous sera envoyée par e-mail, en clair, dès validation de votre paiement.
           </p>
         </div>
 

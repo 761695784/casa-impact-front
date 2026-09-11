@@ -105,7 +105,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Téléphone & Ligne Directe
+                    Téléphone 
                   </p>
                   <a
                     href={contactInfo.phoneHref}
@@ -151,8 +151,8 @@ export default function ContactPage() {
                 className="mt-4 w-full rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
               >
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
-                  <MessageCircle className="size-4" />
-                  Ouvrir WhatsApp (+221 {contactInfo.phone})
+                  {/* <MessageCircle className="size-4" /> */}
+                  Ouvrir WhatsApp 
                 </a>
               </Button>
             </div>

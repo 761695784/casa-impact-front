@@ -25,7 +25,7 @@ export function HomeBoutique() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1 text-xs font-bold text-primary mb-3">
-              <Sparkles className="size-3.5 text-accent" />
+              {/* <Sparkles className="size-3.5 text-accent" /> */}
               <span>Notre Collection</span>
             </div>
             <h2 className="font-display text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
@@ -88,7 +88,7 @@ export function HomeBoutique() {
                     onClick={() => handleOrder(product)}
                     className="inline-flex items-center gap-1 rounded-full bg-primary hover:bg-[#024424] text-white text-xs font-bold px-3 py-2 shadow-sm transition-all hover:scale-105 active:scale-95"
                   >
-                    <MessageCircle className="size-3.5 text-accent" />
+                    {/* <MessageCircle className="size-3.5 text-accent" /> */}
                     <span>Commander</span>
                   </button>
                 </div>
@@ -128,7 +128,7 @@ export function HomeBoutique() {
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-xs sm:text-sm font-bold text-foreground hover:bg-secondary transition-all shadow-xs whitespace-nowrap"
             >
-              <MessageCircle className="size-4 text-[#25D366] shrink-0" />
+              {/* <MessageCircle className="size-4 text-[#25D366] shrink-0" /> */}
               <span>Commander sur WhatsApp</span>
             </a>
           </div>

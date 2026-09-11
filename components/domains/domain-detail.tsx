@@ -152,11 +152,11 @@ export function DomainDetail({ slug }: { slug: string }) {
               <Icon className="size-8" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-accent backdrop-blur-md mb-2">
+              {/* <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-accent backdrop-blur-md mb-2">
                 <Sparkles className="size-3" />
                 <span>Domaine d'Action Officiel</span>
-              </div>
-              <h1 className="text-balance font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl drop-shadow-sm">
+              </div> */}
+              <h1 className="text-balance font-display text-xs font-bold text-accent leading-tight sm:text-4xl lg:text-5xl drop-shadow-sm">
                 {domain.nom}
               </h1>
             </div>
@@ -180,7 +180,7 @@ export function DomainDetail({ slug }: { slug: string }) {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
-                Vision & Enjeux
+                Vision et Enjeux
               </div>
               <h2 className="mt-4 font-display text-3xl font-bold text-foreground sm:text-4xl">
                 Pourquoi ce domaine est crucial pour la Casamance

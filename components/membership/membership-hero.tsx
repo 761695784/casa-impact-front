@@ -48,7 +48,7 @@ export function MembershipHero({
         className="pointer-events-none absolute -bottom-24 -right-16 hidden opacity-[0.08] lg:block lg:w-[480px]"
       />
 
-      <div className="relative mx-auto w-full max-w-7xl px-4 pt-6 pb-12 sm:px-6 sm:pt-8 sm:pb-16 md:pt-10 md:pb-20 lg:px-8">
+      <div className="relative mx-auto w-full max-w-7xl px-4 pt-3 pb-8 sm:px-6 sm:pt-4 sm:pb-12 md:pt-5 md:pb-14 lg:px-8">
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
           <nav aria-label="Fil d'Ariane" className="mb-4">

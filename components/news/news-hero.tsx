@@ -48,7 +48,7 @@ export function NewsHero({
         className="pointer-events-none absolute -bottom-24 -right-16 hidden opacity-[0.08] lg:block lg:w-[480px]"
       />
 
-      <div className="relative mx-auto w-full max-w-7xl px-4 pt-6 pb-12 sm:px-6 sm:pt-8 sm:pb-16 md:pt-10 md:pb-20 lg:px-8">
+      <div className="relative mx-auto w-full max-w-7xl px-4 pt-3 pb-8 sm:px-6 sm:pt-4 sm:pb-12 md:pt-5 md:pb-14 lg:px-8">
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
           <nav aria-label="Fil d'Ariane" className="mb-4">
@@ -72,14 +72,14 @@ export function NewsHero({
         )}
 
         {/* Eyebrow badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/95 backdrop-blur-md">
+        {/* <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/95 backdrop-blur-md">
           <Sparkles className="size-3 text-accent" />
           <span>La Vie de Casa Impact & Événements</span>
-        </div>
+        </div> */}
 
         {/* Title */}
         <h1 className="mt-5 max-w-3xl text-balance font-display text-4xl font-bold leading-[1.05] text-white sm:text-5xl lg:text-6xl drop-shadow-sm">
-          Actualités &{" "}
+          Actualités et {" "}
           <span className="relative inline-block text-accent">
             Temps Forts
             <span className="absolute -bottom-1 left-0 h-1.5 w-full rounded-full bg-accent/60" aria-hidden />
@@ -88,7 +88,7 @@ export function NewsHero({
 
         {/* Description */}
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/90 sm:text-xl font-normal drop-shadow">
-          Suivez au quotidien les actions de terrain, reportages, communiqués officiels et rencontres avec la jeunesse de <strong>Ziguinchor</strong>, <strong>Kolda</strong> et <strong>Sédhiou</strong>.
+          Suivez au quotidien les actions de terrain, reportages, communiqués officiels, les rencontres, les activités et les événements de <strong>Casa Impact</strong> avec la jeunesse de <strong>Ziguinchor</strong>, <strong>Kolda</strong> et <strong>Sédhiou</strong>.
         </p>
 
         {/* Quick News Categories Indicators */}

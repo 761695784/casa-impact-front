@@ -36,10 +36,10 @@ export function CtaBand({
         />
 
         <div className="relative max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-sm border border-white/15">
+          {/* <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-sm border border-white/15">
             <Sparkles className="size-3.5 text-accent" />
             <span>Passer à l'action</span>
-          </div>
+          </div> */}
 
           <h2 className="mt-5 text-balance font-display text-3xl font-bold leading-tight text-white sm:text-4xl md:text-5xl">
             {title}

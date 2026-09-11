@@ -37,12 +37,12 @@ export function TestimonialsHero({ onOpenSubmitModal }: TestimonialsHeroProps) {
       />
       <div className="pointer-events-none absolute -top-24 left-1/4 size-96 rounded-full bg-accent/15 blur-3xl z-1" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 pt-6 pb-12 sm:px-6 sm:pt-8 sm:pb-16 md:pt-10 md:pb-18 lg:px-8 w-full">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pt-3 pb-8 sm:px-6 sm:pt-4 sm:pb-12 md:pt-5 md:pb-14 lg:px-8 w-full">
         {/* Top Eyebrow */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/15 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-accent backdrop-blur-md shadow-sm">
+        {/* <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/15 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-accent backdrop-blur-md shadow-sm">
           <Sparkles className="size-3.5 text-accent animate-pulse" />
           <span>Paroles du Terrain • Récits d'Impact</span>
-        </div>
+        </div> */}
 
         {/* Main Title & Subtitle */}
         <div className="mt-6 grid gap-8 lg:grid-cols-12 lg:items-end">
@@ -81,7 +81,7 @@ export function TestimonialsHero({ onOpenSubmitModal }: TestimonialsHeroProps) {
                   size="lg"
                   className="rounded-full bg-accent text-forest hover:bg-accent/90 font-bold px-7 shadow-xl shadow-accent/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <MessageSquareHeart className="mr-2 size-5" />
+                  {/* <MessageSquareHeart className="mr-2 size-5" /> */}
                   Partager mon témoignage
                 </Button>
               )}
@@ -108,7 +108,7 @@ export function TestimonialsHero({ onOpenSubmitModal }: TestimonialsHeroProps) {
                   <span className="font-display text-2xl sm:text-3xl font-bold text-white">98%</span>
                 </div>
                 <p className="mt-1 text-xs text-white/85 font-medium leading-snug">
-                  Satisfaction & recommandation des bénéficiaires
+                  Satisfaction et recommandation des bénéficiaires
                 </p>
               </div>
 

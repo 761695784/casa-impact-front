@@ -31,7 +31,7 @@ export function AboutIntro() {
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
             <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
-            Identité & Origines
+            Identité et Origines
           </div>
 
           <h2 className="mt-5 text-pretty font-display text-3xl font-bold leading-[1.12] text-foreground sm:text-4xl lg:text-[2.6rem]">
@@ -83,13 +83,13 @@ export function AboutIntro() {
 
           <div className="mt-6 text-center">
             <p className="font-display text-lg font-bold text-foreground">
-              Le Baobab & L'Arbre de Vie
+              Le Baobab
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               Symbole des racines profondes, de la force collective et de la transmission intergénérationnelle.
             </p>
             <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-accent-foreground">
-              <Sparkles className="size-3" />
+              {/* <Sparkles className="size-3" /> */}
               <span>Inspirer • Former • Entreprendre</span>
             </div>
           </div>

@@ -166,7 +166,7 @@ export function ContactForm() {
         </Field>
 
         {/* Téléphone */}
-        <Field label="Téléphone (facultatif)" icon={Phone} error={errors.telephone?.message}>
+        <Field label="Téléphone" icon={Phone} error={errors.telephone?.message}>
           <Input
             {...register("telephone")}
             placeholder="+221 ..."
@@ -200,7 +200,7 @@ export function ContactForm() {
         </Field>
 
         {/* Sujet */}
-        <Field label="Sujet précis (facultatif)" icon={FileText} error={errors.sujet?.message} className="sm:col-span-2">
+        <Field label="Sujet précis" icon={FileText} error={errors.sujet?.message} className="sm:col-span-2">
           <Input
             {...register("sujet")}
             placeholder="Ex : Proposition de partenariat pour le programme entrepreneuriat"

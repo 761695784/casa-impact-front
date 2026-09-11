@@ -97,8 +97,8 @@ export function HomeStatsCounter() {
       label: "Régions Naturelles Fédérées",
       description: "Ziguinchor, Sédhiou et Kolda sous une même vision",
       icon: MapPin,
-      iconColor: "text-white",
-      iconBg: "bg-white/20 border-white/30",
+      iconColor: "text-accent",
+      iconBg: "bg-accent/20 border-accent/30",
       border: "border-white/15 hover:border-white/40",
     },
     {
@@ -106,7 +106,7 @@ export function HomeStatsCounter() {
       value: domainesCount,
       suffix: "",
       label: "Domaines d'Intervention",
-      description: "Leadership, Entrepreneuriat, Culture, Sport & Diaspora",
+      description: "Leadership, Entrepreneuriat, Culture, Sport,Tourisme et Diaspora",
       icon: Compass,
       iconColor: "text-accent",
       iconBg: "bg-accent/20 border-accent/30",
@@ -138,10 +138,10 @@ export function HomeStatsCounter() {
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-12 sm:mb-16 border-b border-white/15 pb-8">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-accent backdrop-blur-md shadow-sm">
+            {/* <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-accent backdrop-blur-md shadow-sm">
               <TrendingUp className="size-3.5" />
               <span>Nos Chiffres Clés</span>
-            </div>
+            </div> */}
             <h2 className="mt-4 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl drop-shadow-sm">
               L'impact de notre organisation en{" "}
               <span className="text-accent relative inline-block">
@@ -190,10 +190,10 @@ export function HomeStatsCounter() {
                     >
                       <Icon className="size-5" />
                     </div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent border border-white/10 backdrop-blur-xs">
+                    {/* <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent border border-white/10 backdrop-blur-xs">
                       <Sparkles className="size-2.5 text-accent" />
                       Actif
-                    </span>
+                    </span> */}
                   </div>
 
                   {/* Animated Counter */}

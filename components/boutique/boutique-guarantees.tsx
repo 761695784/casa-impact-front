@@ -3,6 +3,7 @@
 import React from "react"
 import { Truck, ShieldCheck, HeartHandshake, MessageCircle, Sparkles } from "lucide-react"
 import { SHOP_PHONE_DISPLAY, SHOP_WHATSAPP_NUMBER } from "@/lib/data/collections"
+import { Button } from "@/components/ui/button"
 
 const guarantees = [
   {
@@ -29,33 +30,35 @@ const guarantees = [
 
 export function BoutiqueGuarantees() {
   return (
-    <section className="py-16 bg-secondary/40 border-t border-border">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-xl mx-auto mb-10">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1 text-xs font-bold text-accent-foreground mb-2">
-            <Sparkles className="size-3 text-accent-foreground" />
-            <span>Engagements Casa Impact</span>
+    <section className="py-16 sm:py-20 bg-secondary/30 border-t border-border">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <div className="text-center max-w-xl mx-auto mb-12">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary mb-3">
+            <Sparkles className="size-3.5 text-accent" />
+            <span>Engagements & Garanties</span>
           </div>
-          <h2 className="font-display text-xl sm:text-3xl font-extrabold text-foreground">
+          <h2 className="font-display text-2xl sm:text-4xl font-bold text-foreground tracking-tight">
             Pourquoi choisir nos articles officiels ?
           </h2>
         </div>
 
+        {/* 4 Guarantees Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {guarantees.map((g, idx) => {
             const Icon = g.icon
             return (
               <div
                 key={idx}
-                className="rounded-3xl border border-border bg-card p-6 shadow-xs hover:shadow-md hover:border-primary/30 transition-all text-center flex flex-col items-center justify-center group"
+                className="rounded-3xl border border-border bg-card p-6 sm:p-7 shadow-xs hover:shadow-md hover:border-primary/30 transition-all text-center flex flex-col items-center justify-center group"
               >
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4 group-hover:scale-110 transition-transform duration-300">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                   <Icon className="size-7" />
                 </div>
-                <h3 className="font-display text-base font-bold text-foreground">
+                <h3 className="font-display text-base sm:text-lg font-bold text-foreground">
                   {g.title}
                 </h3>
-                <p className="mt-2 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                <p className="mt-2 text-xs sm:text-sm text-muted-foreground leading-relaxed font-sans">
                   {g.desc}
                 </p>
               </div>
@@ -63,27 +66,46 @@ export function BoutiqueGuarantees() {
           })}
         </div>
 
-        {/* WhatsApp Banner */}
-        <div className="mt-12 rounded-3xl bg-gradient-to-r from-forest via-[#024424] to-forest p-8 text-white shadow-xl text-center relative overflow-hidden">
+        {/* WhatsApp Group Order Banner */}
+        <div className="mt-14 rounded-3xl bg-forest border border-white/20 p-8 sm:p-10 text-white shadow-xl text-center relative overflow-hidden">
+          {/* Ambient Lighting */}
+          <div className="pointer-events-none absolute -top-16 -right-16 size-60 rounded-full bg-accent/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-16 size-60 rounded-full bg-emerald-400/15 blur-3xl" />
+
           <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-            <h3 className="font-display text-xl sm:text-2xl font-bold">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/20 border border-accent/40 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+              <Sparkles className="size-3.5" />
+              <span>Commandes Groupées & Personnalisations</span>
+            </div>
+
+            <h3 className="font-display text-xl sm:text-3xl font-bold text-white leading-snug">
               Besoin d'une commande personnalisée ou d'un lot pour votre structure ?
             </h3>
-            <p className="text-sm text-white/85">
+
+            <p className="text-sm sm:text-base text-white/85 max-w-xl mx-auto leading-relaxed font-sans">
               Contactez directement notre service boutique sur WhatsApp au{" "}
-              <strong className="text-accent">{SHOP_PHONE_DISPLAY}</strong> pour les commandes groupées, partenariats ou expéditions internationales.
+              <strong className="text-accent">{SHOP_PHONE_DISPLAY}</strong> pour les commandes d'entreprises, associations, caravanes ou expéditions internationales.
             </p>
-            <a
-              href={`https://wa.me/${SHOP_WHATSAPP_NUMBER}?text=${encodeURIComponent(
-                "Bonjour Casa Impact Boutique, je souhaite passer une commande groupée / personnalisée."
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-bold text-accent-foreground shadow-lg hover:bg-white hover:text-forest transition-all cursor-pointer"
-            >
-              <MessageCircle className="size-4" />
-              <span>Contacter le pôle boutique</span>
-            </a>
+
+            <div className="pt-2">
+              <Button
+                asChild
+                size="lg"
+                className="h-12 rounded-full bg-accent text-accent-foreground hover:bg-white hover:text-forest font-bold px-7 shadow-lg shadow-accent/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              >
+                <a
+                  href={`https://wa.me/${SHOP_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                    "Bonjour Casa Impact Boutique, je souhaite passer une commande groupée / personnalisée."
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5"
+                >
+                  <MessageCircle className="size-4.5" />
+                  <span>Contacter le pôle boutique</span>
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
       </div>

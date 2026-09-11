@@ -157,35 +157,13 @@ export function HomeHero() {
       />
 
       {/* Main Content Container */}
-      <div className="relative mx-auto flex min-h-[calc(85vh)] max-w-7xl flex-col justify-between px-4 pb-10 pt-6 sm:px-6 sm:pb-12 sm:pt-8 lg:px-8 lg:pt-10">
-
-        {/* Top Badges: Regions & Live Indicator */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/90 backdrop-blur-md">
-            <span className="flex size-2 rounded-full bg-accent animate-pulse" aria-hidden />
-            <span>3 Régions • 1 Vision • 1 Impact</span>
-          </div> */}
-
-          {/* Region Tabs / Navigation */}
-          {/* <div className="hidden sm:flex items-center gap-2 rounded-full border border-white/10 bg-black/20 p-1 backdrop-blur-md">
-            {siteConfig.regions.map((r, i) => (
-              <span
-                key={r}
-                className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-white/80"
-              >
-                <span className="text-accent font-bold">0{i + 1}</span>
-                {r}
-              </span>
-            ))}
-          </div> */}
-        </div>
-
+      <div className="relative mx-auto flex max-w-7xl flex-col px-4 pb-10 pt-2 sm:px-6 sm:pb-12 sm:pt-3 lg:px-8 lg:pt-4">
         {/* Center Hero Message */}
-        <div className="my-auto max-w-3xl pt-8 pb-10">
-          <div className="inline-flex items-center gap-2 rounded-lg bg-accent/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-accent backdrop-blur-sm border border-accent/30">
+        <div className="max-w-3xl pt-2 pb-8 sm:pt-4">
+          {/* <div className="inline-flex items-center gap-2 rounded-lg bg-accent/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-accent backdrop-blur-sm border border-accent/30">
             <Sparkles className="size-3.5" />
             <span>Plateforme d'action et de transformation</span>
-          </div>
+          </div> */}
 
           <h1 className="mt-6 text-balance font-display text-4xl font-bold leading-[1.02] sm:text-6xl lg:text-7xl text-white drop-shadow-sm">
             La Casamance se construit avec{" "}

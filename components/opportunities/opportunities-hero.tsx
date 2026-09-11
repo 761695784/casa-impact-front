@@ -48,7 +48,7 @@ export function OpportunitiesHero({
         className="pointer-events-none absolute -bottom-28 -right-20 hidden opacity-[0.08] lg:block lg:w-[500px]"
       />
 
-      <div className="relative mx-auto w-full max-w-7xl px-4 pt-6 pb-12 sm:px-6 sm:pt-8 sm:pb-16 md:pt-10 md:pb-20 lg:px-8">
+      <div className="relative mx-auto w-full max-w-7xl px-4 pt-3 pb-8 sm:px-6 sm:pt-4 sm:pb-12 md:pt-5 md:pb-14 lg:px-8">
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
           <nav aria-label="Fil d'Ariane" className="mb-4">
@@ -72,10 +72,10 @@ export function OpportunitiesHero({
         )}
 
         {/* Eyebrow badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/95 backdrop-blur-md">
+        {/* <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/95 backdrop-blur-md">
           <Sparkles className="size-3 text-accent" />
           <span>Tremplin Jeunesse, Entrepreneuriat & Innovation</span>
-        </div>
+        </div> */}
 
         {/* Title */}
         <h1 className="mt-5 max-w-3xl text-balance font-display text-4xl font-bold leading-[1.05] text-white sm:text-5xl lg:text-6xl drop-shadow-sm">
@@ -95,17 +95,17 @@ export function OpportunitiesHero({
         <div className="mt-8 flex flex-wrap items-center gap-3 pt-4 border-t border-white/15">
           <div className="flex items-center gap-1.5 rounded-lg bg-black/25 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm border border-white/10">
             <Rocket className="size-3.5 text-accent" />
-            <span>Programmes 100% Financés & Accompagnés</span>
+            <span>Programmes 100% Financés et Accompagnés</span>
           </div>
 
           <div className="flex items-center gap-1.5 rounded-lg bg-black/25 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm border border-white/10">
             <Users className="size-3.5 text-accent" />
-            <span>Cohortes Régionales & Mentorat d'Élite</span>
+            <span>Cohortes Régionales et Mentorat d'Élite</span>
           </div>
 
           <div className="flex items-center gap-1.5 rounded-lg bg-black/25 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm border border-white/10">
             <Award className="size-3.5 text-accent" />
-            <span>Certifications & Débouchés Concrets</span>
+            <span>Certifications et Débouchés Concrets</span>
           </div>
         </div>
       </div>

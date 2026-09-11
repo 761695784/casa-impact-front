@@ -7,7 +7,7 @@ import { BaobabMark } from "@/components/brand/baobab-mark"
 
 export function ProgramsHero() {
   return (
-    <section className="relative isolate min-h-[340px] sm:min-h-[380px] lg:min-h-[420px] flex items-center bg-forest text-forest-foreground overflow-hidden pt-6 sm:pt-8 md:pt-10 pb-10">
+    <section className="relative isolate min-h-[300px] sm:min-h-[340px] lg:min-h-[360px] flex items-center bg-forest text-forest-foreground overflow-hidden pt-3 sm:pt-4 md:pt-5 pb-8">
       {/* Background Image with subtle Ken Burns effect */}
       <div className="absolute inset-0 -z-20 overflow-hidden">
         <div className="relative h-full w-full animate-ken-burns">

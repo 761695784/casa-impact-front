@@ -45,7 +45,7 @@ export function HomeManifesto() {
         <div className="relative">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
             <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
-            Manifeste & Raison d'être
+            Manifeste et Raison d'être
           </div>
 
           <h2 className="mt-6 text-pretty font-display text-3xl font-bold leading-[1.12] text-foreground sm:text-4xl lg:text-[2.6rem]">
@@ -124,7 +124,7 @@ export function HomeManifesto() {
 const territoryMeta = [
   {
     nom: "Ziguinchor",
-    tag: "Cœur historique & littoral",
+    tag: "Cœur historique et littoral",
     gradient: "from-forest/10 via-forest/5 to-transparent",
     border: "border-forest/25 hover:border-forest",
     badgeBg: "bg-forest/10 text-forest",
@@ -133,7 +133,7 @@ const territoryMeta = [
   },
   {
     nom: "Sédhiou",
-    tag: "Traditions & Terroirs d'avenir",
+    tag: "Traditions et Terroirs d'avenir",
     gradient: "from-earth/10 via-earth/5 to-transparent",
     border: "border-earth/25 hover:border-earth",
     badgeBg: "bg-earth/10 text-earth",
@@ -142,7 +142,7 @@ const territoryMeta = [
   },
   {
     nom: "Kolda",
-    tag: "Agro-écologie & Jeunesse",
+    tag: "Agro-écologie et Jeunesse",
     gradient: "from-accent/15 via-accent/5 to-transparent",
     border: "border-accent/30 hover:border-accent",
     badgeBg: "bg-accent/15 text-accent-foreground",
@@ -194,10 +194,10 @@ export function HomeTerritories() {
                   <span className={`size-2 rounded-full ${meta.accentBg}`} />
                   Région engagée
                 </span>
-                <span className="text-muted-foreground group-hover:text-primary transition-colors flex items-center gap-1">
+                {/* <span className="text-muted-foreground group-hover:text-primary transition-colors flex items-center gap-1">
                   Découvrir
                   <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
-                </span>
+                </span> */}
               </div>
             </div>
           )

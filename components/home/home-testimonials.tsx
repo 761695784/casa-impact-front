@@ -61,7 +61,7 @@ export function HomeTestimonials() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 sm:mb-16">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1 text-xs font-bold text-primary mb-3">
-              <Sparkles className="size-3.5 text-accent" />
+              {/* <Sparkles className="size-3.5 text-accent" /> */}
               <span>Témoignages</span>
             </div>
             <h2 className="font-display text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">

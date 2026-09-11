@@ -29,13 +29,13 @@ export function DomainsCrossImpact() {
 
       <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:items-center">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-md">
+          {/* <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-md">
             <Sparkles className="size-3 text-accent" />
             <span>Vision Écosystémique</span>
-          </div>
+          </div> */}
 
           <h2 className="mt-5 font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
-            Une Approche Synergique & Intégrée du Territoire
+            Une Approche Synergique et Intégrée du Territoire
           </h2>
 
           <p className="mt-5 text-base leading-relaxed text-white/85 sm:text-lg font-normal">

@@ -55,9 +55,9 @@ export function ProductOrderModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg w-[calc(100vw-2rem)] p-0 rounded-3xl overflow-hidden border border-white/20 shadow-2xl bg-card text-foreground">
+      <DialogContent className="max-w-lg w-[calc(100vw-2rem)] p-0 rounded-3xl overflow-hidden border border-border shadow-2xl bg-card text-foreground">
         {/* Top Header with Live Three.js WebGL Product Visual */}
-        <div className="bg-gradient-to-br from-[#024424] via-forest to-[#012613] p-5 sm:p-6 text-white relative overflow-hidden">
+        <div className="bg-forest p-5 sm:p-6 text-forest-foreground relative overflow-hidden border-b border-white/10">
           {/* Ambient Glows */}
           <div className="pointer-events-none absolute -top-10 -right-10 size-48 rounded-full bg-accent/20 blur-2xl" />
 
@@ -75,20 +75,20 @@ export function ProductOrderModal({
 
             {/* Product Meta */}
             <div className="min-w-0 flex-1 space-y-1">
-              <div className="inline-flex items-center gap-1 rounded-full bg-accent/20 border border-accent/40 px-2 py-0.5 text-[10px] font-extrabold text-accent uppercase tracking-wider">
-                <Sparkles className="size-2.5 text-accent" />
+              <div className="inline-flex items-center gap-1 rounded-full bg-accent text-accent-foreground px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                {/* <Sparkles className="size-2.5" /> */}
                 <span>{product.badge || product.categoryLabel}</span>
               </div>
 
-              <DialogTitle className="text-base sm:text-lg font-display font-black text-white leading-snug truncate">
+              <DialogTitle className="text-base sm:text-lg font-display font-bold text-white leading-snug truncate">
                 {product.title}
               </DialogTitle>
 
               <div className="flex items-baseline gap-1">
-                <span className="font-display text-xl font-extrabold text-accent">
+                <span className="font-display text-xl font-bold text-accent">
                   {product.price.toLocaleString("fr-FR")}
                 </span>
-                <span className="text-xs font-bold text-white/90">FCFA</span>
+                <span className="text-xs font-semibold text-white/90">FCFA</span>
                 <span className="text-[11px] text-white/60 ml-1">/ unité</span>
               </div>
             </div>
@@ -100,7 +100,7 @@ export function ProductOrderModal({
           {/* Size Selector */}
           {product.sizes && product.sizes.length > 1 && (
             <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground mb-1.5">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                 Choisir une taille :
               </label>
               <div className="flex flex-wrap gap-2">
@@ -113,7 +113,7 @@ export function ProductOrderModal({
                       onClick={() => setSelectedSize(size)}
                       className={`min-w-10 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                         isSelected
-                          ? "bg-primary text-white shadow-md shadow-primary/30 ring-2 ring-primary scale-105"
+                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/30 ring-2 ring-primary scale-105"
                           : "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border"
                       }`}
                     >
@@ -129,7 +129,7 @@ export function ProductOrderModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Quantity */}
             <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground mb-1.5">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                 Quantité :
               </label>
               <div className="inline-flex items-center rounded-2xl border border-border bg-secondary/40 p-1">
@@ -158,7 +158,7 @@ export function ProductOrderModal({
 
             {/* Delivery Region */}
             <div>
-              <label className="block text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground mb-1.5">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                 Lieu de livraison :
               </label>
               <select
@@ -178,7 +178,7 @@ export function ProductOrderModal({
 
           {/* Optional Notes */}
           <div>
-            <label className="block text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground mb-1.5">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
               Précisions ou remarques (optionnel) :
             </label>
             <textarea
@@ -206,20 +206,20 @@ export function ProductOrderModal({
               Total estimé :
             </span>
             <div className="flex items-baseline gap-1">
-              <span className="font-display text-xl sm:text-2xl font-black text-primary">
+              <span className="font-display text-xl sm:text-2xl font-bold text-primary">
                 {totalPrice.toLocaleString("fr-FR")}
               </span>
-              <span className="text-xs font-bold text-accent">FCFA</span>
+              <span className="text-xs font-semibold text-muted-foreground">FCFA</span>
             </div>
           </div>
 
           <button
             type="button"
             onClick={handleOrder}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] hover:bg-[#20ba59] text-white font-bold py-3 px-6 shadow-lg shadow-emerald-500/25 hover:scale-105 active:scale-95 transition-all text-xs sm:text-sm cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-full bg-[#065222] hover:bg-[#023b17] text-white font-bold py-3 px-6 shadow-lg shadow-emerald-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all text-xs sm:text-sm cursor-pointer"
           >
-            <MessageCircle className="size-4.5 shrink-0" />
-            <span>Valider la commande sur WhatsApp</span>
+            {/* <MessageCircle className="size-4.5 shrink-0" /> */}
+            <span>Valider sur WhatsApp</span>
           </button>
         </div>
       </DialogContent>

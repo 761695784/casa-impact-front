@@ -82,7 +82,7 @@ export function TeamOrg() {
               </div>
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-accent-foreground">
-              <Sparkles className="size-3" />
+              {/* <Sparkles className="size-3" /> */}
               Gouvernance
             </span>
           </div>

@@ -69,12 +69,12 @@ export function ThreeProductCanvas({
     keyLight.position.set(4, 5, 4)
     scene.add(keyLight)
 
-    // Fill Light (Soft Emerald/Forest Tint)
-    const fillLight = new THREE.DirectionalLight(0x028646, 1.6)
+    // Fill Light (Soft Forest Green Tint)
+    const fillLight = new THREE.DirectionalLight(0x02542d, 1.8)
     fillLight.position.set(-4, -2, 2)
     scene.add(fillLight)
 
-    // Rim / Backlight (Gold Accent)
+    // Rim / Backlight (Gold Accent #F2A20D)
     const rimLight = new THREE.PointLight(0xf2a20d, 3.5, 12)
     rimLight.position.set(0, 3, -3)
     scene.add(rimLight)
@@ -205,7 +205,7 @@ export function ThreeProductCanvas({
       const particleColors = new Float32Array(particleCount * 3)
 
       const colorGold = new THREE.Color(0xf2a20d)
-      const colorEmerald = new THREE.Color(0x34d399)
+      const colorForest = new THREE.Color(0x02542d)
       const colorWhite = new THREE.Color(0xffffff)
 
       for (let i = 0; i < particleCount; i++) {
@@ -215,7 +215,7 @@ export function ThreeProductCanvas({
         particlePositions[i3 + 2] = (Math.random() - 0.5) * 2.5
 
         const randColor = Math.random()
-        const col = randColor > 0.6 ? colorGold : randColor > 0.3 ? colorEmerald : colorWhite
+        const col = randColor > 0.6 ? colorGold : randColor > 0.3 ? colorForest : colorWhite
         particleColors[i3] = col.r
         particleColors[i3 + 1] = col.g
         particleColors[i3 + 2] = col.b

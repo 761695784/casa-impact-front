@@ -1,28 +1,38 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
-import { Users, UserCheck, Clock, UserX, CreditCard } from "lucide-react"
+import React, { useState } from "react"
+import { Users, UserCheck, Clock, UserX, CreditCard, UserPlus, FileSpreadsheet } from "lucide-react"
 import { AdhesionsFilterBar } from "@/components/admin/adhesions/adhesions-filter-bar"
 import { AdhesionsTable } from "@/components/admin/adhesions/adhesions-table"
 import { AdhesionsMobileList } from "@/components/admin/adhesions/adhesions-mobile-list"
+import { MembershipFormDialog } from "@/components/admin/adhesions/membership-form-dialog"
+import { LegacyImportDialog } from "@/components/admin/adhesions/legacy-import-dialog"
 import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog"
 import { ErrorState } from "@/components/admin/ui/error-state"
+import { PaginationBar } from "@/components/admin/ui/pagination-bar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import {
   useMemberships,
+  useMembershipStats,
   useValidateMembership,
   useRejectMembership,
   useDeleteMembership,
 } from "@/hooks/use-memberships"
 import type { Membership } from "@/types/models"
 
+/** Pagination de la liste après 20 lignes (accord explicite du 2026-09-11). */
+const PER_PAGE = 20
+
 export default function AdminAdhesionsPage() {
   const [search, setSearch] = useState("")
   const [statut, setStatut] = useState("all")
   const [region, setRegion] = useState("all")
+  const [page, setPage] = useState(1)
 
   // Modal dialog states
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isImportOpen, setIsImportOpen] = useState(false)
   const [validatingMembership, setValidatingMembership] =
     useState<Membership | null>(null)
   const [rejectingMembership, setRejectingMembership] =
@@ -30,8 +40,23 @@ export default function AdminAdhesionsPage() {
   const [deletingMembership, setDeletingMembership] =
     useState<Membership | null>(null)
 
+  // Changer un filtre revient toujours à la page 1 — sinon on peut se
+  // retrouver sur une page qui n'existe plus pour le nouveau filtre.
+  const updateSearch = (val: string) => {
+    setSearch(val)
+    setPage(1)
+  }
+  const updateStatut = (val: string) => {
+    setStatut(val)
+    setPage(1)
+  }
+  const updateRegion = (val: string) => {
+    setRegion(val)
+    setPage(1)
+  }
+
   const {
-    data: memberships = [],
+    data,
     isLoading,
     isError,
     error,
@@ -40,7 +65,24 @@ export default function AdminAdhesionsPage() {
     search,
     statut,
     region,
+    page,
+    per_page: PER_PAGE,
   })
+
+  const memberships = data?.data ?? []
+  const meta = data?.meta
+
+  // Compteurs globaux (voir useMembershipStats) — indépendants de la page
+  // et des filtres courants, lus sur meta.total côté serveur : c'est le
+  // vrai total, pas juste la longueur de la page affichée (bug corrigé le
+  // 2026-09-11 : ça affichait 100 au lieu de 171 après l'import historique).
+  const { data: stats } = useMembershipStats()
+  const counts = {
+    total: stats?.total ?? 0,
+    validees: stats?.validees ?? 0,
+    enAttente: stats?.enAttente ?? 0,
+    refusees: stats?.refusees ?? 0,
+  }
 
   const validateMutation = useValidateMembership()
   const rejectMutation = useRejectMembership()
@@ -50,19 +92,8 @@ export default function AdminAdhesionsPage() {
     setSearch("")
     setStatut("all")
     setRegion("all")
+    setPage(1)
   }
-
-  // Summary counts computed dynamically
-  const counts = useMemo(() => {
-    return {
-      total: memberships.length,
-      validees: memberships.filter((m) => m.statut === "validee").length,
-      enAttente: memberships.filter(
-        (m) => m.statut === "en_attente_paiement"
-      ).length,
-      refusees: memberships.filter((m) => m.statut === "refusee").length,
-    }
-  }, [memberships])
 
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-300">
@@ -79,6 +110,24 @@ export default function AdminAdhesionsPage() {
           <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
             Suivi des demandes d'adhésion, cotisations (1 000 FCFA) et attribution des cartes de membre officielles.
           </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start sm:self-auto">
+          <Button
+            onClick={() => setIsImportOpen(true)}
+            variant="outline"
+            className="rounded-full font-semibold gap-2 border-amber-500/40 text-amber-700 hover:bg-amber-500/10 dark:text-amber-500"
+          >
+            <FileSpreadsheet className="size-4" />
+            <span>Importer l'historique (Excel)</span>
+          </Button>
+          <Button
+            onClick={() => setIsCreateOpen(true)}
+            className="rounded-full bg-forest text-white hover:bg-forest/90 font-semibold gap-2 shadow-xs"
+          >
+            <UserPlus className="size-4" />
+            <span>Ajouter un membre</span>
+          </Button>
         </div>
       </div>
 
@@ -130,11 +179,11 @@ export default function AdminAdhesionsPage() {
         search={search}
         statut={statut}
         region={region}
-        onSearchChange={setSearch}
-        onStatutChange={setStatut}
-        onRegionChange={setRegion}
+        onSearchChange={updateSearch}
+        onStatutChange={updateStatut}
+        onRegionChange={updateRegion}
         onReset={handleReset}
-        totalCount={memberships.length}
+        totalCount={meta?.total ?? memberships.length}
       />
 
       {/* 4. Content State */}
@@ -168,7 +217,7 @@ export default function AdminAdhesionsPage() {
               ? "Aucun résultat ne correspond aux filtres appliqués."
               : "Aucune demande d'adhésion n'a été enregistrée pour l'instant."}
           </p>
-          {(search || statut !== "all" || region !== "all") && (
+          {search || statut !== "all" || region !== "all" ? (
             <Button
               variant="outline"
               size="sm"
@@ -177,6 +226,26 @@ export default function AdminAdhesionsPage() {
             >
               Réinitialiser les filtres
             </Button>
+          ) : (
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
+              <Button
+                onClick={() => setIsImportOpen(true)}
+                variant="outline"
+                size="sm"
+                className="rounded-full font-semibold gap-1.5 border-amber-500/40 text-amber-700 hover:bg-amber-500/10 dark:text-amber-500"
+              >
+                <FileSpreadsheet className="size-4" />
+                <span>Importer l'historique (Excel)</span>
+              </Button>
+              <Button
+                onClick={() => setIsCreateOpen(true)}
+                size="sm"
+                className="rounded-full bg-forest text-white hover:bg-forest/90 font-semibold gap-1.5"
+              >
+                <UserPlus className="size-4" />
+                <span>Ajouter un membre</span>
+              </Button>
+            </div>
           )}
         </div>
       ) : (
@@ -198,8 +267,27 @@ export default function AdminAdhesionsPage() {
             onReject={(m) => setRejectingMembership(m)}
             onDelete={(m) => setDeletingMembership(m)}
           />
+
+          {/* Pagination (20 par page) */}
+          {meta && (
+            <PaginationBar
+              currentPage={meta.current_page}
+              lastPage={meta.last_page}
+              total={meta.total}
+              perPage={meta.per_page}
+              onPageChange={setPage}
+              disabled={isLoading}
+              itemLabel="membre"
+            />
+          )}
         </div>
       )}
+
+      {/* Formulaire d'ajout manuel (membre historique) */}
+      <MembershipFormDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
+
+      {/* Import en masse de l'historique (fichier Excel) */}
+      <LegacyImportDialog open={isImportOpen} onOpenChange={setIsImportOpen} />
 
       {/* Validation Confirmation Dialog */}
       <ConfirmDialog

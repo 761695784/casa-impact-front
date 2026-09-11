@@ -31,6 +31,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog"
 import { ErrorState } from "@/components/admin/ui/error-state"
+import { SendMessageDialog } from "@/components/admin/messages/send-message-dialog"
 import { formatDate } from "@/lib/format"
 import {
   CONTACT_CATEGORY_LABELS,
@@ -55,6 +56,7 @@ export default function AdminMessageDetailPage({ params }: PageProps) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [notesInternes, setNotesInternes] = useState("")
   const [statut, setStatut] = useState<ContactMessageStatus>("nouveau")
+  const [isReplyOpen, setIsReplyOpen] = useState(false)
 
   const {
     data: message,
@@ -167,18 +169,12 @@ export default function AdminMessageDetailPage({ params }: PageProps) {
         {/* Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
           <Button
-            asChild
             size="sm"
+            onClick={() => setIsReplyOpen(true)}
             className="rounded-full text-xs gap-1.5 bg-forest hover:bg-forest/90 text-white"
           >
-            <a
-              href={`mailto:${message.email}?subject=Re:%20${encodeURIComponent(
-                message.sujet || "Votre message à Casa Impact"
-              )}`}
-            >
-              <Send className="size-3.5" />
-              <span>Répondre par e-mail</span>
-            </a>
+            <Send className="size-3.5" />
+            <span>Répondre par e-mail</span>
           </Button>
 
           <Button
@@ -344,6 +340,17 @@ export default function AdminMessageDetailPage({ params }: PageProps) {
         </div>
 
       </div>
+
+      {/* Répondre par e-mail (accord du 2026-09-11) — même modal/template que
+          "Envoyer un message", pré-remplie avec l'expéditeur de ce message. */}
+      <SendMessageDialog
+        open={isReplyOpen}
+        onOpenChange={setIsReplyOpen}
+        initialRecipients={[
+          { email: message.email, label: fullName || message.email, source: "libre" },
+        ]}
+        initialSubject={`Re: ${message.sujet || "Votre message à Casa Impact"}`}
+      />
 
       {/* Deletion Dialog */}
       <ConfirmDialog

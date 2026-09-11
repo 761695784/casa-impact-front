@@ -22,6 +22,7 @@ import {
   User,
   CheckCircle2,
   X,
+  Camera,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -45,6 +46,7 @@ import {
 } from "@/hooks/use-memberships"
 import { BaobabMark } from "@/components/brand/baobab-mark"
 import { MembershipCardPreview } from "@/components/membership/membership-card-preview"
+import { MembershipPhotoDialog } from "@/components/admin/adhesions/membership-photo-dialog"
 import { toast } from "sonner"
 
 interface PageProps {
@@ -60,6 +62,7 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
   const [confirmReject, setConfirmReject] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
+  const [isPhotoEditOpen, setIsPhotoEditOpen] = useState(false)
 
   const {
     data: membership,
@@ -220,6 +223,28 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
             <span className="absolute -bottom-2 -right-2 flex size-7 items-center justify-center rounded-full bg-forest text-white shadow-md border-2 border-background">
               <CheckCircle2 className="size-4" />
             </span>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsPhotoEditOpen(true)
+              }}
+              title={membership.photo_url ? "Remplacer la photo" : "Ajouter une photo"}
+              className="absolute -top-2 -right-2 flex size-7 items-center justify-center rounded-full bg-white text-forest shadow-md border-2 border-background hover:bg-forest hover:text-white transition-colors"
+            >
+              <Camera className="size-3.5" />
+            </button>
+
+            {!membership.photo_url && (
+              <button
+                type="button"
+                onClick={() => setIsPhotoEditOpen(true)}
+                className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-forest hover:underline"
+              >
+                Ajouter une photo
+              </button>
+            )}
           </div>
 
           {/* Member Core Info */}
@@ -521,6 +546,13 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
           </Button>
         </DialogContent>
       </Dialog>
+
+      {/* Ajouter/remplacer la photo (pensé pour les membres importés sans photo) */}
+      <MembershipPhotoDialog
+        membership={membership}
+        open={isPhotoEditOpen}
+        onOpenChange={setIsPhotoEditOpen}
+      />
 
       {/* Confirmation Dialog: Valider */}
       <ConfirmDialog

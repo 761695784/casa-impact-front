@@ -12,6 +12,8 @@ interface PaginationBarProps {
   onPageChange: (page: number) => void
   disabled?: boolean
   className?: string
+  /** Nom de l'élément compté, au singulier (accord au pluriel géré automatiquement). Défaut "candidature" pour compatibilité avec les usages existants. */
+  itemLabel?: string
 }
 
 export function PaginationBar({
@@ -22,6 +24,7 @@ export function PaginationBar({
   onPageChange,
   disabled = false,
   className,
+  itemLabel = "candidature",
 }: PaginationBarProps) {
   if (total === 0 || lastPage <= 1) {
     return (
@@ -44,7 +47,7 @@ export function PaginationBar({
     >
       <div>
         Affichage de <strong>{start}</strong> à <strong>{end}</strong> sur{" "}
-        <strong>{total}</strong> candidature{total > 1 ? "s" : ""}
+        <strong>{total}</strong> {itemLabel}{total > 1 ? "s" : ""}
       </div>
 
       <div className="flex items-center gap-1.5">

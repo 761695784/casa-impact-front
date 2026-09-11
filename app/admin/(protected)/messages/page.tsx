@@ -1,10 +1,11 @@
 "use client"
 
 import React, { useState, useMemo } from "react"
-import { Mail, MailOpen, Clock, CheckCircle2 } from "lucide-react"
+import { Mail, MailOpen, Clock, CheckCircle2, Send } from "lucide-react"
 import { MessagesFilterBar } from "@/components/admin/messages/messages-filter-bar"
 import { MessagesTable } from "@/components/admin/messages/messages-table"
 import { MessagesMobileList } from "@/components/admin/messages/messages-mobile-list"
+import { SendMessageDialog } from "@/components/admin/messages/send-message-dialog"
 import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog"
 import { ErrorState } from "@/components/admin/ui/error-state"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -26,6 +27,7 @@ export default function AdminMessagesPage() {
   const [deletingMessage, setDeletingMessage] = useState<ContactMessage | null>(
     null
   )
+  const [isSendMessageOpen, setIsSendMessageOpen] = useState(false)
 
   const {
     data: messages = [],
@@ -71,6 +73,14 @@ export default function AdminMessagesPage() {
             Traitement des prises de contact, propositions de partenariat et sollicitations reçues depuis le site public.
           </p>
         </div>
+
+        <Button
+          onClick={() => setIsSendMessageOpen(true)}
+          className="rounded-full bg-forest text-white hover:bg-forest/90 font-semibold gap-2 shadow-xs shrink-0"
+        >
+          <Send className="size-4" />
+          <span>Envoyer un message</span>
+        </Button>
       </div>
 
       {/* 2. KPI Summary */}
@@ -211,6 +221,9 @@ export default function AdminMessagesPage() {
           }
         }}
       />
+
+      {/* Envoyer un message (accord du 2026-09-11) */}
+      <SendMessageDialog open={isSendMessageOpen} onOpenChange={setIsSendMessageOpen} />
     </div>
   )
 }

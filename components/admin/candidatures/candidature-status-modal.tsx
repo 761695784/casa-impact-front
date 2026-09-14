@@ -20,9 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { APPLICATION_STATUS_LABELS } from "@/types/enums"
-import { useUpdateApplicationStatus } from "@/hooks/use-applications"
+import { useUpdateApplicationStatus, useNotifyApplication } from "@/hooks/use-applications"
 import { StatusBadge } from "@/components/admin/ui/status-badge"
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Loader2, AlertCircle, CheckCircle2, Mail } from "lucide-react"
 import type { Application } from "@/types/models"
 import type { ApplicationStatus } from "@/types/enums"
 
@@ -46,6 +46,7 @@ export function CandidatureStatusModal({
   const [showConfirmSensitive, setShowConfirmSensitive] = useState(false)
 
   const updateMutation = useUpdateApplicationStatus()
+  const notifyMutation = useNotifyApplication()
 
   useEffect(() => {
     if (application) {
@@ -135,6 +136,38 @@ export function CandidatureStatusModal({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Envoi manuel de l'email contextuel (accord du 2026-09-14) —
+              envoie toujours l'email du statut ACTUELLEMENT ENREGISTRÉ
+              (application.statut), pas de la sélection ci-dessus tant
+              qu'elle n'a pas été enregistrée : on l'indique clairement pour
+              éviter toute confusion si l'admin vient de changer le statut
+              dans le menu sans encore cliquer sur "Enregistrer". */}
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/80 bg-secondary/30 p-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-foreground">
+                Email « {APPLICATION_STATUS_LABELS[application.statut]} »
+              </p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                Envoie au candidat l'email correspondant au statut actuellement enregistré, à tout moment (utile pour un renvoi).
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={notifyMutation.isPending}
+              onClick={() => notifyMutation.mutate(application.id)}
+              className="shrink-0 rounded-full gap-1.5 text-xs"
+            >
+              {notifyMutation.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Mail className="size-3.5" />
+              )}
+              <span>Envoyer</span>
+            </Button>
           </div>
 
           {/* Notes Internes */}

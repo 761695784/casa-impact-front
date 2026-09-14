@@ -5,8 +5,23 @@ import { useRouter, usePathname } from "next/navigation"
 import { DATA_SOURCE } from "@/lib/config"
 import { apiFetch, ensureCsrfCookie } from "@/lib/api-client"
 import { mockAdminUsers } from "@/lib/mock/admin-dashboard.mock"
+import { ROLES_MAP } from "@/lib/services/users.service"
 import type { User } from "@/types/models"
 import type { AdminRoleSlug } from "@/types/admin"
+
+/**
+ * Permissions du rôle principal d'un utilisateur démo (mode mock
+ * uniquement) — dérivées de ROLES_MAP (users.service.ts), la même source
+ * que le formulaire de création/édition d'utilisateur. Corrige le bug du
+ * 2026-09-11 : les comptes démo "communication"/"gestionnaire-candidatures"
+ * recevaient auparavant `permissions: []` codé en dur ici, quel que soit
+ * leur rôle réel.
+ */
+function mockPermissionsFor(user: User | null | undefined): string[] {
+  const roleSlug = (user?.roles?.[0] as AdminRoleSlug) || null
+  if (!roleSlug) return []
+  return ROLES_MAP[roleSlug]?.permissions ?? []
+}
 
 interface AuthContextType {
   user: User | null
@@ -39,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // DEMO ONLY — replace with API data
         const demo = mockAdminUsers[0]
         setUser(demo)
-        setPermissions(demo?.roles?.includes("administrateur-principal") ? ["*"] : [])
+        setPermissions(mockPermissionsFor(demo))
         setIsLoading(false)
         return
       }
@@ -80,7 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           mockAdminUsers.find((u) => u.email === credentials.email) ||
           mockAdminUsers[0]
         setUser(found)
-        setPermissions(found?.roles?.includes("administrateur-principal") ? ["*"] : [])
+        setPermissions(mockPermissionsFor(found))
         router.push("/admin/dashboard")
         return
       }
@@ -124,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const found = mockAdminUsers.find((u) => u.roles?.includes(roleSlug))
       if (found) {
         setUser(found)
-        setPermissions(found?.roles?.includes("administrateur-principal") ? ["*"] : [])
+        setPermissions(mockPermissionsFor(found))
       }
     }
   }

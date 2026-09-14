@@ -83,7 +83,7 @@ export function AboutIntro() {
 
           <div className="mt-6 text-center">
             <p className="font-display text-lg font-bold text-foreground">
-              Le Baobab
+              Le Manguier
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               Symbole des racines profondes, de la force collective et de la transmission intergénérationnelle.

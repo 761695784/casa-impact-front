@@ -34,7 +34,10 @@ export function CandidaturesMobileList({
               {app.reference}
             </span>
             <div className="flex items-center gap-1.5">
-              <StatusBadge status={app.statut} />
+              <StatusBadge
+                status={app.statut}
+                onClick={() => onOpenStatusModal(app)}
+              />
               {app.promu && (
                 <Badge
                   variant="outline"

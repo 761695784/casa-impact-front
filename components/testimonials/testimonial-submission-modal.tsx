@@ -91,7 +91,7 @@ export function TestimonialSubmissionModal({
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("L'image ne doit pas dépasser 5 Mo.")
+      toast.error("L'image ne doit pas dépasser 50 Mo.")
       return
     }
 

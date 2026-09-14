@@ -75,16 +75,15 @@ export function TestimonialsHero({ onOpenSubmitModal }: TestimonialsHeroProps) {
 
             {/* CTAs */}
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              {onOpenSubmitModal && (
+              {/* {onOpenSubmitModal && (
                 <Button
                   onClick={onOpenSubmitModal}
                   size="lg"
                   className="rounded-full bg-accent text-forest hover:bg-accent/90 font-bold px-7 shadow-xl shadow-accent/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  {/* <MessageSquareHeart className="mr-2 size-5" /> */}
                   Partager mon témoignage
                 </Button>
-              )}
+              )} */}
               <Button
                 asChild
                 variant="outline"

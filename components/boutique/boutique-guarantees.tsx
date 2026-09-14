@@ -35,8 +35,8 @@ export function BoutiqueGuarantees() {
         {/* Section Header */}
         <div className="text-center max-w-xl mx-auto mb-12">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary mb-3">
-            <Sparkles className="size-3.5 text-accent" />
-            <span>Engagements & Garanties</span>
+            {/* <Sparkles className="size-3.5 text-accent" /> */}
+            <span>Engagements et Garanties</span>
           </div>
           <h2 className="font-display text-2xl sm:text-4xl font-bold text-foreground tracking-tight">
             Pourquoi choisir nos articles officiels ?
@@ -74,8 +74,8 @@ export function BoutiqueGuarantees() {
 
           <div className="relative z-10 max-w-2xl mx-auto space-y-4">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/20 border border-accent/40 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-              <Sparkles className="size-3.5" />
-              <span>Commandes Groupées & Personnalisations</span>
+              {/* <Sparkles className="size-3.5" /> */}
+              <span>Commandes Groupées et Personnalisations</span>
             </div>
 
             <h3 className="font-display text-xl sm:text-3xl font-bold text-white leading-snug">

@@ -234,6 +234,37 @@ export interface Application {
   promu?: boolean
   promoted_at?: string
   notes_internes?: string
+  /**
+   * Historique des changements de statut + emails envoyés (accord du
+   * 2026-09-14, pour la présentation aux partenaires) — présent seulement
+   * quand chargé côté backend (show/update/notify), voir
+   * Admin\ApplicationResource::history.
+   */
+  history?: ApplicationHistoryEntry[]
+}
+
+export interface ApplicationHistoryEntry {
+  id: number
+  type: "statut_change" | "email_envoye"
+  ancien_statut?: ApplicationStatus | null
+  nouveau_statut?: ApplicationStatus | null
+  sujet_email?: string | null
+  user?: { id: number; name: string } | null
+  /**
+   * Présent uniquement sur la page/export d'historique à plat
+   * (Admin\ApplicationController::history/exportHistory, accord du
+   * 2026-09-14) où la candidature est eager-loadée pour identifier le
+   * dossier concerné par chaque ligne — absent quand cette entrée est
+   * imbriquée sous Application.history (ApplicationResource ne recharge
+   * pas la relation depuis elle-même). Voir Admin\ApplicationHistoryResource.
+   */
+  application?: {
+    id: number
+    reference: string
+    candidat_nom: string
+    application_call: { id: number; titre: string } | null
+  } | null
+  created_at: string
 }
 
 export interface ApplicationConfirmation {

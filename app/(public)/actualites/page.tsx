@@ -5,6 +5,7 @@ import { Section, SectionHeading } from "@/components/layout/section"
 import { CtaBand } from "@/components/layout/cta-band"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/actualites" },
   title: "Actualités — La Vie de Casa Impact & Événements",
   description:
     "Suivez l'actualité de Casa Impact : annonces officielles, communiqués, reportages de terrain et comptes-rendus d'initiatives à Ziguinchor, Sédhiou et Kolda.",

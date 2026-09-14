@@ -51,12 +51,12 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     groupTitle: "CONTENU",
     items: [
-      {
-        title: "Pages",
-        href: "/admin/pages",
-        icon: FileText,
-        permission: "pages.view",
-      },
+      // {
+      //   title: "Pages",
+      //   href: "/admin/pages",
+      //   icon: FileText,
+      //   permission: "pages.view",
+      // },
       {
         title: "Domaines",
         href: "/admin/domaines",

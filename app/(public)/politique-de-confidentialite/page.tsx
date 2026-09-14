@@ -19,6 +19,7 @@ import { Section } from "@/components/layout/section"
 import { siteConfig, contactInfo } from "@/lib/config"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/politique-de-confidentialite" },
   title: "Politique de Confidentialité | Casa Impact",
   description:
     "Découvrez notre politique de protection des données personnelles, conforme à la loi sénégalaise n° 2008-12 et aux exigences de la CDP.",

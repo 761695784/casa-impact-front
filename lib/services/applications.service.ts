@@ -1,7 +1,13 @@
 import { DATA_SOURCE } from "@/lib/config"
 import { apiFetch } from "@/lib/api-client"
 import { mockApplications } from "@/lib/mock/applications.mock"
-import type { Application, ApplicationCall, ApplicationDocumentFile, PaginatedResponse } from "@/types/models"
+import type {
+  Application,
+  ApplicationCall,
+  ApplicationDocumentFile,
+  ApplicationHistoryEntry,
+  PaginatedResponse,
+} from "@/types/models"
 import type { ApplicationStatus, Region } from "@/types/enums"
 
 export interface ListApplicationsParams {
@@ -11,6 +17,24 @@ export interface ListApplicationsParams {
   appel_id?: number | "all" | string
   page?: number
   per_page?: number
+}
+
+export interface ListApplicationHistoryParams {
+  application_call_id?: number | "all" | string
+  type?: "statut_change" | "email_envoye" | "all" | string
+  page?: number
+  per_page?: number
+}
+
+export interface PendingNotificationsCount {
+  total: number
+  par_statut: Partial<Record<ApplicationStatus, number>>
+}
+
+export interface NotifyPendingResult {
+  message: string
+  total: number
+  par_statut: Partial<Record<ApplicationStatus, number>>
 }
 
 function delay<T>(data: T, ms = 120): Promise<T> {
@@ -281,6 +305,149 @@ export const applicationsService = {
 
     const raw = (json as { data?: RawApplication }).data ?? (json as RawApplication)
     return withLegacyNames(raw)
+  },
+
+  /**
+   * Envoi MANUEL de l'email contextuel du statut ACTUEL de la candidature
+   * (bouton dédié, accord du 2026-09-14) — n'importe quel statut, pas
+   * seulement Retenue/NonRetenue/EnListeAttente, et indépendant d'un
+   * changement de statut (utile pour renvoyer un email, ou notifier un
+   * statut intermédiaire). Chaque envoi est journalisé côté serveur.
+   * Endpoint : POST /api/admin/applications/{id}/notify
+   */
+  notifyApplication: async (id: number): Promise<Application> => {
+    if (DATA_SOURCE === "mock") {
+      const found = mockApplications.find((a) => a.id === Number(id))
+      if (!found) throw new Error("Candidature introuvable")
+      return delay<Application>(found)
+    }
+
+    const json = await apiFetch<{ data?: RawApplication } | RawApplication>(
+      `/api/admin/applications/${id}/notify`,
+      { method: "POST" }
+    )
+
+    const raw = (json as { data?: RawApplication }).data ?? (json as RawApplication)
+    return withLegacyNames(raw)
+  },
+
+  /**
+   * Nombre de candidatures en attente d'un email (pas encore notifiées pour
+   * leur statut actuel), groupé par statut — alimente le bouton "Envoyer
+   * les emails en attente". `applicationCallId` optionnel : sans lui,
+   * compte tous appels confondus.
+   * Endpoint : GET /api/admin/applications/pending-notifications-count
+   */
+  getPendingNotificationsCount: async (
+    applicationCallId?: number | "all" | string
+  ): Promise<PendingNotificationsCount> => {
+    if (DATA_SOURCE === "mock") {
+      return delay<PendingNotificationsCount>({ total: 0, par_statut: {} })
+    }
+
+    const queryParams = new URLSearchParams()
+    if (applicationCallId && applicationCallId !== "all") {
+      queryParams.set("application_call_id", String(applicationCallId))
+    }
+
+    return apiFetch<PendingNotificationsCount>(
+      `/api/admin/applications/pending-notifications-count?${queryParams.toString()}`
+    )
+  },
+
+  /**
+   * Envoi GROUPÉ — "les séries d'emails par statut" une fois que l'admin a
+   * fini de trancher chaque dossier (accord du 2026-09-14). Envoie l'email
+   * contextuel à toutes les candidatures en attente, scopé à un appel si
+   * fourni, sinon à tous les appels.
+   * Endpoint : POST /api/admin/applications/notify-pending
+   */
+  notifyPendingApplications: async (
+    applicationCallId?: number | "all" | string
+  ): Promise<NotifyPendingResult> => {
+    if (DATA_SOURCE === "mock") {
+      return delay<NotifyPendingResult>({
+        message: "Aucun email en attente à envoyer.",
+        total: 0,
+        par_statut: {},
+      })
+    }
+
+    const body: Record<string, unknown> = {}
+    if (applicationCallId && applicationCallId !== "all") {
+      body.application_call_id = Number(applicationCallId)
+    }
+
+    return apiFetch<NotifyPendingResult>(`/api/admin/applications/notify-pending`, {
+      method: "POST",
+      body,
+    })
+  },
+
+  /**
+   * Historique paginé (changements de statut + emails envoyés), pour la
+   * page dédiée (accord du 2026-09-14 : "une page ou un export pour
+   * l'historique").
+   * Endpoint : GET /api/admin/applications/history
+   */
+  listApplicationHistory: async (
+    params: ListApplicationHistoryParams = {}
+  ): Promise<PaginatedResponse<ApplicationHistoryEntry>> => {
+    const { application_call_id, type, page = 1, per_page = 20 } = params
+
+    if (DATA_SOURCE === "mock") {
+      return delay<PaginatedResponse<ApplicationHistoryEntry>>({
+        data: [],
+        meta: { current_page: 1, last_page: 1, per_page, total: 0 },
+      })
+    }
+
+    const queryParams = new URLSearchParams()
+    if (application_call_id && application_call_id !== "all") {
+      queryParams.set("application_call_id", String(application_call_id))
+    }
+    if (type && type !== "all") queryParams.set("type", type)
+    queryParams.set("page", String(page))
+    queryParams.set("per_page", String(per_page))
+
+    return apiFetch<PaginatedResponse<ApplicationHistoryEntry>>(
+      `/api/admin/applications/history?${queryParams.toString()}`
+    )
+  },
+
+  /**
+   * Export CSV de l'historique — pensé pour être partagé tel quel avec un
+   * partenaire.
+   * Endpoint : GET /api/admin/applications/history/export
+   */
+  exportApplicationHistory: async (
+    params: Omit<ListApplicationHistoryParams, "page" | "per_page"> = {}
+  ): Promise<void> => {
+    const { API_URL } = await import("@/lib/config")
+    const queryParams = new URLSearchParams()
+    if (params.application_call_id && params.application_call_id !== "all") {
+      queryParams.set("application_call_id", String(params.application_call_id))
+    }
+    if (params.type && params.type !== "all") queryParams.set("type", params.type)
+
+    const res = await fetch(
+      `${API_URL}/api/admin/applications/history/export?${queryParams.toString()}`,
+      { method: "GET", credentials: "include" }
+    )
+
+    if (!res.ok) {
+      throw new Error(`Échec de l'exportation de l'historique (HTTP ${res.status})`)
+    }
+
+    const blob = await res.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `historique_candidatures_casa_impact_${new Date().toISOString().split("T")[0]}.csv`
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
   },
 
   /**

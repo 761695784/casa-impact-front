@@ -13,7 +13,15 @@ function delay<T>(data: T, ms = 100): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(data), ms))
 }
 
-const ROLES_MAP: Record<AdminRoleSlug, Role> = {
+/**
+ * Exporté (accord du 2026-09-11) pour être réutilisé par AuthContext en
+ * mode mock — sans ça, les comptes démo "communication" et
+ * "gestionnaire-candidatures" se retrouvaient avec ZÉRO permission une
+ * fois connectés (AuthContext codait en dur `permissions: []` pour
+ * quiconque n'était pas administrateur-principal), ce qui rendait le mode
+ * mock inutilisable pour tester l'affichage par rôle.
+ */
+export const ROLES_MAP: Record<AdminRoleSlug, Role> = {
   "administrateur-principal": {
     id: 1,
     nom: "Administrateur Principal",
@@ -24,19 +32,25 @@ const ROLES_MAP: Record<AdminRoleSlug, Role> = {
     id: 2,
     nom: "Responsable Communication",
     slug: "communication",
+    // Notation pointée alignée sur RolesAndPermissionsSeeder.php côté
+    // backend (voir lib/admin-nav.ts) — "resource.*" couvre toutes les
+    // actions de ce module (view/create/update/delete), voir
+    // hooks/use-permissions.ts::hasPermission(). Corrige le bug du
+    // 2026-09-11 : l'ancienne notation "news:*" (deux-points) ne
+    // correspondait à aucune permission réellement vérifiée nulle part.
     permissions: [
-      "news:*",
-      "partners:*",
-      "pages:*",
-      "testimonials:*",
-      "talents:*",
+      "news.*",
+      "partners.*",
+      "pages.*",
+      "testimonials.*",
+      "talents.*",
     ],
   },
   "gestionnaire-candidatures": {
     id: 3,
     nom: "Gestionnaire des Candidatures",
     slug: "gestionnaire-candidatures",
-    permissions: ["applications:*", "application-calls:*", "memberships:*"],
+    permissions: ["applications.*", "application-calls.*", "memberships.*"],
   },
 }
 

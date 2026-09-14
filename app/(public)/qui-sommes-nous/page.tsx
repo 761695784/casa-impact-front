@@ -12,6 +12,7 @@ import {
 import { TeamOrg } from "@/components/team/team-org"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/qui-sommes-nous" },
   title: "Qui sommes-nous — Histoire, Vision & Équipe",
   description:
     "Découvrez Casa Impact, organisation engagée pour le développement durable et inclusif de la Casamance : histoire, vision, valeurs, équipe exécutive et mot du Président Fondateur.",

@@ -8,52 +8,41 @@ import { Section, SectionHeading } from "@/components/layout/section"
 import { Button } from "@/components/ui/button"
 import { usePartners } from "@/hooks/use-content"
 import { getPartnerLogoUrl } from "@/lib/format"
-import type { Partner } from "@/types/models"
-
-// Partenaires officiels prioritaires garantis
-const DEFAULT_PARTNERS: Partner[] = [
-  {
-    id: 1,
-    nom: "Majeli Connect",
-    description: "Solutions technologiques & transformation numérique",
-    lien: "https://majeliconnect.com",
-    type: "technique",
-    media: [{ id: -1, collection: "logo", url: "/assets/partners/logo-Majeli-Connect.png" }],
-    statut: "actif",
-  },
-  {
-    id: 2,
-    nom: "Intello Créative",
-    description: "Agence créative, branding & communication d'impact",
-    lien: "https://intellocreative.com",
-    type: "technique",
-    media: [{ id: -2, collection: "logo", url: "/assets/partners/logo-Intello-Creative.webp" }],
-    statut: "actif",
-  },
-]
 
 export function HomePartners() {
-  const { data: partnersData } = usePartners()
+  // Correctif du 2026-09-14 (demande explicite : "enleve moi les mockup et
+  // fais que ça affiche ce vient directement de l'api") — le marquee
+  // n'affiche plus que les VRAIS partenaires actifs renvoyés par
+  // GET /api/public/partners (via usePartners → contentService.listPartners,
+  // déjà branché sur l'API réelle). Le tableau DEFAULT_PARTNERS
+  // (Majeli Connect / Intello Créative en dur) a été retiré : ces deux
+  // partenaires ne s'affichent que s'ils existent réellement côté admin,
+  // avec un logo, comme n'importe quel autre partenaire.
+  const { data: partnersData, isLoading } = usePartners()
 
-  // On filtre les partenaires actifs qui disposent d'un logo et d'un lien
-  const activePartners =
-    partnersData && partnersData.length > 0
-      ? partnersData.filter((p) => p.statut === "actif" && getPartnerLogoUrl(p))
-      : DEFAULT_PARTNERS
-
-  // Assurer la présence prioritaire de Majeli Connect & Intello Créative
-  const displayPartners =
-    activePartners.length > 0 ? activePartners : DEFAULT_PARTNERS
+  const activePartners = (partnersData ?? []).filter(
+    (p) => p.statut === "actif" && getPartnerLogoUrl(p)
+  )
 
   // Répétition pour assurer un défilement infini fluide sans coupure visuelle
-  const marqueeList = [
-    ...displayPartners,
-    ...displayPartners,
-    ...displayPartners,
-    ...displayPartners,
-    ...displayPartners,
-    ...displayPartners,
-  ]
+  const marqueeList =
+    activePartners.length > 0
+      ? [
+          ...activePartners,
+          ...activePartners,
+          ...activePartners,
+          ...activePartners,
+          ...activePartners,
+          ...activePartners,
+        ]
+      : []
+
+  // Rien à afficher (chargement initial, ou aucun partenaire actif avec
+  // logo côté API) : on n'affiche plus de partenaires fictifs à la place —
+  // on n'affiche simplement rien tant qu'il n'y a pas de vraie donnée.
+  if (!isLoading && activePartners.length === 0) {
+    return null
+  }
 
   return (
     <Section className="relative overflow-hidden py-16 md:py-24 border-t border-border/60 bg-gradient-to-b from-background via-secondary/20 to-background">

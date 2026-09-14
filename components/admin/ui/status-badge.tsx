@@ -6,6 +6,13 @@ interface StatusBadgeProps {
   status: string
   label?: string
   className?: string
+  /**
+   * Rend le badge cliquable (accord du 2026-09-11 : permettre de changer un
+   * statut / marquer un élément comme traité directement au clic sur son
+   * badge, sans passer par un menu). Ajoute un style au survol + le rôle
+   * "button" pour l'accessibilité.
+   */
+  onClick?: () => void
 }
 
 const STATUS_CONFIGS: Record<
@@ -111,7 +118,7 @@ const STATUS_CONFIGS: Record<
   },
 }
 
-export function StatusBadge({ status, label, className }: StatusBadgeProps) {
+export function StatusBadge({ status, label, className, onClick }: StatusBadgeProps) {
   const config = STATUS_CONFIGS[status] || {
     label: label || status,
     className: "border-border bg-secondary text-foreground",
@@ -123,8 +130,22 @@ export function StatusBadge({ status, label, className }: StatusBadgeProps) {
   return (
     <Badge
       variant="outline"
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                onClick()
+              }
+            }
+          : undefined
+      }
       className={cn(
         "inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold rounded-full shadow-2xs",
+        onClick && "cursor-pointer transition-transform hover:scale-105 hover:shadow-md active:scale-95",
         config.className,
         className
       )}

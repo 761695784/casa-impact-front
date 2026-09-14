@@ -300,3 +300,33 @@ export function useDownloadMembershipCard() {
     },
   })
 }
+
+/**
+ * Bouton "Envoyer un rappel de paiement" (accord du 2026-09-11) — ne prend
+ * aucun paramètre : cible toujours tous les membres `en_attente_paiement`,
+ * calculé côté serveur au moment de l'envoi. Pas d'invalidation de cache :
+ * un rappel n'écrit rien sur les adhésions (ni statut, ni compteur).
+ */
+export function useSendPaymentReminders() {
+  return useMutation({
+    mutationFn: () => membershipsService.sendPaymentReminders(),
+    onSuccess: (result) => {
+      if (result.sent === 0) {
+        toast.info(result.message)
+        return
+      }
+      toast.success("Rappels envoyés", {
+        description:
+          result.failed.length > 0
+            ? `${result.sent} envoyé(s), ${result.failed.length} échec(s).`
+            : result.message,
+      })
+    },
+    onError: (err: unknown) => {
+      toast.error("Erreur lors de l'envoi des rappels", {
+        description:
+          err instanceof Error ? err.message : "Une erreur est survenue.",
+      })
+    },
+  })
+}

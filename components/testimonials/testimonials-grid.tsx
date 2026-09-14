@@ -19,26 +19,26 @@ export function TestimonialsGrid({ onOpenSubmitModal }: TestimonialsGridProps = 
 
   // Une liste réelle vide doit afficher un vrai état vide, jamais un
   // repli silencieux sur des données mock.
-  if (testimonials.length === 0) {
-    return (
-      <EmptyState
-        icon={<Quote className="size-6" />}
-        title="Les premiers témoignages arrivent bientôt"
-        description="Bénéficiaires, membres et partenaires partageront ici leur expérience de l'organisation Casa Impact. Vous avez une histoire à raconter ?"
-        action={
-          onOpenSubmitModal ? (
-            <Button onClick={onOpenSubmitModal} className="rounded-full bg-primary text-white">
-              Partager mon témoignage
-            </Button>
-          ) : (
-            <Button asChild className="rounded-full bg-primary text-white">
-              <Link href="/contact">Partager mon témoignage</Link>
-            </Button>
-          )
-        }
-      />
-    )
-  }
+  // if (testimonials.length === 0) {
+  //   return (
+  //     <EmptyState
+  //       icon={<Quote className="size-6" />}
+  //       title="Les premiers témoignages arrivent bientôt"
+  //       description="Bénéficiaires, membres et partenaires partageront ici leur expérience de l'organisation Casa Impact. Vous avez une histoire à raconter ?"
+  //       action={
+  //         onOpenSubmitModal ? (
+  //           <Button onClick={onOpenSubmitModal} className="rounded-full bg-primary text-white">
+  //             Partager mon témoignage
+  //           </Button>
+  //         ) : (
+  //           <Button asChild className="rounded-full bg-primary text-white">
+  //             <Link href="/contact">Partager mon témoignage</Link>
+  //           </Button>
+  //         )
+  //       }
+  //     />
+  //   )
+  // }
 
   return (
     <div className="space-y-10">

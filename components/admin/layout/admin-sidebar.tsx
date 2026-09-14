@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Logo } from "@/components/brand/logo"
 import { ADMIN_NAV_GROUPS } from "@/lib/admin-nav"
-import { usePermissions } from "@/hooks/use-permissions"
 import { BaobabMark } from "@/components/brand/baobab-mark"
 import { Badge } from "@/components/ui/badge"
 
@@ -25,14 +24,13 @@ export function AdminSidebar({
   isCollapsed = false,
   onItemClick,
   className,
-  badgeCounts = {
-    candidaturesNouvelles: 7,
-    messagesNonLus: 4,
-    adhesionsEnAttente: 6,
-  },
+    badgeCounts = {
+      candidaturesNouvelles: 7,
+      messagesNonLus: 4,
+      adhesionsEnAttente: 6,
+    },
 }: AdminSidebarProps) {
   const pathname = usePathname()
-  const { hasPermission } = usePermissions()
 
   return (
     <aside
@@ -62,12 +60,14 @@ export function AdminSidebar({
       <div className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin">
         <div className="space-y-6">
           {ADMIN_NAV_GROUPS.map((group) => {
-            // Filter items user has permission to see
-            const visibleItems = group.items.filter((item) =>
-              item.permission ? hasPermission(item.permission) : true
-            )
-
-            if (visibleItems.length === 0) return null
+            // Accord du 2026-09-11 : quel que soit le rôle, TOUTES les
+            // sections restent visibles dans la navigation (plus de
+            // filtrage par permission ici) — seules les actions à
+            // l'intérieur de chaque page sont restreintes par rôle (voir
+            // PermissionGate utilisé dans chaque page admin). Naviguer
+            // vers une section où on n'a que des droits de lecture doit
+            // rester possible.
+            const visibleItems = group.items
 
             return (
               <div key={group.groupTitle} className="space-y-1">

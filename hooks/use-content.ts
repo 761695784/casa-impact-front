@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { contentService } from "@/lib/services/content.service"
+import { publicMembershipService } from "@/lib/services/public-membership.service"
 
 export const queryKeys = {
   domains: ["domains"] as const,
@@ -91,4 +92,21 @@ export function useImpactIndicators() {
 
 export function useMapPoints() {
   return useQuery({ queryKey: queryKeys.mapPoints, queryFn: () => contentService.listMapPoints() })
+}
+
+/**
+ * Nombre réel de membres actifs (accord du 2026-09-14, section "Chiffres
+ * clés" du site public) — `data` vaut `null` en mode mock, et la requête
+ * passe en `isError` si l'API réelle est injoignable ; dans les deux cas
+ * le composant appelant doit afficher "?" plutôt qu'un chiffre par
+ * défaut. Pas de `retry` : un "?" doit apparaître vite si le backend est
+ * hors ligne, pas après plusieurs tentatives silencieuses.
+ */
+export function useMembersActifsCount() {
+  return useQuery({
+    queryKey: ["public", "memberships", "count"],
+    queryFn: () => publicMembershipService.getMembersActifsCount(),
+    staleTime: 1000 * 60,
+    retry: false,
+  })
 }

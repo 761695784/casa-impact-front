@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { PermissionGate } from "@/components/admin/permission-gate"
 import { formatDate } from "@/lib/format"
 import {
   CONTACT_CATEGORY_LABELS,
@@ -194,23 +195,27 @@ export function MessagesTable({
                             </Link>
                           }
                         />
-                        {isUnread && (
+                        <PermissionGate permission="contact-messages.update">
+                          {isUnread && (
+                            <DropdownMenuItem
+                              onClick={() => onMarkAsRead(m)}
+                              className="flex items-center gap-2 cursor-pointer"
+                            >
+                              <MailOpen className="size-3.5 text-emerald-600" />
+                              <span>Marquer comme lu</span>
+                            </DropdownMenuItem>
+                          )}
+                        </PermissionGate>
+                        <PermissionGate permission="contact-messages.delete">
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() => onMarkAsRead(m)}
-                            className="flex items-center gap-2 cursor-pointer"
+                            onClick={() => onDelete(m)}
+                            className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
                           >
-                            <MailOpen className="size-3.5 text-emerald-600" />
-                            <span>Marquer comme lu</span>
+                            <Trash2 className="size-3.5" />
+                            <span>Supprimer</span>
                           </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => onDelete(m)}
-                          className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
-                        >
-                          <Trash2 className="size-3.5" />
-                          <span>Supprimer</span>
-                        </DropdownMenuItem>
+                        </PermissionGate>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

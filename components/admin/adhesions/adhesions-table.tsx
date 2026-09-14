@@ -2,6 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   Eye,
   CheckCircle2,
@@ -30,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { PermissionGate } from "@/components/admin/permission-gate"
 import { StatusBadge } from "@/components/admin/ui/status-badge"
 import { formatDate, formatNumber } from "@/lib/format"
 import {
@@ -51,6 +53,8 @@ export function AdhesionsTable({
   onReject,
   onDelete,
 }: AdhesionsTableProps) {
+  const router = useRouter()
+
   return (
     <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-2xs">
       <div className="overflow-x-auto">
@@ -200,9 +204,21 @@ export function AdhesionsTable({
                   </div>
                 </TableCell>
 
-                {/* 6. Statut Adhésion */}
+                {/* 6. Statut Adhésion — cliquable quand en attente : ouvre
+                    directement le dossier, où Valider/Refuser sont à un
+                    clic (accord du 2026-09-11). Pas d'action automatique
+                    au clic ici (contrairement aux Candidatures) : deux
+                    issues possibles (valider/refuser), impossible de
+                    deviner laquelle sans ouvrir le dossier. */}
                 <TableCell>
-                  <StatusBadge status={m.statut} />
+                  <StatusBadge
+                    status={m.statut}
+                    onClick={
+                      m.statut === "en_attente_paiement"
+                        ? () => router.push(`/admin/adhesions/${m.id}`)
+                        : undefined
+                    }
+                  />
                 </TableCell>
 
                 {/* 7. Actions */}
@@ -232,32 +248,36 @@ export function AdhesionsTable({
                           </Link>
                         }
                       />
-                      {m.statut !== "validee" && (
+                      <PermissionGate permission="memberships.update">
+                        {m.statut !== "validee" && (
+                          <DropdownMenuItem
+                            onClick={() => onValidate(m)}
+                            className="flex items-center gap-2 text-emerald-700 focus:text-emerald-700 cursor-pointer"
+                          >
+                            <CheckCircle2 className="size-3.5" />
+                            <span>Valider l'adhésion</span>
+                          </DropdownMenuItem>
+                        )}
+                        {m.statut !== "refusee" && (
+                          <DropdownMenuItem
+                            onClick={() => onReject(m)}
+                            className="flex items-center gap-2 text-amber-700 focus:text-amber-700 cursor-pointer"
+                          >
+                            <XCircle className="size-3.5" />
+                            <span>Refuser l'adhésion</span>
+                          </DropdownMenuItem>
+                        )}
+                      </PermissionGate>
+                      <PermissionGate permission="memberships.delete">
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onClick={() => onValidate(m)}
-                          className="flex items-center gap-2 text-emerald-700 focus:text-emerald-700 cursor-pointer"
+                          onClick={() => onDelete(m)}
+                          className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
                         >
-                          <CheckCircle2 className="size-3.5" />
-                          <span>Valider l'adhésion</span>
+                          <Trash2 className="size-3.5" />
+                          <span>Supprimer</span>
                         </DropdownMenuItem>
-                      )}
-                      {m.statut !== "refusee" && (
-                        <DropdownMenuItem
-                          onClick={() => onReject(m)}
-                          className="flex items-center gap-2 text-amber-700 focus:text-amber-700 cursor-pointer"
-                        >
-                          <XCircle className="size-3.5" />
-                          <span>Refuser l'adhésion</span>
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => onDelete(m)}
-                        className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
-                      >
-                        <Trash2 className="size-3.5" />
-                        <span>Supprimer</span>
-                      </DropdownMenuItem>
+                      </PermissionGate>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

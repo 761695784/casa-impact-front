@@ -2,8 +2,10 @@
 
 import React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Eye, CheckCircle2, XCircle, Trash2, Mail, Phone, MapPin, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PermissionGate } from "@/components/admin/permission-gate"
 import { StatusBadge } from "@/components/admin/ui/status-badge"
 import { formatDate, formatNumber } from "@/lib/format"
 import {
@@ -25,6 +27,8 @@ export function AdhesionsMobileList({
   onReject,
   onDelete,
 }: AdhesionsMobileListProps) {
+  const router = useRouter()
+
   return (
     <div className="space-y-4 md:hidden">
       {memberships.map((m) => (
@@ -37,7 +41,14 @@ export function AdhesionsMobileList({
             <span className="font-mono text-xs font-bold text-forest">
               {m.numero_membre || `ADH-#${m.id}`}
             </span>
-            <StatusBadge status={m.statut} />
+            <StatusBadge
+              status={m.statut}
+              onClick={
+                m.statut === "en_attente_paiement"
+                  ? () => router.push(`/admin/adhesions/${m.id}`)
+                  : undefined
+              }
+            />
           </div>
 
           {/* Photo, Identity & Contact */}
@@ -121,39 +132,43 @@ export function AdhesionsMobileList({
               </Link>
             </Button>
 
-            {m.statut !== "validee" && (
-              <Button
-                size="sm"
-                onClick={() => onValidate(m)}
-                className="rounded-full text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                title="Valider"
-              >
-                <CheckCircle2 className="size-3.5" />
-                <span>Valider</span>
-              </Button>
-            )}
+            <PermissionGate permission="memberships.update">
+              {m.statut !== "validee" && (
+                <Button
+                  size="sm"
+                  onClick={() => onValidate(m)}
+                  className="rounded-full text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  title="Valider"
+                >
+                  <CheckCircle2 className="size-3.5" />
+                  <span>Valider</span>
+                </Button>
+              )}
 
-            {m.statut !== "refusee" && (
+              {m.statut !== "refusee" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onReject(m)}
+                  className="size-8 rounded-full text-amber-700 hover:bg-amber-500/10"
+                  title="Refuser"
+                >
+                  <XCircle className="size-4" />
+                </Button>
+              )}
+            </PermissionGate>
+
+            <PermissionGate permission="memberships.delete">
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => onReject(m)}
-                className="size-8 rounded-full text-amber-700 hover:bg-amber-500/10"
-                title="Refuser"
+                onClick={() => onDelete(m)}
+                className="size-8 rounded-full text-destructive hover:bg-destructive/10"
+                title="Supprimer"
               >
-                <XCircle className="size-4" />
+                <Trash2 className="size-4" />
               </Button>
-            )}
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onDelete(m)}
-              className="size-8 rounded-full text-destructive hover:bg-destructive/10"
-              title="Supprimer"
-            >
-              <Trash2 className="size-4" />
-            </Button>
+            </PermissionGate>
           </div>
         </div>
       ))}

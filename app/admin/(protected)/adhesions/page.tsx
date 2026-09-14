@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { Users, UserCheck, Clock, UserX, CreditCard, UserPlus, FileSpreadsheet } from "lucide-react"
+import { Users, UserCheck, Clock, UserX, CreditCard, UserPlus, FileSpreadsheet, BellRing } from "lucide-react"
 import { AdhesionsFilterBar } from "@/components/admin/adhesions/adhesions-filter-bar"
 import { AdhesionsTable } from "@/components/admin/adhesions/adhesions-table"
 import { AdhesionsMobileList } from "@/components/admin/adhesions/adhesions-mobile-list"
@@ -18,6 +18,7 @@ import {
   useValidateMembership,
   useRejectMembership,
   useDeleteMembership,
+  useSendPaymentReminders,
 } from "@/hooks/use-memberships"
 import type { Membership } from "@/types/models"
 
@@ -39,6 +40,7 @@ export default function AdminAdhesionsPage() {
     useState<Membership | null>(null)
   const [deletingMembership, setDeletingMembership] =
     useState<Membership | null>(null)
+  const [isReminderConfirmOpen, setIsReminderConfirmOpen] = useState(false)
 
   // Changer un filtre revient toujours à la page 1 — sinon on peut se
   // retrouver sur une page qui n'existe plus pour le nouveau filtre.
@@ -87,6 +89,7 @@ export default function AdminAdhesionsPage() {
   const validateMutation = useValidateMembership()
   const rejectMutation = useRejectMembership()
   const deleteMutation = useDeleteMembership()
+  const sendRemindersMutation = useSendPaymentReminders()
 
   const handleReset = () => {
     setSearch("")
@@ -113,6 +116,16 @@ export default function AdminAdhesionsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start sm:self-auto">
+          {counts.enAttente > 0 && (
+            <Button
+              onClick={() => setIsReminderConfirmOpen(true)}
+              variant="outline"
+              className="rounded-full font-semibold gap-2 border-forest/40 text-forest hover:bg-forest/10"
+            >
+              <BellRing className="size-4" />
+              <span>Envoyer un rappel de paiement</span>
+            </Button>
+          )}
           <Button
             onClick={() => setIsImportOpen(true)}
             variant="outline"
@@ -320,6 +333,22 @@ export default function AdminAdhesionsPage() {
             await rejectMutation.mutateAsync(rejectingMembership.id)
             setRejectingMembership(null)
           }
+        }}
+      />
+
+      {/* Rappel de paiement — accord du 2026-09-11, cible tous les membres
+          en_attente_paiement (recalculé côté serveur au moment de l'envoi). */}
+      <ConfirmDialog
+        open={isReminderConfirmOpen}
+        onOpenChange={setIsReminderConfirmOpen}
+        title="Envoyer un rappel de paiement ?"
+        description={`${counts.enAttente} membre(s) n'ont pas encore finalisé leur adhésion (paiement en attente). Ils recevront un email de rappel avec les instructions de paiement Wave.`}
+        confirmText="Envoyer les rappels"
+        variant="default"
+        isLoading={sendRemindersMutation.isPending}
+        onConfirm={async () => {
+          await sendRemindersMutation.mutateAsync()
+          setIsReminderConfirmOpen(false)
         }}
       />
 

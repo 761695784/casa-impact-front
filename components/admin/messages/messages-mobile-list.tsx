@@ -4,6 +4,7 @@ import React from "react"
 import Link from "next/link"
 import { Eye, MailOpen, Trash2, Mail, Phone } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PermissionGate } from "@/components/admin/permission-gate"
 import { formatDate } from "@/lib/format"
 import {
   CONTACT_CATEGORY_LABELS,
@@ -98,27 +99,31 @@ export function MessagesMobileList({
                 </Link>
               </Button>
 
-              {isUnread && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => onMarkAsRead(m)}
-                  className="rounded-full text-xs text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20"
-                >
-                  <MailOpen className="size-3.5" />
-                  <span>Lu</span>
-                </Button>
-              )}
+              <PermissionGate permission="contact-messages.update">
+                {isUnread && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => onMarkAsRead(m)}
+                    className="rounded-full text-xs text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20"
+                  >
+                    <MailOpen className="size-3.5" />
+                    <span>Lu</span>
+                  </Button>
+                )}
+              </PermissionGate>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onDelete(m)}
-                className="size-9 rounded-full text-destructive hover:bg-destructive/10"
-                title="Supprimer le message"
-              >
-                <Trash2 className="size-4" />
-              </Button>
+              <PermissionGate permission="contact-messages.delete">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDelete(m)}
+                  className="size-9 rounded-full text-destructive hover:bg-destructive/10"
+                  title="Supprimer le message"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </PermissionGate>
             </div>
           </div>
         )

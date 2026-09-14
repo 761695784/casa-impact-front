@@ -11,8 +11,15 @@ import {
   AlertCircle,
   Clock,
   Sparkles,
+  Send,
+  History,
 } from "lucide-react"
-import { useApplications, useDeleteApplication } from "@/hooks/use-applications"
+import {
+  useApplications,
+  useDeleteApplication,
+  usePendingNotificationsCount,
+  useNotifyPendingApplications,
+} from "@/hooks/use-applications"
 import { CandidaturesFilterBar } from "@/components/admin/candidatures/candidatures-filter-bar"
 import { CandidaturesTable } from "@/components/admin/candidatures/candidatures-table"
 import { CandidaturesMobileList } from "@/components/admin/candidatures/candidatures-mobile-list"
@@ -23,7 +30,9 @@ import { PaginationBar } from "@/components/admin/ui/pagination-bar"
 import { ErrorState } from "@/components/admin/ui/error-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
+import { APPLICATION_STATUS_LABELS } from "@/types/enums"
 import type { Application } from "@/types/models"
+import type { ApplicationStatus } from "@/types/enums"
 
 export default function CandidaturesListPage() {
   const [search, setSearch] = useState("")
@@ -36,6 +45,7 @@ export default function CandidaturesListPage() {
   const [selectedAppForStatus, setSelectedAppForStatus] = useState<Application | null>(null)
   const [selectedAppForPromote, setSelectedAppForPromote] = useState<Application | null>(null)
   const [selectedAppForDelete, setSelectedAppForDelete] = useState<Application | null>(null)
+  const [isNotifyConfirmOpen, setIsNotifyConfirmOpen] = useState(false)
 
   const { data, isLoading, isError, error, refetch } = useApplications({
     search,
@@ -47,6 +57,15 @@ export default function CandidaturesListPage() {
   })
 
   const deleteMutation = useDeleteApplication()
+
+  // Envoi groupé des emails "en attente" — accord du 2026-09-14 : on
+  // n'envoie plus automatiquement à chaque changement de statut, l'admin
+  // déclenche l'envoi des séries d'emails une fois tous les dossiers
+  // tranchés. Scopé au filtre "appel" courant (comme l'export CSV) : sans
+  // appel sélectionné, porte sur tous les appels confondus.
+  const { data: pendingCount } = usePendingNotificationsCount(appelId)
+  const notifyPendingMutation = useNotifyPendingApplications()
+  const pendingTotal = pendingCount?.total ?? 0
 
   const handleResetFilters = () => {
     setSearch("")
@@ -77,7 +96,24 @@ export default function CandidaturesListPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {pendingTotal > 0 && (
+            <Button
+              onClick={() => setIsNotifyConfirmOpen(true)}
+              variant="outline"
+              size="sm"
+              className="rounded-full gap-1.5 font-semibold border-forest/40 text-forest hover:bg-forest/10"
+            >
+              <Send className="size-3.5" />
+              <span>Envoyer les emails en attente ({pendingTotal})</span>
+            </Button>
+          )}
+          <Button asChild variant="outline" size="sm" className="rounded-full gap-1.5 border-border bg-card">
+            <Link href="/admin/candidatures/historique">
+              <History className="size-3.5" />
+              <span>Historique</span>
+            </Link>
+          </Button>
           <Button asChild variant="outline" size="sm" className="rounded-full gap-1.5 border-border bg-card">
             <Link href="/admin/appels-a-candidatures">
               <span>Voir les appels ouverts</span>
@@ -209,6 +245,36 @@ export default function CandidaturesListPage() {
           if (selectedAppForDelete) {
             await deleteMutation.mutateAsync(selectedAppForDelete.id)
           }
+        }}
+      />
+
+      {/* Envoi groupé des emails en attente — accord du 2026-09-14 :
+          "on etudie on voit si c'est bon on fait retenue mais on envoie
+          pas encore de mail, apres si on finit de choisir on envoie les
+          series d'emails par statut". Scopé au filtre "appel" courant
+          (comme l'export CSV) ; ne renvoie jamais deux fois le même email
+          pour un même statut (dédoublonnage côté serveur via l'historique). */}
+      <ConfirmDialog
+        open={isNotifyConfirmOpen}
+        onOpenChange={setIsNotifyConfirmOpen}
+        title="Envoyer les emails en attente ?"
+        description={
+          `${pendingTotal} candidat(s) ` +
+          (appelId !== "all" ? "de cet appel " : "") +
+          `n'ont pas encore reçu l'email correspondant à leur statut actuel` +
+          (pendingCount?.par_statut && Object.keys(pendingCount.par_statut).length > 0
+            ? ` (${Object.entries(pendingCount.par_statut)
+                .map(([statut, n]) => `${n} ${APPLICATION_STATUS_LABELS[statut as ApplicationStatus] ?? statut}`)
+                .join(", ")})`
+            : "") +
+          `. Chacun recevra l'email contextuel de son statut actuel.`
+        }
+        confirmText="Envoyer les emails"
+        variant="default"
+        isLoading={notifyPendingMutation.isPending}
+        onConfirm={async () => {
+          await notifyPendingMutation.mutateAsync(appelId)
+          setIsNotifyConfirmOpen(false)
         }}
       />
 

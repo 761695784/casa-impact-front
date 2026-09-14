@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { APPLICATION_STATUS_LABELS, REGION_LABELS } from "@/types/enums"
-import { mockApplicationCalls } from "@/lib/mock/application-calls.mock"
+import { useApplicationCalls } from "@/hooks/use-application-calls"
 import type { ApplicationStatus, Region } from "@/types/enums"
 import { useExportApplications } from "@/hooks/use-applications"
 
@@ -44,6 +44,10 @@ export function CandidaturesFilterBar({
   // Local state for debounced search
   const [localSearch, setLocalSearch] = useState(search)
   const exportMutation = useExportApplications()
+  // Correctif du 2026-09-14 (même bug que le formulaire "Nouvel appel" :
+  // mockApplicationCalls contenait des id fictifs) — appels réels de la base.
+  const { data: applicationCallsData } = useApplicationCalls({ per_page: 100 })
+  const applicationCalls = applicationCallsData?.data || []
 
   useEffect(() => {
     setLocalSearch(search)
@@ -144,7 +148,7 @@ export function CandidaturesFilterBar({
               </SelectTrigger>
               <SelectContent className="rounded-2xl text-xs max-w-xs">
                 <SelectItem value="all">Tous les appels</SelectItem>
-                {mockApplicationCalls.map((call) => (
+                {applicationCalls.map((call) => (
                   <SelectItem key={call.id} value={String(call.id)}>
                     {call.titre}
                   </SelectItem>

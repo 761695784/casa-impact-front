@@ -30,7 +30,7 @@ import {
 import { ApiError } from "@/lib/api-client"
 import { Plus, Trash2, Megaphone, Loader2, Sparkles } from "lucide-react"
 import { APPLICATION_CALL_STATUS_LABELS, REGION_LABELS } from "@/types/enums"
-import { mockPrograms } from "@/lib/mock/programs.mock"
+import { usePrograms } from "@/hooks/use-programs"
 import { useCreateApplicationCall, useUpdateApplicationCall } from "@/hooks/use-application-calls"
 import type { ApplicationCall, ApplicationDocument } from "@/types/models"
 import type { ApplicationCallStatus, Region } from "@/types/enums"
@@ -59,7 +59,7 @@ export function AppelFormDialog({
   const [slug, setSlug] = useState("")
   const [resume, setResume] = useState("")
   const [description, setDescription] = useState("")
-  const [programmeId, setProgrammeId] = useState<string>("1")
+  const [programmeId, setProgrammeId] = useState<string>("")
   const [region, setRegion] = useState<string>("ziguinchor")
   const [localisation, setLocalisation] = useState("")
   const [dateOuverture, setDateOuverture] = useState("")
@@ -83,13 +83,20 @@ export function AppelFormDialog({
   const updateMutation = useUpdateApplicationCall()
   const isPending = createMutation.isPending || updateMutation.isPending
 
+  // Programmes RÉELS de la base (accord du 2026-09-14 : le sélecteur
+  // affichait auparavant mockPrograms, dont les id fictifs ne
+  // correspondaient à aucun programme réel — d'où l'erreur serveur "The
+  // selected program id is invalid" à la création d'un appel).
+  const { data: programsData } = usePrograms({ per_page: 100 })
+  const programs = programsData?.data || []
+
   useEffect(() => {
     if (applicationCall) {
       setTitre(applicationCall.titre || "")
       setSlug(applicationCall.slug || "")
       setResume(applicationCall.resume || "")
       setDescription(applicationCall.description || "")
-      setProgrammeId(applicationCall.programme_id ? String(applicationCall.programme_id) : "1")
+      setProgrammeId(applicationCall.programme_id ? String(applicationCall.programme_id) : "")
       setRegion(applicationCall.region || "ziguinchor")
       setLocalisation(applicationCall.localisation || "")
       setDateOuverture(applicationCall.date_ouverture || "")
@@ -107,7 +114,7 @@ export function AppelFormDialog({
       setSlug("")
       setResume("")
       setDescription("")
-      setProgrammeId("1")
+      setProgrammeId("")
       setRegion("ziguinchor")
       setLocalisation("Ziguinchor")
       setDateOuverture(new Date().toISOString().split("T")[0])
@@ -320,7 +327,7 @@ export function AppelFormDialog({
                 <Select
                   value={programmeId}
                   onValueChange={(val) => {
-                    setProgrammeId(val || "1")
+                    setProgrammeId(val || "")
                     clearError("programmeId")
                   }}
                 >
@@ -335,7 +342,7 @@ export function AppelFormDialog({
                     <SelectValue placeholder="Sélectionner un programme" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl text-xs">
-                    {mockPrograms.map((p) => (
+                    {programs.map((p) => (
                       <SelectItem key={p.id} value={String(p.id)}>
                         {p.titre}
                       </SelectItem>

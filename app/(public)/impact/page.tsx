@@ -8,6 +8,7 @@ import { Section, SectionHeading } from "@/components/layout/section"
 import { CtaBand } from "@/components/layout/cta-band"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/impact" },
   title: "Notre impact — Résultats & Transformation en Casamance",
   description:
     "Découvrez l'impact réel et mesuré de Casa Impact : personnes accompagnées, membres adhérents et dynamiques territoriales à Ziguinchor, Sédhiou et Kolda.",

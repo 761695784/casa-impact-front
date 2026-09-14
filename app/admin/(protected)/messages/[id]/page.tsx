@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PermissionGate } from "@/components/admin/permission-gate"
 import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog"
 import { ErrorState } from "@/components/admin/ui/error-state"
 import { SendMessageDialog } from "@/components/admin/messages/send-message-dialog"
@@ -168,24 +169,28 @@ export default function AdminMessageDetailPage({ params }: PageProps) {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            size="sm"
-            onClick={() => setIsReplyOpen(true)}
-            className="rounded-full text-xs gap-1.5 bg-forest hover:bg-forest/90 text-white"
-          >
-            <Send className="size-3.5" />
-            <span>Répondre par e-mail</span>
-          </Button>
+          <PermissionGate permission="contact-messages.create">
+            <Button
+              size="sm"
+              onClick={() => setIsReplyOpen(true)}
+              className="rounded-full text-xs gap-1.5 bg-forest hover:bg-forest/90 text-white"
+            >
+              <Send className="size-3.5" />
+              <span>Répondre par e-mail</span>
+            </Button>
+          </PermissionGate>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setConfirmDelete(true)}
-            className="size-8 rounded-full text-destructive hover:bg-destructive/10"
-            title="Supprimer le message"
-          >
-            <Trash2 className="size-4" />
-          </Button>
+          <PermissionGate permission="contact-messages.delete">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setConfirmDelete(true)}
+              className="size-8 rounded-full text-destructive hover:bg-destructive/10"
+              title="Supprimer le message"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </PermissionGate>
         </div>
       </div>
 
@@ -282,58 +287,85 @@ export default function AdminMessageDetailPage({ params }: PageProps) {
             </CardHeader>
 
             <CardContent className="pt-5 space-y-4 text-xs">
-              {/* Statut selector */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Statut du dossier</Label>
-                <Select
-                  value={statut}
-                  onValueChange={(val) =>
-                    setStatut(val as ContactMessageStatus)
-                  }
-                >
-                  <SelectTrigger className="h-10 rounded-2xl text-xs">
-                    <SelectValue placeholder="Statut" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl text-xs">
-                    {(
-                      Object.keys(
-                        CONTACT_MESSAGE_STATUS_LABELS
-                      ) as ContactMessageStatus[]
-                    ).map((key) => (
-                      <SelectItem key={key} value={key}>
-                        {CONTACT_MESSAGE_STATUS_LABELS[key]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Notes internes */}
-              <div className="space-y-1.5 pt-2 border-t border-border/50">
-                <Label htmlFor="notes" className="text-xs font-semibold">
-                  Notes de suivi interne
-                </Label>
-                <Textarea
-                  id="notes"
-                  rows={4}
-                  value={notesInternes}
-                  onChange={(e) => setNotesInternes(e.target.value)}
-                  placeholder="Notes réservées à l'équipe (ex : contacté par téléphone le...)"
-                  className="rounded-2xl text-xs resize-none"
-                />
-              </div>
-
-              {/* Save Button */}
-              <Button
-                onClick={handleSaveTreatment}
-                disabled={updateMutation.isPending}
-                className="w-full rounded-full text-xs gap-1.5 bg-forest text-white hover:bg-forest/90 font-medium"
+              <PermissionGate
+                permission="contact-messages.update"
+                fallback={
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs font-semibold text-muted-foreground">
+                        Statut du dossier
+                      </Label>
+                      <p className="mt-1 font-semibold text-foreground">
+                        {CONTACT_MESSAGE_STATUS_LABELS[statut] || statut}
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-border/50">
+                      <Label className="text-xs font-semibold text-muted-foreground">
+                        Notes de suivi interne
+                      </Label>
+                      <p className="mt-1 whitespace-pre-line text-foreground">
+                        {notesInternes || "Aucune note enregistrée."}
+                      </p>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground italic pt-1">
+                      Votre rôle ne permet pas de modifier le traitement de ce message.
+                    </p>
+                  </div>
+                }
               >
-                <Save className="size-3.5" />
-                <span>
-                  {updateMutation.isPending ? "Enregistrement..." : "Enregistrer le suivi"}
-                </span>
-              </Button>
+                {/* Statut selector */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Statut du dossier</Label>
+                  <Select
+                    value={statut}
+                    onValueChange={(val) =>
+                      setStatut(val as ContactMessageStatus)
+                    }
+                  >
+                    <SelectTrigger className="h-10 rounded-2xl text-xs">
+                      <SelectValue placeholder="Statut" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl text-xs">
+                      {(
+                        Object.keys(
+                          CONTACT_MESSAGE_STATUS_LABELS
+                        ) as ContactMessageStatus[]
+                      ).map((key) => (
+                        <SelectItem key={key} value={key}>
+                          {CONTACT_MESSAGE_STATUS_LABELS[key]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Notes internes */}
+                <div className="space-y-1.5 pt-2 border-t border-border/50">
+                  <Label htmlFor="notes" className="text-xs font-semibold">
+                    Notes de suivi interne
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    rows={4}
+                    value={notesInternes}
+                    onChange={(e) => setNotesInternes(e.target.value)}
+                    placeholder="Notes réservées à l'équipe (ex : contacté par téléphone le...)"
+                    className="rounded-2xl text-xs resize-none"
+                  />
+                </div>
+
+                {/* Save Button */}
+                <Button
+                  onClick={handleSaveTreatment}
+                  disabled={updateMutation.isPending}
+                  className="w-full rounded-full text-xs gap-1.5 bg-forest text-white hover:bg-forest/90 font-medium"
+                >
+                  <Save className="size-3.5" />
+                  <span>
+                    {updateMutation.isPending ? "Enregistrement..." : "Enregistrer le suivi"}
+                  </span>
+                </Button>
+              </PermissionGate>
             </CardContent>
           </Card>
 

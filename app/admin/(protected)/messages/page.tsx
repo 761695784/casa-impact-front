@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog"
 import { ErrorState } from "@/components/admin/ui/error-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
+import { PermissionGate } from "@/components/admin/permission-gate"
 import {
   useContactMessages,
   useMarkContactMessageAsRead,
@@ -74,13 +75,15 @@ export default function AdminMessagesPage() {
           </p>
         </div>
 
-        <Button
-          onClick={() => setIsSendMessageOpen(true)}
-          className="rounded-full bg-forest text-white hover:bg-forest/90 font-semibold gap-2 shadow-xs shrink-0"
-        >
-          <Send className="size-4" />
-          <span>Envoyer un message</span>
-        </Button>
+        <PermissionGate permission="contact-messages.create">
+          <Button
+            onClick={() => setIsSendMessageOpen(true)}
+            className="rounded-full bg-forest text-white hover:bg-forest/90 font-semibold gap-2 shadow-xs shrink-0"
+          >
+            <Send className="size-4" />
+            <span>Envoyer un message</span>
+          </Button>
+        </PermissionGate>
       </div>
 
       {/* 2. KPI Summary */}

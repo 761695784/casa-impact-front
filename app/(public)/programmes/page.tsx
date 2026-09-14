@@ -6,6 +6,7 @@ import { ProgramsList } from "@/components/programs/programs-list"
 import { ProgramsHowItWorks } from "@/components/programs/programs-how-it-works"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/programmes" },
   title: "Programmes & Activités | Casa Impact",
   description:
     "Découvrez les programmes d'excellence, formations, incubateurs et événements de Casa Impact déployés à Ziguinchor, Sédhiou et Kolda.",

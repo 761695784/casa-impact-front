@@ -147,7 +147,10 @@ export function CandidaturesTable({
               {/* Statut & Badges */}
               <TableCell className="align-top py-4 whitespace-nowrap">
                 <div className="flex flex-col gap-1.5 items-start">
-                  <StatusBadge status={app.statut} />
+                  <StatusBadge
+                    status={app.statut}
+                    onClick={() => onOpenStatusModal(app)}
+                  />
                   {app.promu && (
                     <Badge
                       variant="outline"

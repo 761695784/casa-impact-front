@@ -99,6 +99,12 @@ export interface LegacyImportResult {
   failed: string[]
 }
 
+export interface SendPaymentRemindersResult {
+  message: string
+  sent: number
+  failed: string[]
+}
+
 /**
  * Service Adhésions (admin) — aligné sur les routes réelles :
  *   GET    /api/admin/memberships             (index, paginé)
@@ -433,5 +439,33 @@ export const membershipsService = {
     link.click()
     link.remove()
     URL.revokeObjectURL(url)
+  },
+
+  /**
+   * Bouton "Envoyer un rappel de paiement" de la page Adhésions (accord du
+   * 2026-09-11) — relance par email TOUS les membres dont l'adhésion est
+   * encore `en_attente_paiement` (n'ont pas finalisé leur adhésion), avec
+   * les mêmes instructions de paiement Wave que l'email de confirmation
+   * initial. Le backend recalcule lui-même la liste des membres ciblés au
+   * moment de l'envoi (statut réellement en base) : pas besoin de lui
+   * transmettre d'ids, ce qui évite tout décalage avec une liste chargée
+   * côté client avant l'envoi.
+   */
+  sendPaymentReminders: async (): Promise<SendPaymentRemindersResult> => {
+    if (DATA_SOURCE === "mock") {
+      const pending = mockMemberships.filter((m) => m.statut === "en_attente_paiement")
+      return delay<SendPaymentRemindersResult>({
+        message:
+          pending.length > 0
+            ? `Rappel envoyé avec succès à ${pending.length} membre(s).`
+            : "Aucun membre en attente de paiement à relancer.",
+        sent: pending.length,
+        failed: [],
+      })
+    }
+
+    return apiFetch<SendPaymentRemindersResult>("/api/admin/memberships/payment-reminder", {
+      method: "POST",
+    })
   },
 }

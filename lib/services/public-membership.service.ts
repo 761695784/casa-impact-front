@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api-client"
+import { DATA_SOURCE } from "@/lib/config"
 import type { MembershipConfirmation } from "@/types/models"
 import type { MembershipRegion, ContributionDomain, ContributionType } from "@/types/enums"
 
@@ -62,5 +63,27 @@ export const publicMembershipService = {
     )
 
     return (json as { data?: MembershipConfirmation }).data ?? (json as MembershipConfirmation)
+  },
+
+  /**
+   * Nombre réel de membres actifs (adhésion validée) — alimente le
+   * compteur "Membres Actifs" de la section "Chiffres clés" du site
+   * public (accord du 2026-09-14 : "au lieu de 130 membres... connecté
+   * avec l'api pour que cela affiche concretement le nombre reel et si
+   * l'api n'est pas branché faut juste y mettre un ?"). Renvoie `null` en
+   * mode mock (DATA_SOURCE !== 'api') — le composant appelant affiche
+   * alors "?" plutôt qu'un chiffre inventé. En mode réel, une erreur
+   * réseau/API n'est PAS rattrapée ici : elle remonte telle quelle pour
+   * que useQuery bascule en `isError`, et le composant affiche "?" dans
+   * ce cas aussi (même traitement que "API non branchée").
+   * Endpoint : GET /api/public/memberships/count
+   */
+  getMembersActifsCount: async (): Promise<number | null> => {
+    if (DATA_SOURCE === "mock") return null
+
+    const json = await apiFetch<{ membres_actifs: number }>(
+      "/api/public/memberships/count"
+    )
+    return json.membres_actifs
   },
 }

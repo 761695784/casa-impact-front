@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/contact" },
   title: "Contact — Échanger avec l'Équipe Casa Impact",
   description:
     "Contactez l'équipe de Casa Impact : information générale, partenariats, projets, investissement ou adhésion. Siège à Ziguinchor, au cœur de la Casamance.",

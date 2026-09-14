@@ -17,7 +17,14 @@ export function usePermissions() {
     if (!user) return false
     if (role === "administrateur-principal") return true
     if (permissions.includes("*")) return true
-    return permissions.includes(permission)
+    if (permissions.includes(permission)) return true
+
+    // Support d'un droit "module entier" du type "memberships.*" (voir
+    // RolesAndPermissionsSeeder / mockUsers.ROLES_MAP) : couvre
+    // memberships.view, memberships.create, memberships.update, etc. sans
+    // avoir à lister chaque action une par une.
+    const resource = permission.split(".")[0]
+    return permissions.includes(`${resource}.*`)
   }
 
   /**

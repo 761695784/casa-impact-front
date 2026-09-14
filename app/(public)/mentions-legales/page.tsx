@@ -19,6 +19,7 @@ import { Section } from "@/components/layout/section"
 import { siteConfig, contactInfo } from "@/lib/config"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/mentions-legales" },
   title: "Mentions Légales | Casa Impact",
   description:
     "Consultez les mentions légales de l'organisation Casa Impact : éditeur, hébergement, conception par Majeli Connect, propriété intellectuelle et conditions d'utilisation.",

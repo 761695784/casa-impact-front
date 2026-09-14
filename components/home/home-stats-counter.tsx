@@ -15,18 +15,18 @@ import { Section } from "@/components/layout/section"
 import { AnimatedCounter } from "@/components/ui/animated-counter"
 import { Button } from "@/components/ui/button"
 import { BaobabMark } from "@/components/brand/baobab-mark"
-import { useImpactIndicators } from "@/hooks/use-content"
+import { useImpactIndicators, useMembersActifsCount } from "@/hooks/use-content"
 
 export function HomeStatsCounter() {
   const { data: indicators } = useImpactIndicators()
 
-  // Calcul dynamique ou fallback officiel (300 personnes impactées, 130 adhérents)
+  // Calcul dynamique ou fallback officiel (300 personnes impactées)
   // Le tableau de valeurs réel est `values` (pas `valeurs`), et chaque entrée
   // est `{valeur, periode?, region?}` — pas de champ `cible` côté API.
   // NB : `values[]` peut contenir plusieurs entrées par indicateur (par
   // période et/ou par région) ; l'API ne précise pas si elles doivent être
   // sommées ou lues individuellement. On conserve ici la somme pour les
-  // compteurs cumulatifs (personnes/adhérents) et la dernière entrée pour
+  // compteurs cumulatifs (personnes) et la dernière entrée pour
   // les compteurs "état actuel" (régions/domaines), comme dans le code
   // existant — à confirmer côté métier si ambigu.
   const impactesCount = (() => {
@@ -39,17 +39,25 @@ export function HomeStatsCounter() {
     return 300
   })()
 
-  const adherentsCount = (() => {
-    const ind = indicators?.find((i) =>
-      i.libelle.toLowerCase().includes("adhérent") ||
-      i.libelle.toLowerCase().includes("membre") ||
-      i.id === 2
-    )
-    if (ind && ind.values && ind.values.length > 0) {
-      return ind.values.reduce((acc, v) => acc + (v.valeur || 0), 0)
-    }
-    return 130
-  })()
+  // Correctif du 2026-09-14 (demande explicite : "au lieu de 130 membres...
+  // connecté avec l'api pour que cela affiche concretement le nombre reel
+  // et si l'api n'est pas branché faut juste y mettre un ?") — remplace
+  // l'ancienne heuristique de recherche textuelle dans les indicateurs
+  // d'impact (peu fiable, et retombait sur "130" en dur) par le VRAI
+  // compteur de membres validés (voir Public\MembershipController::count),
+  // la même donnée que "Membres Validés" dans l'admin Adhésions. `null` =
+  // pas de chiffre fiable (mode mock, chargement, ou API injoignable) → on
+  // affiche "?" au lieu d'inventer un nombre (voir le rendu de la carte
+  // "adherents" plus bas).
+  const {
+    data: membersActifsCount,
+    isLoading: membersLoading,
+    isError: membersError,
+  } = useMembersActifsCount()
+  const adherentsCount =
+    membersLoading || membersError || membersActifsCount == null
+      ? null
+      : membersActifsCount
 
   const regionsCount = (() => {
     const ind = indicators?.find((i) => i.id === 3)
@@ -72,7 +80,7 @@ export function HomeStatsCounter() {
       id: "impactes",
       value: impactesCount,
       suffix: "+",
-      label: "Personnes & Jeunes Impactés",
+      label: "Personnes Impactées",
       description: "Bénéficiaires de formations, mentorat et caravanes",
       icon: Users,
       iconColor: "text-accent",
@@ -83,7 +91,7 @@ export function HomeStatsCounter() {
       id: "adherents",
       value: adherentsCount,
       suffix: "",
-      label: "Adhérents & Membres Actifs",
+      label: "Membres Actifs",
       description: "Jeunes et cadres engagés avec carte officielle (1 000 FCFA)",
       icon: CreditCard,
       iconColor: "text-accent",
@@ -154,7 +162,7 @@ export function HomeStatsCounter() {
             </p>
           </div>
 
-          <Button
+          {/* <Button
             asChild
             variant="outline"
             size="sm"
@@ -164,7 +172,7 @@ export function HomeStatsCounter() {
               <span>Consulter le rapport d'impact</span>
               <ArrowRight className="size-3.5 text-accent" />
             </Link>
-          </Button>
+          </Button> */}
         </div>
 
         {/* 4 Stats Counters Cards Grid */}
@@ -196,14 +204,20 @@ export function HomeStatsCounter() {
                     </span> */}
                   </div>
 
-                  {/* Animated Counter */}
+                  {/* Animated Counter — "?" quand la vraie donnée n'est pas
+                      disponible (voir adherentsCount) plutôt qu'un chiffre
+                      inventé */}
                   <div className="mt-6">
                     <p className="font-display text-4xl sm:text-5xl font-bold tracking-tight text-accent drop-shadow-xs">
-                      <AnimatedCounter
-                        value={item.value}
-                        duration={2000}
-                        suffix={item.suffix}
-                      />
+                      {item.value === null ? (
+                        <span aria-label="Donnée indisponible">?</span>
+                      ) : (
+                        <AnimatedCounter
+                          value={item.value}
+                          duration={2000}
+                          suffix={item.suffix}
+                        />
+                      )}
                     </p>
 
                     <h3 className="mt-2.5 text-base font-bold text-white leading-snug">

@@ -167,9 +167,10 @@ export const contentService = {
     const res = await apiFetch<PaginatedResponse<Talent>>(`/api/public/talents?${MAX_PER_PAGE}`)
     return res.data
   },
-  // Pas encore utilisé par aucune page (aucune route /talents/[slug] n'existe
-  // pour l'instant côté frontend) mais le vrai endpoint existe côté
-  // backend — ajouté ici pour le jour où une fiche de détail sera créée.
+  // Utilisé par app/(public)/talents/[slug]/page.tsx (route créée le
+  // 2026-09-14 — jusque-là ce endpoint existait déjà mais n'était appelé
+  // par aucune page, les profils de talents n'étaient pas accessibles
+  // par leur propre URL).
   getTalent: async (slug: string): Promise<Talent | undefined> => {
     if (DATA_SOURCE === "mock") return delay<Talent | undefined>(mockTalents.find((t) => t.slug === slug))
     try {

@@ -7,6 +7,7 @@ import { Section, SectionHeading } from "@/components/layout/section"
 import { CtaBand } from "@/components/layout/cta-band"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/opportunites" },
   title: "Opportunités & Appels à Candidatures — Casa Impact",
   description:
     "Rejoignez les programmes d'excellence de Casa Impact : incubateur d'entreprises, Académie du leadership, formations tech et financements en Casamance.",

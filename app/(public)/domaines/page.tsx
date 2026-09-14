@@ -6,6 +6,7 @@ import { Section, SectionHeading } from "@/components/layout/section"
 import { CtaBand } from "@/components/layout/cta-band"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/domaines" },
   title: "Domaines d'Intervention — Les 6 Piliers Stratégiques de Casa Impact",
   description:
     "Découvrez les 6 domaines d'action de Casa Impact : jeunesse & leadership, entrepreneuriat & innovation, culture, sport, tourisme et investissement diaspora en Casamance.",

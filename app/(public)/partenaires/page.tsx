@@ -6,6 +6,7 @@ import { CtaBand } from "@/components/layout/cta-band"
 import { Building2, Landmark, HeartHandshake, GraduationCap } from "lucide-react"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/partenaires" },
   title: "Partenaires",
   description:
     "Institutions, entreprises, ONG et collectivités : rejoignez le réseau de partenaires de Casa Impact pour accompagner la jeunesse et les communautés de la Casamance.",

@@ -226,7 +226,7 @@ export function UserFormDialog({
                 setEmail(e.target.value)
                 clearError("email")
               }}
-              placeholder="admin@casa-impact.org"
+              placeholder="admin@casaimpact.org"
               className={`h-10 rounded-2xl text-xs sm:text-sm ${
                 errors.email
                   ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5"

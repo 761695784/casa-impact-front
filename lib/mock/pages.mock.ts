@@ -25,7 +25,7 @@ export const mockPages: Page[] = [
     slug: "mentions-legales",
     resume: "Informations légales relatives à l'éditeur, aux directeurs de publication et à l'hébergement du portail.",
     contenu:
-      "Le présent site web est édité par l'organisation Casa Impact, association à but non lucratif enregistrée au Sénégal.\n\nSiège social : Ziguinchor, Région naturelle de Casamance, Sénégal.\nEmail : contact@casa-impact.org\n\nDirecteur de la publication : Président de Casa Impact.\nHébergement : Infrastructure cloud sécurisée conforme aux normes de protection des données.",
+      "Le présent site web est édité par l'organisation Casa Impact, association à but non lucratif enregistrée au Sénégal.\n\nSiège social : Ziguinchor, Région naturelle de Casamance, Sénégal.\nEmail : contact@casaimpact.org\n\nDirecteur de la publication : Président de Casa Impact.\nHébergement : Infrastructure cloud sécurisée conforme aux normes de protection des données.",
     statut: "publie",
     meta_description: "Mentions légales et informations officielles du portail Casa Impact.",
     ordre: 2,

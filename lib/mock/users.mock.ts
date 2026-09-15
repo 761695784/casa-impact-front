@@ -11,7 +11,7 @@ export const mockUsers: User[] = [
     id: 1,
     nom: "Faye",
     prenom: "Ousmane",
-    email: "admin@casa-impact.org",
+    email: "admin@casaimpact.org",
     role: {
       id: 1,
       nom: "Administrateur Principal",
@@ -27,7 +27,7 @@ export const mockUsers: User[] = [
     id: 2,
     nom: "Sané",
     prenom: "Aïssatou",
-    email: "comm@casa-impact.org",
+    email: "comm@casaimpact.org",
     role: {
       id: 2,
       nom: "Responsable Communication",
@@ -43,7 +43,7 @@ export const mockUsers: User[] = [
     id: 3,
     nom: "Diallo",
     prenom: "Mamadou",
-    email: "candidatures@casa-impact.org",
+    email: "candidatures@casaimpact.org",
     role: {
       id: 3,
       nom: "Gestionnaire des Candidatures",
@@ -59,7 +59,7 @@ export const mockUsers: User[] = [
     id: 4,
     nom: "Ndiaye",
     prenom: "Fatou Binetou",
-    email: "f.ndiaye@casa-impact.org",
+    email: "f.ndiaye@casaimpact.org",
     role: {
       id: 2,
       nom: "Responsable Communication",

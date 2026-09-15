@@ -56,13 +56,13 @@ export const teamMembers: TeamMember[] = [
     image: '/assets/team/nna-maimouna-djitte.jpg',
     ordre: 2,
   },
-  // Administration générale
+  // Administration générales
   {
     id: 'maimouna-sambou',
     nom: 'Maïmouna Sambou',
     fonction: 'Secrétaire Générale',
     categorie: 'administration',
-    image: PLACEHOLDER,
+    image: '/assets/team/maimouna-sambou.jpeg',
     ordre: 1,
   },
   {
@@ -86,29 +86,23 @@ export const teamMembers: TeamMember[] = [
     id: 'felicite-binette-coly',
     nom: 'Félicité Binette Coly',
     fonction: 'Responsable Capital Humain',
-    pole: 'Jeunesse & Leadership',
+    pole: 'Volet Jeunesse & Leadership',
     categorie: 'pole_capital_humain',
     image: '/assets/team/felicite-binette-coly.jpg',
     ordre: 1,
   },
+  
   {
-    id: 'mamadou-sabane-diallo',
-    nom: 'Mamadou Sabane Diallo',
-    fonction: 'Responsable Jeunesse & Leadership',
-    pole: 'Jeunesse & Leadership',
+    id: 'khalifa-ababacar-sane',
+    nom: 'Khalifa Ababacar Sane',
+    fonction: 'Responsable Capital humain',
+    pole: 'Volet Sport & Développement',
     categorie: 'pole_capital_humain',
-    image: '/assets/team/mamadou-sabane-diallo.jpeg',
+    image: '/assets/team/khalifa-ababacar-sane.jpeg',
     ordre: 2,
   },
-  {
-    id: 'cherif-aliou-sonko',
-    nom: 'Chérif Aliou Sonko',
-    fonction: 'Responsable Sport et Développement',
-    pole: 'Sport & Développement',
-    categorie: 'pole_capital_humain',
-    image: '/assets/team/cherif-aliou-sonko.jpg',
-    ordre: 3,
-  },
+
+
   // Pôle Économie, Agriculture & Attractivité
   {
     id: 'mansa-signate',
@@ -128,15 +122,7 @@ export const teamMembers: TeamMember[] = [
     image: '/assets/team/samsidine-diatta.jpeg',
     ordre: 2,
   },
-  {
-    id: 'seynabou-bodian',
-    nom: 'Seynabou Bodian',
-    fonction: 'Membre Pôle Économie',
-    pole: 'Diaspora & Investissement',
-    categorie: 'pole_economie',
-    image: '/assets/team/seynabou-bodian.jpg',
-    ordre: 3,
-  },
+
   // Pôle Culture & Communication
   {
     id: 'maimouna-bodian-seye',
@@ -163,7 +149,7 @@ export const teamMembers: TeamMember[] = [
     fonction: 'Responsable Partenariats',
     pole: 'Partenariats',
     categorie: 'pole_support',
-    image: PLACEHOLDER,
+    image: '/assets/team/safina-kante.jpeg',
     ordre: 1,
   },
   {
@@ -183,6 +169,14 @@ export const teamMembers: TeamMember[] = [
     categorie: 'commission_scientifique',
     image: '/assets/team/kadialy-sane.jpeg',
     ordre: 1,
+  },
+    {
+    id: 'ndeye-sire-sagna',
+    nom: 'Ndeye Sire Sagna',
+    fonction: 'Membre Commission scientifique',
+    categorie: 'commission_scientifique',
+    image: '/assets/team/ndeye-ciré-sagna.jpeg',
+    ordre: 2,
   },
   // Coordination régionale
   {

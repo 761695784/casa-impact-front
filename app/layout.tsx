@@ -141,7 +141,13 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
         <QueryProvider>{children}</QueryProvider>
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        {/* Désactivé le 2026-09-15 : Vercel Analytics ne fonctionne que sur
+            l'infrastructure Vercel elle-même (le script /_vercel/insights/
+            script.js n'existe pas ailleurs) — le site étant hébergé sur
+            Hostinger, ça ne faisait qu'ajouter une erreur 404 sans
+            conséquence dans la console à chaque visite. À réactiver si le
+            site est un jour migré vers Vercel. */}
+        {false && <Analytics />}
       </body>
     </html>
   )

@@ -49,6 +49,20 @@ const nextConfig = {
     // origine autorisée est celle de notre propre API, jamais une URL
     // fournie par un tiers.
     dangerouslyAllowLocalIP: true,
+    // Ajouté le 2026-09-15 : en production sur Hostinger, `/_next/image`
+    // échouait en 400 même pour les images locales de /public (ex.
+    // photos de l'équipe sur /qui-sommes-nous), alors que ça fonctionnait
+    // en local. Cause la plus probable : l'optimiseur d'images intégré de
+    // Next.js dépend du paquet natif `sharp`, absent de package.json —
+    // et vu le souci GLIBC déjà rencontré avec les liaisons natives de
+    // Turbopack sur cet hébergeur, l'ajouter risquait de reproduire le
+    // même genre de plantage plutôt que de le résoudre à coup sûr. On
+    // désactive donc l'optimisation à la volée : les images sont servies
+    // telles quelles (un peu plus lourdes, mais l'affichage est garanti
+    // sur n'importe quel hébergeur, sans dépendance native). `remotePatterns`
+    // ci-dessus reste en place, prêt à resservir si l'optimisation est un
+    // jour réactivée (ex. paquet `sharp` ajouté et confirmé fonctionnel).
+    unoptimized: true,
   },
   async headers() {
     return [

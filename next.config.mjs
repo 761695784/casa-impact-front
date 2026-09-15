@@ -29,6 +29,17 @@ try {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Note 2026-09-15 : l'hébergement de production ne dispose pas des
+  // liaisons natives Turbopack pour Linux (GLIBC trop ancienne). La bascule
+  // vers Webpack se fait uniquement via `next build --webpack` dans le
+  // script `build` de package.json — `experimental.turbopack` a été
+  // essayé ici mais Next.js 16.3.3 le rejette avec un avertissement
+  // ("Unrecognized key(s) in object: 'turbopack' at experimental" — ce
+  // n'est pas une option reconnue), donc retiré. Le build passe déjà par le
+  // flag CLI, aucune configuration supplémentaire n'est nécessaire ; si un
+  // jour l'hébergeur ignore le script `build` de package.json et lance
+  // `next build` directement, il faudra le configurer pour utiliser
+  // `npm run build` (ou passer `--webpack` explicitement côté hébergeur).
   images: {
     remotePatterns: mediaRemotePatterns,
     // Le backend tourne en local (localhost/127.0.0.1) en développement —

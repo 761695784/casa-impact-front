@@ -79,8 +79,11 @@ const schema = z.object({
   nom: z.string().min(2, "Veuillez renseigner votre nom."),
   email: z.string().email("Adresse e-mail invalide."),
   telephone: z.string().min(6, "Numéro de téléphone invalide."),
+  // Zod 4 (accord de dépendance 2026-09-15, corrige l'échec de build en
+  // production) : `errorMap` a été retiré de la signature de `z.enum()` au
+  // profit de `message` pour un message d'erreur statique par défaut.
   region: z.enum(["ziguinchor", "sedhiou", "kolda"], {
-    errorMap: () => ({ message: "Veuillez sélectionner votre région." }),
+    message: "Veuillez sélectionner votre région.",
   }),
   lieu: z.string().optional(),
   tranche_age: z.string().min(1, "Veuillez sélectionner votre tranche d'âge."),

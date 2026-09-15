@@ -115,7 +115,14 @@ function withLegacyDocuments(
   }))
 }
 
-interface RawApplication extends Application {
+// `Omit<Application, "documents">` (et non `Application` directement, corrige
+// l'échec de build en production 2026-09-15) : le backend renvoie des
+// documents à la forme brute `RawApplicationDocument` (`cle` optionnelle),
+// pas encore passée par `withLegacyDocuments` ci-dessus — un `cle` optionnel
+// n'est pas un sous-type valide du `cle` obligatoire d'`ApplicationDocumentFile`
+// (type de `Application.documents`), donc `extends Application` échouait le
+// typecheck (TS2430).
+interface RawApplication extends Omit<Application, "documents"> {
   nom?: string
   prenom?: string
   email?: string

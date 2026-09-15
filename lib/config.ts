@@ -68,8 +68,8 @@ export const footerNav = {
     { label: 'Qui sommes-nous', href: '/qui-sommes-nous' },
     { label: "Domaines d'intervention", href: '/domaines' },
     { label: 'Programmes', href: '/programmes' },
-    { label: 'Impact', href: '/impact' },
-    { label: 'Carte des actions', href: '/carte' },
+    // { label: 'Impact', href: '/impact' },
+    // { label: 'Carte des actions', href: '/carte' },
   ],
   participer: [
     { label: 'Boutique officielle', href: '/boutique' },

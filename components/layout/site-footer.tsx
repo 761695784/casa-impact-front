@@ -87,7 +87,7 @@ export function SiteFooter() {
               href="https://majeliconnect.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-accent hover:underline hover:text-white transition-colors"
+              className="font-bold text-accent hover:underline hover:text-white transition-colors"
             >
               Majeli Connect
             </a>

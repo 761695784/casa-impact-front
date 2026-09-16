@@ -26,11 +26,35 @@ export function ThreeProductCanvas({
 }: ThreeProductCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0, isHovered: false })
 
+  // Ajouté le 2026-09-16 (site en prod plantait au scroll sur /boutique) :
+  // chaque carte produit instancie sa PROPRE scène WebGL (plusieurs
+  // lumières, un système de particules, sa propre boucle d'animation en
+  // continu). Avec une douzaine d'articles dans le catalogue, ça fait
+  // autant de contextes WebGL actifs simultanément — les navigateurs
+  // (surtout mobiles) en limitent strictement le nombre (souvent 8 à 16
+  // selon l'appareil) ; au-delà, soit les plus anciens contextes sont
+  // perdus (rendu cassé), soit l'onglet plante carrément sur les
+  // téléphones les plus modestes. On ne crée donc la scène 3D que pour
+  // les cartes réellement visibles à l'écran (+ une marge), les autres
+  // restent sur l'image de secours statique tant qu'elles ne sont pas
+  // scrollées dans le champ de vision.
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { rootMargin: "150px 0px" }
+    )
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container || !isVisible) return
 
     let animationFrameId: number
     const clock = new THREE.Clock()
@@ -342,14 +366,22 @@ export function ThreeProductCanvas({
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement)
       }
+      // La carte sort du champ de vision (ou le composant est démonté) :
+      // on repasse sur l'image de secours pour la prochaine fois qu'elle
+      // redevient visible, plutôt que de laisser un conteneur vide.
+      setIsLoaded(false)
     }
-  }, [imageUrl, isHero, showParticles, showPedestal, autoRotateSpeed, hoverIntensity])
+  }, [imageUrl, isHero, showParticles, showPedestal, autoRotateSpeed, hoverIntensity, isVisible])
 
   return (
     <div
       ref={containerRef}
       className={`relative size-full overflow-hidden select-none ${className}`}
-      style={{ touchAction: "none" }}
+      // `touchAction: "none"` a été retiré le 2026-09-16 : posé ici sans
+      // aucune gestion tactile en face (seuls mousemove/mouseleave sont
+      // câblés, pas de touchstart/touchmove), il désactivait purement et
+      // simplement le scroll natif du doigt dès qu'il touchait une carte
+      // produit — exactement le plantage au scroll signalé sur /boutique.
       aria-label={title}
     >
       {/* Fallback image while WebGL texture initializes */}

@@ -162,14 +162,14 @@ export const teamMembers: TeamMember[] = [
     ordre: 2,
   },
   // Commission scientifique
-  {
-    id: 'kadialy-sane',
-    nom: 'Kadialy Sané',
-    fonction: 'Responsable Commission scientifique',
-    categorie: 'commission_scientifique',
-    image: '/assets/team/kadialy-sane.jpeg',
-    ordre: 1,
-  },
+  // {
+  //   id: 'kadialy-sane',
+  //   nom: 'Kadialy Sané',
+  //   fonction: 'Responsable Commission scientifique',
+  //   categorie: 'commission_scientifique',
+  //   image: '/assets/team/kadialy-sane.jpeg',
+  //   ordre: 1,
+  // },
     {
     id: 'ndeye-sire-sagna',
     nom: 'Ndeye Sire Sagna',

@@ -108,7 +108,7 @@ export const teamMembers: TeamMember[] = [
     id: 'mansa-signate',
     nom: 'Papa Mamadou Lamine Mansa Signaté',
     fonction: 'Responsable Pôle Économie',
-    pole: 'Entrepreneuriat & Innovation',
+    pole: 'Volet Tourisme & Attractivité',
     categorie: 'pole_economie',
     image: '/assets/team/mansa-signate.jpg',
     ordre: 1,
@@ -116,8 +116,8 @@ export const teamMembers: TeamMember[] = [
   {
     id: 'samsidine-diatta',
     nom: 'Samsidine Diatta',
-    fonction: 'Responsable Tourisme & Attractivité',
-    pole: 'Tourisme & Attractivité',
+    fonction: 'Responsable Pôle Économie',
+    pole: 'Volet Entrepreneuriat, Investissement & Innovation',
     categorie: 'pole_economie',
     image: '/assets/team/samsidine-diatta.jpeg',
     ordre: 2,
@@ -168,7 +168,7 @@ export const teamMembers: TeamMember[] = [
     fonction: 'Responsable Commission scientifique',
     pole: 'commission scientifique',
     categorie: 'commission_scientifique',
-    image: '/assets/team/kadialy-sane.jpeg',
+    image: '/assets/team/Kadialy-sane.jpeg',
     ordre: 1,
   },
 

@@ -177,21 +177,19 @@ export const president = {
   citation:
     "L'avenir de la Casamance ne se construira pas sans sa jeunesse.",
   signature: 'Inspirer • Former • Entreprendre • Transformer',
+  // Version raccourcie du mot du Président (accord explicite du
+  // 2026-09-16 : "l'autre texte est trop long") — remplace l'ancienne
+  // version plus longue ci-dessus. Le nom/la fonction ne sont PAS répétés
+  // ici : about-sections.tsx les affiche déjà séparément après le message
+  // (via president.nom / president.fonction), donc "Toumany Badiane —
+  // Président Fondateur" fourni par l'utilisateur en fin de texte n'est
+  // volontairement pas dupliqué dans ce tableau.
   message: [
     'Chers jeunes, chers partenaires, chers amis de la Casamance,',
-    "Casa Impact est née d'une conviction profonde : la Casamance possède un potentiel exceptionnel, et sa plus grande richesse reste sa jeunesse.",
-    "De Ziguinchor à Sédhiou, en passant par Kolda, notre territoire regorge de talents, d'entrepreneurs, de créateurs, de leaders, d'artisans, d'étudiants et de femmes et d'hommes qui, chaque jour, œuvrent dans l'ombre pour faire avancer leur communauté.",
-    "Notre ambition est de contribuer à révéler ce potentiel et à créer un cadre où chaque jeune peut se former, entreprendre, innover, prendre des responsabilités et avoir un impact positif sur son territoire.",
-    "À travers Casa Impact, nous voulons agir concrètement autour de plusieurs axes : le leadership, le développement personnel, l'entrepreneuriat, l'innovation, le numérique, l'intelligence artificielle, la cybersécurité, la culture, le tourisme et l'engagement citoyen.",
-    "Nous avons également fait le choix de mettre en lumière nos champions : ces jeunes et ces structures qui créent de la valeur, développent des initiatives, créent des emplois, valorisent notre patrimoine et contribuent au rayonnement positif de la Casamance et du Sénégal.",
-    "Parce que nous croyons qu'il est temps de raconter aussi notre propre histoire, de montrer nos réussites, nos talents, nos territoires et les opportunités qui existent chez nous.",
-    "Casa Impact veut être un espace de rencontre, de transmission et d'action. Un pont entre les jeunes, les institutions, les entreprises, les organisations, la diaspora et tous ceux qui croient au potentiel de notre territoire.",
-    'Notre vision est simple : Trois régions. Une vision. Un impact.',
-    "Nous ne prétendons pas avoir toutes les réponses. Mais nous sommes convaincus d'une chose : l'avenir de la Casamance ne se construira pas sans sa jeunesse.",
-    "À toutes celles et ceux qui souhaitent contribuer à cette dynamique, je lance un appel : rejoignez-nous, partagez vos idées, vos compétences et votre énergie.",
-    "Ensemble, faisons de la Casamance un territoire où les jeunes ne sont pas seulement bénéficiaires du développement, mais des acteurs majeurs de sa transformation.",
+    "Casa Impact est née d'une conviction profonde : la Casamance possède un potentiel exceptionnel, et sa plus grande richesse est sa jeunesse.",
+    "De Ziguinchor à Kolda, en passant par Sédhiou, notre territoire regorge de talents, d'entrepreneurs, de créateurs, de leaders et d'acteurs engagés qui contribuent chaque jour à faire avancer leurs communautés.",
+    "Notre ambition est de révéler ce potentiel et de créer un cadre où chaque jeune peut se former, entreprendre, innover et agir pour son territoire.",
     "La Casamance a besoin de ses fils et de ses filles. À nous d'écrire ensemble la suite de son histoire.",
-    'Avec engagement et conviction,',
   ],
 } as const
 

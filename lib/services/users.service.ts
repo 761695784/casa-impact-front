@@ -1,4 +1,5 @@
-import { DATA_SOURCE, API_URL } from "@/lib/config"
+import { DATA_SOURCE } from "@/lib/config"
+import { apiFetch } from "@/lib/api-client"
 import { mockUsers } from "@/lib/mock/users.mock"
 import type { User, Role } from "@/types/models"
 import type { AdminRoleSlug } from "@/types/admin"
@@ -7,6 +8,45 @@ export interface ListUsersParams {
   search?: string
   role?: string
   statut?: string
+}
+
+/**
+ * Forme RÉELLE de App\Http\Resources\Admin\UserResource (vérifiée le
+ * 2026-09-16, bug "l'affichage des infos utilisateur ça ne va pas" —
+ * liste affichant "undefined" comme nom et "Utilisateur" comme rôle pour
+ * tout le monde) : un seul champ `name` (pas de nom/prenom séparés) et
+ * `roles` en tableau de SLUGS à plat (`$this->roles->pluck('name')`),
+ * jamais un objet `role` imbriqué. Le modèle User n'a par ailleurs AUCUNE
+ * colonne de statut (actif/inactif/suspendu) — ce concept n'existe que
+ * côté UI pour l'instant, donc toujours "actif" tant que le compte existe
+ * (soft-delete = compte absent de la liste, pas "inactif").
+ * withLegacyUserShape() traduit cette forme réelle vers celle attendue par
+ * les composants existants (UsersTable, UserFormDialog), construits à
+ * l'origine contre le mock — même principe que RawApplication/
+ * withLegacyNames() dans applications.service.ts.
+ */
+interface RawUser {
+  id: number
+  name: string
+  email: string
+  roles: string[]
+  created_at?: string
+  updated_at?: string
+}
+
+function withLegacyUserShape(raw: RawUser): User {
+  const roleSlug = (raw.roles?.[0] as AdminRoleSlug) || undefined
+  return {
+    id: raw.id,
+    name: raw.name,
+    nom: raw.name,
+    email: raw.email,
+    roles: raw.roles,
+    role: roleSlug ? ROLES_MAP[roleSlug] : undefined,
+    statut: "actif",
+    created_at: raw.created_at,
+    updated_at: raw.updated_at,
+  }
 }
 
 function delay<T>(data: T, ms = 100): Promise<T> {
@@ -93,29 +133,13 @@ export const usersService = {
     if (role && role !== "all") queryParams.set("role", role)
     if (statut && statut !== "all") queryParams.set("statut", statut)
 
-    const url = `${API_URL}/api/admin/users${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`
-
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Laravel Sanctum SPA
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors du chargement des utilisateurs (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data?: RawUser[] } | RawUser[]>(
+      `/api/admin/users${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`
+    )
+    const raw = (json as { data?: RawUser[] }).data ?? (json as RawUser[])
+    return raw.map(withLegacyUserShape)
   },
 
   /**
@@ -131,22 +155,11 @@ export const usersService = {
       return delay<User>(found)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/users/${id}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Impossible de charger l'utilisateur #${id} (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data?: RawUser } | RawUser>(
+      `/api/admin/users/${id}`
+    )
+    const raw = (json as { data?: RawUser }).data ?? (json as RawUser)
+    return withLegacyUserShape(raw)
   },
 
   /**
@@ -180,26 +193,23 @@ export const usersService = {
       return delay<User>(newUser)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/users`, {
+    // Le backend (StoreUserRequest) attend `name` (pas nom/prenom séparés)
+    // et `roles` en tableau (pas `role_slug` singulier) — voir
+    // withLegacyUserShape() ci-dessus pour le sens inverse (lecture).
+    // NOTE : StoreUserRequest exige aussi `password` (+ confirmation), que
+    // ce formulaire ne collecte pas encore — la création échouera donc
+    // avec une erreur de validation "password requis" tant qu'un champ mot
+    // de passe n'aura pas été ajouté à UserFormDialog.
+    const json = await apiFetch<{ data?: RawUser } | RawUser>(`/api/admin/users`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
+      body: {
+        name: [payload.prenom, payload.nom].filter(Boolean).join(" "),
+        email: payload.email,
+        roles: [payload.role_slug],
       },
-      credentials: "include",
-      body: JSON.stringify(payload),
     })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors de la création de l'utilisateur (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const raw = (json as { data?: RawUser }).data ?? (json as RawUser)
+    return withLegacyUserShape(raw)
   },
 
   /**
@@ -236,26 +246,22 @@ export const usersService = {
       return delay<User>(updated)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/users/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors de la mise à jour de l'utilisateur (HTTP ${res.status})`
-      )
+    // Même traduction de forme que createUser ci-dessus. `statut` n'est pas
+    // envoyé : aucune colonne correspondante côté backend (voir
+    // withLegacyUserShape), UpdateUserRequest l'ignorerait de toute façon.
+    const body: Record<string, unknown> = {}
+    if (payload.nom || payload.prenom) {
+      body.name = [payload.prenom, payload.nom].filter(Boolean).join(" ")
     }
+    if (payload.email) body.email = payload.email
+    if (payload.role_slug) body.roles = [payload.role_slug]
 
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data?: RawUser } | RawUser>(
+      `/api/admin/users/${id}`,
+      { method: "PUT", body }
+    )
+    const raw = (json as { data?: RawUser }).data ?? (json as RawUser)
+    return withLegacyUserShape(raw)
   },
 
   /**
@@ -271,20 +277,11 @@ export const usersService = {
       return delay<boolean>(true)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/users/${id}`, {
-      method: "DELETE",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors de la suppression de l'utilisateur (HTTP ${res.status})`
-      )
-    }
-
+    // Corrigé le 2026-09-16 (même bug que contact-messages.service.ts :
+    // fetch() brut sans en-tête X-XSRF-TOKEN, donc 419 "CSRF token
+    // mismatch" systématique sur create/update/delete). Toutes les méthodes
+    // de ce service passent maintenant par apiFetch.
+    await apiFetch<void>(`/api/admin/users/${id}`, { method: "DELETE" })
     return true
   },
 }

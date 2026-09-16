@@ -1,4 +1,5 @@
-import { DATA_SOURCE, API_URL } from "@/lib/config"
+import { DATA_SOURCE } from "@/lib/config"
+import { apiFetch } from "@/lib/api-client"
 import { mockContactMessages } from "@/lib/mock/contact-messages.mock"
 import type { ContactMessage } from "@/types/models"
 import type { ContactCategory, ContactMessageStatus } from "@/types/enums"
@@ -75,29 +76,12 @@ export const contactMessagesService = {
     if (statut && statut !== "all") queryParams.set("statut", statut)
     if (lu !== "all") queryParams.set("lu", lu)
 
-    const url = `${API_URL}/api/admin/contact-messages${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`
-
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Laravel Sanctum SPA
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors du chargement des messages (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data?: ContactMessage[] } | ContactMessage[]>(
+      `/api/admin/contact-messages${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`
+    )
+    return (json as { data?: ContactMessage[] }).data ?? (json as ContactMessage[])
   },
 
   /**
@@ -115,22 +99,10 @@ export const contactMessagesService = {
       return delay<ContactMessage>(found)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/contact-messages/${id}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Impossible de charger le message #${id} (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data?: ContactMessage } | ContactMessage>(
+      `/api/admin/contact-messages/${id}`
+    )
+    return (json as { data?: ContactMessage }).data ?? (json as ContactMessage)
   },
 
   /**
@@ -155,26 +127,11 @@ export const contactMessagesService = {
       return delay<ContactMessage>(updated)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/contact-messages/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors de la mise à jour du message (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data?: ContactMessage } | ContactMessage>(
+      `/api/admin/contact-messages/${id}`,
+      { method: "PUT", body: payload }
+    )
+    return (json as { data?: ContactMessage }).data ?? (json as ContactMessage)
   },
 
   /**
@@ -195,25 +152,11 @@ export const contactMessagesService = {
       return delay<ContactMessage>(mockContactMessages[index])
     }
 
-    const res = await fetch(
-      `${API_URL}/api/admin/contact-messages/${id}/read`,
-      {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        credentials: "include",
-      }
+    const json = await apiFetch<{ data?: ContactMessage } | ContactMessage>(
+      `/api/admin/contact-messages/${id}/read`,
+      { method: "POST" }
     )
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors du marquage comme lu (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    return (json as { data?: ContactMessage }).data ?? (json as ContactMessage)
   },
 
   /**
@@ -229,20 +172,16 @@ export const contactMessagesService = {
       return delay<boolean>(true)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/contact-messages/${id}`, {
+    // Corrigé le 2026-09-16 ("la suppression ne passe pas", 419 "CSRF token
+    // mismatch") : ce fichier faisait un fetch() brut, sans jamais envoyer
+    // l'en-tête X-XSRF-TOKEN attendu par Sanctum sur toute mutation
+    // (POST/PUT/PATCH/DELETE) — contrairement à apiFetch (lib/api-client.ts)
+    // qui l'ajoute automatiquement et rafraîchit le cookie CSRF en cas
+    // d'expiration. Toutes les méthodes de ce service passent maintenant
+    // par apiFetch.
+    await apiFetch<void>(`/api/admin/contact-messages/${id}`, {
       method: "DELETE",
-      headers: { Accept: "application/json" },
-      credentials: "include",
     })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message ||
-          `Erreur lors de la suppression du message (HTTP ${res.status})`
-      )
-    }
-
     return true
   },
 }

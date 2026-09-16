@@ -1,4 +1,5 @@
-import { DATA_SOURCE, API_URL } from "@/lib/config"
+import { DATA_SOURCE } from "@/lib/config"
+import { apiFetch } from "@/lib/api-client"
 import { mockPages } from "@/lib/mock/pages.mock"
 import type { Page } from "@/types/models"
 import type { PageStatus } from "@/types/enums"
@@ -56,28 +57,12 @@ export const pagesService = {
     if (search) queryParams.set("search", search)
     if (statut && statut !== "all") queryParams.set("statut", statut)
 
-    const url = `${API_URL}/api/admin/pages${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`
-
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // Laravel Sanctum SPA
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors du chargement des pages institutionnelles (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data?: Page[] } | Page[]>(
+      `/api/admin/pages${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`
+    )
+    return (json as { data?: Page[] }).data ?? (json as Page[])
   },
 
   /**
@@ -95,21 +80,10 @@ export const pagesService = {
       return delay<Page>(found)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/pages/${id}`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Impossible de charger la page #${id} (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data?: Page } | Page>(
+      `/api/admin/pages/${id}`
+    )
+    return (json as { data?: Page }).data ?? (json as Page)
   },
 
   /**
@@ -132,25 +106,11 @@ export const pagesService = {
       return delay<Page>(newPage)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/pages`, {
+    const json = await apiFetch<{ data?: Page } | Page>(`/api/admin/pages`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
+      body: payload,
     })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la création de la page (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    return (json as { data?: Page }).data ?? (json as Page)
   },
 
   /**
@@ -177,25 +137,11 @@ export const pagesService = {
       return delay<Page>(updated)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/pages/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la mise à jour de la page (HTTP ${res.status})`
-      )
-    }
-
-    const json = await res.json()
-    return json.data || json
+    const json = await apiFetch<{ data?: Page } | Page>(
+      `/api/admin/pages/${id}`,
+      { method: "PUT", body: payload }
+    )
+    return (json as { data?: Page }).data ?? (json as Page)
   },
 
   /**
@@ -211,19 +157,11 @@ export const pagesService = {
       return delay<boolean>(true)
     }
 
-    const res = await fetch(`${API_URL}/api/admin/pages/${id}`, {
-      method: "DELETE",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      throw new Error(
-        err?.message || `Erreur lors de la suppression de la page (HTTP ${res.status})`
-      )
-    }
-
+    // Corrigé le 2026-09-16 (même bug que contact-messages.service.ts et
+    // users.service.ts : fetch() brut sans en-tête X-XSRF-TOKEN → 419 "CSRF
+    // token mismatch" systématique sur toute mutation). Passe maintenant
+    // par apiFetch.
+    await apiFetch<void>(`/api/admin/pages/${id}`, { method: "DELETE" })
     return true
   },
 }

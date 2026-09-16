@@ -62,7 +62,7 @@ const nextConfig = {
     // sur n'importe quel hébergeur, sans dépendance native). `remotePatterns`
     // ci-dessus reste en place, prêt à resservir si l'optimisation est un
     // jour réactivée (ex. paquet `sharp` ajouté et confirmé fonctionnel).
-    unoptimized: true,
+    unoptimized: false,
   },
   async headers() {
     return [

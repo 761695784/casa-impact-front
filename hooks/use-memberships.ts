@@ -302,6 +302,26 @@ export function useDownloadMembershipCard() {
 }
 
 /**
+ * Export PDF "pro" de la liste des adhérents (accord du 2026-09-16) —
+ * déclenche le téléchargement navigateur directement depuis
+ * membershipsService.exportMembershipsPdf (réponse binaire, pas du JSON,
+ * donc rien à mettre en cache ici — même principe que
+ * useDownloadMembershipCard ci-dessus).
+ */
+export function useExportMembershipsPdf() {
+  return useMutation({
+    mutationFn: (params: Pick<ListMembershipsParams, "search" | "statut" | "region">) =>
+      membershipsService.exportMembershipsPdf(params),
+    onError: (err: unknown) => {
+      toast.error("Impossible de générer le PDF", {
+        description:
+          err instanceof Error ? err.message : "Une erreur est survenue.",
+      })
+    },
+  })
+}
+
+/**
  * Bouton "Envoyer un rappel de paiement" (accord du 2026-09-11) — ne prend
  * aucun paramètre : cible toujours tous les membres `en_attente_paiement`,
  * calculé côté serveur au moment de l'envoi. Pas d'invalidation de cache :

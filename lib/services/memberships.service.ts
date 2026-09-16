@@ -442,6 +442,54 @@ export const membershipsService = {
   },
 
   /**
+   * Export PDF "pro" de la liste des adhérents (accord du 2026-09-16) —
+   * mêmes filtres que la liste actuellement affichée (recherche/statut/
+   * région), rendu paysage avec la charte graphique (logo, couleurs,
+   * filigrane) côté serveur. apiFetch ne convient pas ici : la réponse est
+   * un PDF binaire, pas du JSON — même principe que downloadCard().
+   * N'existe pas en mode mock (le rendu PDF a besoin du backend réel).
+   */
+  exportMembershipsPdf: async (
+    params: Pick<ListMembershipsParams, "search" | "statut" | "region"> = {}
+  ): Promise<void> => {
+    const { search, statut, region } = params
+
+    const queryParams = new URLSearchParams()
+    if (search) queryParams.set("search", search)
+    if (statut && statut !== "all") queryParams.set("statut", statut)
+    if (region && region !== "all") queryParams.set("region", region)
+
+    const res = await fetch(
+      `${API_URL}/api/admin/memberships/export-pdf?${queryParams.toString()}`,
+      {
+        method: "GET",
+        headers: { Accept: "application/pdf" },
+        credentials: "include",
+      }
+    )
+
+    if (!res.ok) {
+      const contentType = res.headers.get("content-type") || ""
+      const payload = contentType.includes("application/json")
+        ? await res.json().catch(() => null)
+        : null
+      throw new Error(
+        payload?.message || `Impossible de générer le PDF (HTTP ${res.status})`
+      )
+    }
+
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `adherents-casa-impact-${new Date().toISOString().slice(0, 10)}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  },
+
+  /**
    * Bouton "Envoyer un rappel de paiement" de la page Adhésions (accord du
    * 2026-09-11) — relance par email TOUS les membres dont l'adhésion est
    * encore `en_attente_paiement` (n'ont pas finalisé leur adhésion), avec

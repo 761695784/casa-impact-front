@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { Users, UserCheck, Clock, UserX, CreditCard, UserPlus, FileSpreadsheet, BellRing } from "lucide-react"
+import { Users, UserCheck, Clock, UserX, CreditCard, UserPlus, FileSpreadsheet, FileDown, BellRing } from "lucide-react"
 import { AdhesionsFilterBar } from "@/components/admin/adhesions/adhesions-filter-bar"
 import { AdhesionsTable } from "@/components/admin/adhesions/adhesions-table"
 import { AdhesionsMobileList } from "@/components/admin/adhesions/adhesions-mobile-list"
@@ -19,6 +19,7 @@ import {
   useRejectMembership,
   useDeleteMembership,
   useSendPaymentReminders,
+  useExportMembershipsPdf,
 } from "@/hooks/use-memberships"
 import type { Membership } from "@/types/models"
 
@@ -90,6 +91,7 @@ export default function AdminAdhesionsPage() {
   const rejectMutation = useRejectMembership()
   const deleteMutation = useDeleteMembership()
   const sendRemindersMutation = useSendPaymentReminders()
+  const exportPdfMutation = useExportMembershipsPdf()
 
   const handleReset = () => {
     setSearch("")
@@ -133,6 +135,17 @@ export default function AdminAdhesionsPage() {
           >
             <FileSpreadsheet className="size-4" />
             <span>Importer l'historique (Excel)</span>
+          </Button>
+          <Button
+            onClick={() => exportPdfMutation.mutate({ search, statut, region })}
+            disabled={exportPdfMutation.isPending}
+            variant="outline"
+            className="rounded-full font-semibold gap-2 border-forest/40 text-forest hover:bg-forest/10"
+          >
+            <FileDown className="size-4" />
+            <span>
+              {exportPdfMutation.isPending ? "Génération du PDF..." : "Exporter en PDF"}
+            </span>
           </Button>
           <Button
             onClick={() => setIsCreateOpen(true)}

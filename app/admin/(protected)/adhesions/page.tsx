@@ -103,7 +103,15 @@ export default function AdminAdhesionsPage() {
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-300">
       {/* 1. Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/80 pb-5">
+      {/* flex-wrap + lg:flex-row (accord du 2026-09-16 : le bloc de 4
+          boutons — rappel/import/export PDF/ajouter — débordait hors
+          écran en sm:flex-row, la ligne ne repassant jamais à la ligne
+          suivante faute de largeur disponible pour le bloc). Le bloc
+          d'actions passe désormais SOUS le titre tant que l'écran n'est
+          pas assez large (lg, ≥1024px), et peut encore se scinder sur
+          plusieurs lignes lui-même si besoin (flex-wrap sur les deux
+          niveaux) plutôt que de provoquer un scroll horizontal de page. */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between flex-wrap border-b border-border/80 pb-5">
         <div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-forest/10 px-3 py-0.5 text-xs font-semibold text-forest">
             <CreditCard className="size-3.5" />
@@ -117,7 +125,7 @@ export default function AdminAdhesionsPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
           {counts.enAttente > 0 && (
             <Button
               onClick={() => setIsReminderConfirmOpen(true)}

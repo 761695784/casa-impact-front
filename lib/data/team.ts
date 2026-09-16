@@ -166,10 +166,12 @@ export const teamMembers: TeamMember[] = [
     id: 'kadialy-sane',
     nom: 'Kadialy Sané',
     fonction: 'Responsable Commission scientifique',
+    pole: 'commission scientifique',
     categorie: 'commission_scientifique',
     image: '/assets/team/kadialy-sane.jpeg',
     ordre: 1,
   },
+
     {
     id: 'ndeye-sire-sagna',
     nom: 'Ndeye Sire Sagna',

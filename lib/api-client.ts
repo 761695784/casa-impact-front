@@ -86,13 +86,38 @@ export async function apiFetch<T = unknown>(
     }
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const requestBody = isFormData ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined
+
+  let res = await fetch(`${API_URL}${path}`, {
     ...rest,
     method: httpMethod,
     headers: finalHeaders,
     credentials: "include",
-    body: isFormData ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined,
+    body: requestBody,
   })
+
+  // Correctif du 2026-09-16 ("la suppression ne passe pas", 419 "CSRF token
+  // mismatch" sur une action DELETE en production) : le cookie XSRF-TOKEN
+  // lu plus haut peut exister mais être PÉRIMÉ (session longue, cookie
+  // regénéré côté serveur entre-temps, plusieurs onglets...) — le flux
+  // ci-dessus ne rafraîchit le cookie que quand il est ABSENT, jamais quand
+  // il est présent-mais-obsolète, d'où une boucle de 419 sur toute nouvelle
+  // tentative tant que la page n'est pas rechargée. On retente donc UNE
+  // fois automatiquement après un rafraîchissement explicite du cookie.
+  if (res.status === 419 && MUTATING_METHODS.has(httpMethod)) {
+    await ensureCsrfCookie()
+    const freshToken = readCookie("XSRF-TOKEN")
+    if (freshToken) {
+      finalHeaders["X-XSRF-TOKEN"] = freshToken
+    }
+    res = await fetch(`${API_URL}${path}`, {
+      ...rest,
+      method: httpMethod,
+      headers: finalHeaders,
+      credentials: "include",
+      body: requestBody,
+    })
+  }
 
   if (res.status === 204) {
     return undefined as T

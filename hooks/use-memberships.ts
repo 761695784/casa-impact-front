@@ -179,6 +179,24 @@ export function useUpdateMembershipPhoto() {
   })
 }
 
+/**
+ * Récupère la photo actuellement enregistrée d'un membre en tant que
+ * `File`, pour ouvrir PhotoCropModal dessus sans re-sélection de fichier —
+ * voir membershipsService.getMembershipPhotoAsFile() et MembershipPhotoDialog
+ * (bouton "Recadrer" sur une photo déjà présente, accord du 2026-09-18).
+ */
+export function useFetchMembershipPhotoForCrop() {
+  return useMutation({
+    mutationFn: (id: number) => membershipsService.getMembershipPhotoAsFile(id),
+    onError: (err: unknown) => {
+      toast.error("Impossible de charger la photo actuelle", {
+        description:
+          err instanceof Error ? err.message : "Une erreur est survenue.",
+      })
+    },
+  })
+}
+
 export function useUpdateMembership() {
   const queryClient = useQueryClient()
 

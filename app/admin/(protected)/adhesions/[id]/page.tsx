@@ -63,6 +63,11 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
   const [isPhotoEditOpen, setIsPhotoEditOpen] = useState(false)
+  // Distingue l'ouverture depuis l'icône appareil photo (choix libre) de
+  // celle depuis le bouton "Recadrer" de la fenêtre de zoom, qui doit
+  // directement lancer le recadrage de la photo déjà enregistrée (accord du
+  // 2026-09-18).
+  const [photoEditAutoCrop, setPhotoEditAutoCrop] = useState(false)
 
   const {
     data: membership,
@@ -228,6 +233,7 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
+                setPhotoEditAutoCrop(false)
                 setIsPhotoEditOpen(true)
               }}
               title={membership.photo_url ? "Remplacer la photo" : "Ajouter une photo"}
@@ -239,7 +245,10 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
             {!membership.photo_url && (
               <button
                 type="button"
-                onClick={() => setIsPhotoEditOpen(true)}
+                onClick={() => {
+                  setPhotoEditAutoCrop(false)
+                  setIsPhotoEditOpen(true)
+                }}
                 className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-forest hover:underline"
               >
                 Ajouter une photo
@@ -536,22 +545,41 @@ export default function AdminMembershipDetailPage({ params }: PageProps) {
           <p className="text-xs text-muted-foreground mt-0.5">
             Photo d'identité officielle • Référence {membership.numero_membre || `#${membership.id}`}
           </p>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setIsPhotoModalOpen(false)}
-            className="mt-4 rounded-full w-full"
-          >
-            Fermer
-          </Button>
+          <div className="mt-4 flex flex-col-reverse sm:flex-row gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsPhotoModalOpen(false)}
+              className="rounded-full flex-1"
+            >
+              Fermer
+            </Button>
+            {membership.photo_url && (
+              <Button
+                type="button"
+                onClick={() => {
+                  setIsPhotoModalOpen(false)
+                  setPhotoEditAutoCrop(true)
+                  setIsPhotoEditOpen(true)
+                }}
+                className="rounded-full flex-1 bg-forest text-white hover:bg-forest/90 font-semibold gap-1.5"
+              >
+                <Camera className="size-3.5" />
+                <span>Recadrer la photo</span>
+              </Button>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Ajouter/remplacer la photo (pensé pour les membres importés sans photo) */}
+      {/* Ajouter/remplacer/recadrer la photo (pensé pour les membres importés
+          sans photo, et pour recadrer a posteriori une photo déjà envoyée par
+          l'adhérent mais mal cadrée — accord du 2026-09-18). */}
       <MembershipPhotoDialog
         membership={membership}
         open={isPhotoEditOpen}
         onOpenChange={setIsPhotoEditOpen}
+        autoStartCrop={photoEditAutoCrop}
       />
 
       {/* Confirmation Dialog: Valider */}

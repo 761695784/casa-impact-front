@@ -331,6 +331,38 @@ export const membershipsService = {
     return json.data
   },
 
+  /**
+   * Récupère la photo ACTUELLEMENT enregistrée d'un membre sous forme de
+   * `File`, pour la repasser à PhotoCropModal — pensé pour le recadrage a
+   * posteriori d'une photo déjà importée par l'adhérent, sans repasser par
+   * une sélection de fichier (accord du 2026-09-18). `photo_url` (le lien
+   * `/storage/...` direct) ne peut PAS être utilisé ici : il est hors des
+   * chemins couverts par le CORS Laravel (voir config/cors.php, limité à
+   * `api/*`), et une image dessinée dans un <canvas> sans en-tête CORS est
+   * "taintée" — impossible d'en extraire les pixels pour la recadrer. On
+   * passe donc par la route api/* dédiée `GET .../photo-source`.
+   */
+  getMembershipPhotoAsFile: async (id: number): Promise<File> => {
+    const res = await fetch(`${API_URL}/api/admin/memberships/${id}/photo-source`, {
+      method: "GET",
+      credentials: "include",
+    })
+
+    if (!res.ok) {
+      throw new Error(
+        res.status === 404
+          ? "Ce membre n'a pas encore de photo enregistrée."
+          : `Impossible de récupérer la photo actuelle (HTTP ${res.status})`
+      )
+    }
+
+    const blob = await res.blob()
+    const extension = blob.type.split("/")[1]?.split("+")[0] || "jpg"
+    return new File([blob], `photo-actuelle.${extension}`, {
+      type: blob.type || "image/jpeg",
+    })
+  },
+
   getMembership: async (id: number | string): Promise<Membership> => {
     if (DATA_SOURCE === "mock") {
       const found = mockMemberships.find(

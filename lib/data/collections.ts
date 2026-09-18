@@ -22,7 +22,7 @@ export interface Product {
 }
 
 export const SHOP_WHATSAPP_NUMBER = '221783267378'
-export const SHOP_PHONE_DISPLAY = '78 326 73 78'
+export const SHOP_PHONE_DISPLAY = '78 103 30 63'
 
 export const productCategories = [
   { id: 'all', label: 'Toutes les collections' },

@@ -161,15 +161,15 @@ export function BoutiqueHero() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="font-display text-xl font-bold text-accent block">
+                  {/* <span className="font-display text-xl font-bold text-accent block">
                     10 000 FCFA
-                  </span>
+                  </span> */}
                   <button
                     type="button"
                     onClick={handleOrderHeroProduct}
-                    className="mt-1 text-[11px] font-semibold text-accent hover:text-white underline decoration-accent underline-offset-2 cursor-pointer transition-colors"
+                    className="mt-1 text-[11px] font-bold text-accent hover:text-white decoration-accent cursor-pointer transition-colors"
                   >
-                    Commander ce modèle →
+                    Commander ce modèle 
                   </button>
                 </div>
               </div>

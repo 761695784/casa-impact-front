@@ -13,7 +13,7 @@ export const institution = {
   mission:
     "Casa Impact a pour mission de former et accompagner les jeunes, encourager l'entrepreneuriat et l'innovation, promouvoir la culture et les valeurs de la Casamance, développer le tourisme local, soutenir les talents et attirer les investisseurs et la diaspora.",
   objectif:
-    "Contribuer au développement économique, social, culturel et touristique de la Casamance à travers des initiatives innovantes portées par la jeunesse.",
+    "Contribuer au développement économique, social, culturel et touristique de la Casamance à travers des initiatives innovantes portées par la jeunesse, tout en renforçant la sensibilisation, la protection et la préservation de l’environnement.",
 } as const
 
 export const valeurs = [
@@ -197,7 +197,7 @@ export const territoires = [
   {
     nom: 'Ziguinchor',
     description:
-      "Porte d'entrée de la Casamance, terre du Président Fondateur, cœur historique de l'organisation Casa Impact.",
+      "Porte d’entrée de la Casamance, Ziguinchor se distingue par son riche potentiel culturel, économique et humain. Un territoire porté par une jeunesse créative, ambitieuse et engagée dans le développement local.",
   },
   {
     nom: 'Sédhiou',

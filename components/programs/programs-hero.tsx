@@ -57,10 +57,10 @@ export function ProgramsHero() {
         </nav>
 
         {/* Eyebrow Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-md">
+        {/* <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-md">
           <Sparkles className="size-3 text-accent" />
           <span>Formations & Accompagnements Territoriaux</span>
-        </div>
+        </div> */}
 
         {/* Title */}
         <h1 className="mt-4 text-balance font-display text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl drop-shadow-sm">
@@ -90,7 +90,7 @@ export function ProgramsHero() {
               <Users className="size-5" />
             </div>
             <div>
-              <span className="block font-display text-lg font-bold text-white">+400</span>
+              <span className="block font-display text-lg font-bold text-white">+300</span>
               <span className="block text-[11px] text-white/75">Bénéficiaires formés</span>
             </div>
           </div>

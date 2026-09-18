@@ -24,12 +24,12 @@ export function TestimonialsView() {
       <CtaBand
         title="Votre parcours en Casamance mérite d'être raconté"
         description="Bénéficiaire d'une formation, entrepreneur accompagné, artisane ou acteur citoyen des régions de Ziguinchor, Sédhiou et Kolda : inspirez la communauté en partageant votre expérience."
-        primary={{
-          label: "Partager mon témoignage",
-          href: "#",
-          onClick: () => setIsSubmitModalOpen(true),
-        }}
-        secondary={{
+        // primary={{
+        //   label: "Partager mon témoignage",
+        //   href: "#",
+        //   onClick: () => setIsSubmitModalOpen(true),
+        // }}
+      primary={{
           label: "Rejoindre l'organisation",
           href: "/adherer",
         }}

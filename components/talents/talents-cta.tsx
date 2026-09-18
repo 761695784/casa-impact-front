@@ -61,7 +61,7 @@ export function TalentsCta() {
 
       <div className="mt-12 text-center">
         <Button asChild size="lg" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-8">
-          <Link href="/adherer" className="flex items-center gap-2">
+          <Link href="/contact" className="flex items-center gap-2">
             <UserPlus className="size-4" />
             Soumettre une candidature de talent
             <ArrowRight className="size-4" />

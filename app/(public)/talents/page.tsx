@@ -47,7 +47,7 @@ export default function TalentsPage() {
       <CtaBand
         title="Vous souhaitez soutenir les talents de Casamance ?"
         description="Devenez mentor, partenaire ou investisseur pour accompagner la nouvelle génération de champions territoriaux."
-        primary={{ label: "Devenir Partenaire", href: "/adherer" }}
+        primary={{ label: "Devenir Partenaire", href: "/contact" }}
         secondary={{ label: "Découvrir les programmes", href: "/programmes" }}
       />
     </>

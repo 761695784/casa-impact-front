@@ -85,7 +85,7 @@ export function PartnersGrid() {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <div className="flex justify-center gap-2">
+        <div className="flex justify-start gap-2">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-10 w-28 animate-pulse rounded-full bg-muted" />
           ))}
@@ -116,9 +116,9 @@ export function PartnersGrid() {
   }
 
   return (
-    <div className="space-y-10">
-      {/* Category Filter Tabs */}
-      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
+    <div className="space-y-8 sm:space-y-10">
+      {/* Category Filter Tabs with clean spacing */}
+      <div className="flex flex-wrap items-center justify-start gap-2.5 sm:gap-3">
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon
           const isActive = activeCategory === cat.id

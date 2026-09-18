@@ -59,7 +59,7 @@ export function TalentsCategories() {
           className="mb-0"
         />
         <Button asChild className="rounded-full bg-accent text-accent-foreground font-semibold shadow-md shadow-accent/20 hover:bg-forest hover:text-white transition-all">
-          <Link href="/adherer" className="flex items-center gap-2">
+          <Link href="/contact" className="flex items-center gap-2">
             Recommander un talent
             <ArrowRight className="size-4" />
           </Link>

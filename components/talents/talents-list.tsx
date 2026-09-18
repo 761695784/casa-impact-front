@@ -89,7 +89,7 @@ export function TalentsList() {
                 size="lg"
                 className="h-12 rounded-full bg-accent px-7 font-semibold text-accent-foreground shadow-lg shadow-accent/20 hover:bg-forest hover:text-white transition-all"
               >
-                <Link href="/adherer" className="flex items-center gap-2">
+                <Link href="/contact" className="flex items-center gap-2">
                   Proposer un talent
                   <ArrowRight className="size-4" />
                 </Link>

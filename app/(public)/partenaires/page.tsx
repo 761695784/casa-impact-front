@@ -51,6 +51,7 @@ export default function PartenairesPage() {
           eyebrow="Types d'engagements"
           title="Plusieurs façons de co-construire l'impact"
           description="Quel que soit votre profil ou votre secteur, il existe une passerelle concrète pour contribuer à la transformation des terroirs de la Casamance."
+          className="mb-10 sm:mb-12 md:mb-14"
         />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {partnerTypes.map((t) => (
@@ -91,6 +92,7 @@ export default function PartenairesPage() {
           eyebrow="Ils nous font confiance"
           title="Un réseau solide d'alliances engagées"
           description="Découvrez les acteurs institutionnels, techniques, financiers et médias qui soutiennent concrètement nos actions en Casamance."
+          className="mb-10 sm:mb-12 md:mb-14"
         />
         <PartnersGrid />
       </Section>

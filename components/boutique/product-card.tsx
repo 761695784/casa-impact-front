@@ -74,17 +74,19 @@ export function ProductCard({ product, onSelectProduct, index = 0 }: ProductCard
         </div>
 
         {/* Price & Action Button */}
+        {/* Prix masqué (accord du 2026-09-18) : la boutique n'est pas
+            encore ouverte à la vente — "Bientôt disponible" remplace le
+            prix tant que ce n'est pas le cas, dans la grille catalogue
+            uniquement (voir aussi home-boutique.tsx pour le même
+            traitement sur la vitrine de la page d'accueil). */}
         <div className="pt-4 border-t border-border flex items-center justify-between gap-2">
           <div>
             <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">
-              Prix officiel
+              Disponibilité
             </span>
-            <div className="flex items-baseline gap-1">
-              <span className="font-display text-lg sm:text-xl font-bold text-primary">
-                {product.price.toLocaleString("fr-FR")}
-              </span>
-              <span className="text-xs font-semibold text-muted-foreground">FCFA</span>
-            </div>
+            <span className="font-display text-sm sm:text-base font-bold text-accent">
+              Bientôt disponible
+            </span>
           </div>
 
           <button

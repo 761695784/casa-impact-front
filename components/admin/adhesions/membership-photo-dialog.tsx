@@ -15,6 +15,7 @@ import { compressImageToWebP } from "@/lib/image-processing"
 import { cn } from "@/lib/utils"
 import { ImageIcon, Loader2, Camera } from "lucide-react"
 import type { Membership } from "@/types/models"
+import { PhotoCropModal } from "./photo-crop-modal"
 
 interface MembershipPhotoDialogProps {
   membership: Membership
@@ -37,28 +38,41 @@ export function MembershipPhotoDialog({ membership, open, onOpenChange }: Member
   const [preview, setPreview] = useState<string | null>(null)
   const [isCompressing, setIsCompressing] = useState(false)
 
+  // Étape de recadrage (accord du 2026-09-18) : le fichier brut choisi par
+  // l'utilisateur passe d'abord par PhotoCropModal avant d'être compressé
+  // et retenu comme `photo` — voir handleCropped().
+  const [rawFile, setRawFile] = useState<File | null>(null)
+  const [isCropOpen, setIsCropOpen] = useState(false)
+
   useEffect(() => {
     if (!open) {
       setPhoto(null)
       if (preview) URL.revokeObjectURL(preview)
       setPreview(null)
+      setRawFile(null)
+      setIsCropOpen(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
+    setRawFile(file)
+    setIsCropOpen(true)
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  const handleCropped = async (croppedFile: File) => {
     setIsCompressing(true)
     try {
-      const compressed = await compressImageToWebP(file)
+      const compressed = await compressImageToWebP(croppedFile)
       if (preview) URL.revokeObjectURL(preview)
       setPhoto(compressed)
       setPreview(URL.createObjectURL(compressed))
     } finally {
       setIsCompressing(false)
-      if (fileInputRef.current) fileInputRef.current.value = ""
     }
   }
 
@@ -73,6 +87,7 @@ export function MembershipPhotoDialog({ membership, open, onOpenChange }: Member
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm rounded-3xl p-6">
         <DialogHeader className="space-y-1">
@@ -150,5 +165,13 @@ export function MembershipPhotoDialog({ membership, open, onOpenChange }: Member
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <PhotoCropModal
+      file={rawFile}
+      open={isCropOpen}
+      onOpenChange={setIsCropOpen}
+      onCropped={handleCropped}
+    />
+    </>
   )
 }

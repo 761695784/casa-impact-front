@@ -78,9 +78,12 @@ export function HomeBoutique() {
                   </p>
                 </div>
 
+                {/* Prix masqué (accord du 2026-09-18, même traitement que
+                    product-card.tsx) : la boutique n'est pas encore ouverte
+                    à la vente. */}
                 <div className="pt-3 border-t border-border flex items-center justify-between">
-                  <span className="font-display text-base font-extrabold text-primary">
-                    {product.price.toLocaleString("fr-FR")} <span className="text-[11px] font-medium">FCFA</span>
+                  <span className="font-display text-xs sm:text-sm font-extrabold text-accent">
+                    Bientôt disponible
                   </span>
 
                   <button

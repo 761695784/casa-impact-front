@@ -102,3 +102,68 @@ export async function compressImagesToWebP(
 ): Promise<File[]> {
   return Promise.all(files.map((f) => compressImageToWebP(f, options)))
 }
+
+/** Rectangle de recadrage en pixels réels de l'image source (format
+ * renvoyé par react-easy-crop via son callback onCropComplete). */
+export interface CropRectPixels {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/**
+ * Découpe `file` selon `crop` (voir PhotoCropModal) et réencode le
+ * résultat en WebP — utilisé pour la photo de carte de membre (accord du
+ * 2026-09-18) afin que le cadrage choisi par l'admin soit exactement celui
+ * imprimé sur la carte, plutôt qu'un recadrage automatique côté navigateur
+ * (`object-fit: cover`) imprévisible. Même politique de repli que
+ * compressImageToWebP() : toute limitation technique renvoie le fichier
+ * ORIGINAL inchangé plutôt que de bloquer l'envoi.
+ */
+export async function cropImageFile(
+  file: File,
+  crop: CropRectPixels,
+  options: CompressImageOptions = {}
+): Promise<File> {
+  if (typeof document === "undefined") return file
+  if (crop.width <= 0 || crop.height <= 0) return file
+
+  const { quality = DEFAULT_QUALITY } = options
+
+  let objectUrl: string | null = null
+  try {
+    objectUrl = URL.createObjectURL(file)
+    const img = await loadImage(objectUrl)
+
+    const canvas = document.createElement("canvas")
+    canvas.width = Math.round(crop.width)
+    canvas.height = Math.round(crop.height)
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return file
+
+    ctx.drawImage(
+      img,
+      crop.x,
+      crop.y,
+      crop.width,
+      crop.height,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    )
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/webp", quality)
+    )
+    if (!blob || blob.type !== "image/webp") return file
+
+    const newName = file.name.replace(/\.[^/.]+$/, "") + "-recadree.webp"
+    return new File([blob], newName, { type: "image/webp", lastModified: Date.now() })
+  } catch {
+    return file
+  } finally {
+    if (objectUrl) URL.revokeObjectURL(objectUrl)
+  }
+}

@@ -34,6 +34,7 @@ import { compressImageToWebP } from "@/lib/image-processing"
 import { ApiError } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { UserPlus, ImageIcon, Loader2, X, BadgeCheck, History } from "lucide-react"
+import { PhotoCropModal } from "./photo-crop-modal"
 
 /** Miroir de MembershipRegion::estEnCasamance() côté backend. */
 const CASAMANCE_REGIONS = new Set<MembershipRegion>(["ziguinchor", "sedhiou", "kolda"])
@@ -75,6 +76,10 @@ export function MembershipFormDialog({ open, onOpenChange }: MembershipFormDialo
   const [photo, setPhoto] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [isCompressingPhoto, setIsCompressingPhoto] = useState(false)
+  // Étape de recadrage (accord du 2026-09-18) — voir handlePhotoChange/
+  // handlePhotoCropped et membership-photo-dialog.tsx pour le même flux.
+  const [rawPhotoFile, setRawPhotoFile] = useState<File | null>(null)
+  const [isPhotoCropOpen, setIsPhotoCropOpen] = useState(false)
   const [suggestionsCompetences, setSuggestionsCompetences] = useState("")
   const [adminNote, setAdminNote] = useState("")
   const [sendWelcomeEmail, setSendWelcomeEmail] = useState(false)
@@ -92,6 +97,8 @@ export function MembershipFormDialog({ open, onOpenChange }: MembershipFormDialo
     setTypeContribution("")
     setPhoto(null)
     setPhotoPreview(null)
+    setRawPhotoFile(null)
+    setIsPhotoCropOpen(false)
     setSuggestionsCompetences("")
     setAdminNote("")
     setSendWelcomeEmail(false)
@@ -120,20 +127,25 @@ export function MembershipFormDialog({ open, onOpenChange }: MembershipFormDialo
     }
   }
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     clearError("photo")
+    setRawPhotoFile(file)
+    setIsPhotoCropOpen(true)
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  const handlePhotoCropped = async (croppedFile: File) => {
     setIsCompressingPhoto(true)
     try {
-      const compressed = await compressImageToWebP(file)
+      const compressed = await compressImageToWebP(croppedFile)
       if (photoPreview) URL.revokeObjectURL(photoPreview)
       setPhoto(compressed)
       setPhotoPreview(URL.createObjectURL(compressed))
     } finally {
       setIsCompressingPhoto(false)
-      if (fileInputRef.current) fileInputRef.current.value = ""
     }
   }
 
@@ -218,6 +230,7 @@ export function MembershipFormDialog({ open, onOpenChange }: MembershipFormDialo
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl rounded-3xl p-6 sm:p-8">
         <DialogHeader className="space-y-1">
@@ -613,5 +626,13 @@ export function MembershipFormDialog({ open, onOpenChange }: MembershipFormDialo
         </form>
       </DialogContent>
     </Dialog>
+
+    <PhotoCropModal
+      file={rawPhotoFile}
+      open={isPhotoCropOpen}
+      onOpenChange={setIsPhotoCropOpen}
+      onCropped={handlePhotoCropped}
+    />
+    </>
   )
 }

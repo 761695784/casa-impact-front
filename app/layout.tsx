@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Inter, Bricolage_Grotesque } from 'next/font/google'
 import { QueryProvider } from '@/providers/query-provider'
+import { GoogleAnalytics } from '@/components/analytics/google-analytics'
 import { siteConfig, contactInfo, socialLinks, branding } from '@/lib/config'
 import './globals.css'
 
@@ -148,6 +149,12 @@ export default function RootLayout({
             conséquence dans la console à chaque visite. À réactiver si le
             site est un jour migré vers Vercel. */}
         {false && <Analytics />}
+        {/* Ajouté le 2026-09-21 ("j'aimerai pour avoir l'analytique de mon
+            site comment faire") : Google Analytics 4, chargé uniquement
+            après consentement du visiteur via la bannière cookies (voir
+            components/analytics/google-analytics.tsx). Ne fait rien tant que
+            NEXT_PUBLIC_GA_MEASUREMENT_ID n'est pas configuré. */}
+        <GoogleAnalytics />
       </body>
     </html>
   )

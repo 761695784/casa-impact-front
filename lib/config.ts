@@ -44,6 +44,15 @@ export const DATA_SOURCE: 'mock' | 'api' =
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
+/**
+ * Identifiant de mesure Google Analytics 4 (format G-XXXXXXXXXX), ajouté le
+ * 2026-09-21 ("j'aimerai pour avoir l'analytique de mon site comment
+ * faire"). Vide tant que la variable d'environnement n'est pas configurée
+ * côté Hostinger — le tracking reste alors simplement désactivé (voir
+ * components/analytics/google-analytics.tsx), sans rien casser.
+ */
+export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ''
+
 export const branding = {
   logo: '/assets/branding/logo-casa-impact.png',
   logoWhite: '/assets/branding/logo-casa-impact-blanc.png',

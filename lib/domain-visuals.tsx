@@ -65,7 +65,7 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
   },
   "entrepreneuriat-et-innovation": {
     icon: Rocket,
-    image: "/assets/hero/DSC08045%20copie.jpg",
+    image: "/assets/hero/entrepreneuriat-et-innovation.jpg",
     accentColor: "from-accent/90 to-amber-600/80",
     badgeTone: "bg-accent text-accent-foreground font-bold",
     pitch:
@@ -91,7 +91,7 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
   },
   "culture-et-patrimoine": {
     icon: Landmark,
-    image: "/assets/hero/DSC08016%20copie.jpg",
+    image: "/assets/hero/culture-et-patrimoine.png",
     accentColor: "from-earth/90 to-amber-800/80",
     badgeTone: "bg-earth text-white",
     pitch:
@@ -117,7 +117,7 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
   },
   "sport-et-promotion-des-talents": {
     icon: Trophy,
-    image: "/assets/hero/DSC08084%20copie.jpg",
+    image: "/assets/hero/sport-et-promotion-des-talents.jpg",
     accentColor: "from-primary/90 to-emerald-700/80",
     badgeTone: "bg-primary text-primary-foreground",
     pitch:
@@ -169,7 +169,7 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
   },
   "investissement-et-diaspora": {
     icon: HandCoins,
-    image: "/assets/hero/DSC08011%20copie.jpg",
+    image: "/assets/hero/investissement-et-diaspora.jpg",
     accentColor: "from-amber-700/90 to-earth/80",
     badgeTone: "bg-accent text-accent-foreground font-bold",
     pitch:
@@ -195,7 +195,7 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
   },
   "sensibilisation-environnementale": {
     icon: Leaf,
-    image: "/assets/hero/casamance-landscape.png",
+    image: "/assets/hero/sensibilisation-environnementale.jpg",
     accentColor: "from-emerald-700/90 to-teal-900/80",
     badgeTone: "bg-forest text-white",
     pitch:

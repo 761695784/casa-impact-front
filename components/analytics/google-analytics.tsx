@@ -81,7 +81,7 @@ export function GoogleAnalytics() {
                 <Cookie className="size-4" />
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Nous utilisons des cookies de mesure d'audience (Google Analytics) pour comprendre
+                Nous utilisons des cookies de mesure d'audience pour comprendre
                 comment le site est utilisé et l'améliorer. Vous pouvez accepter ou refuser à tout
                 moment.
               </p>

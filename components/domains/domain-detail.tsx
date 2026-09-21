@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   ChevronRight,
   CheckCircle2,
+  Clock,
   MapPin,
   Layers,
 } from "lucide-react"
@@ -225,10 +226,25 @@ export function DomainDetail({ slug }: { slug: string }) {
                     </p>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-border/50 flex items-center gap-2 text-xs font-semibold text-primary">
-                    <CheckCircle2 className="size-3.5" />
-                    <span>Déploiement en cours</span>
-                  </div>
+                  {/* Statut réel (accord du 2026-09-21) : basé sur la présence
+                      de vrais programmes rattachés à CE domaine
+                      (`relatedPrograms`, déjà calculé plus haut), pas un texte
+                      figé identique pour les 7 domaines — évite d'afficher
+                      "Déploiement en cours" sur des domaines où rien n'est
+                      encore lancé (ex. Sensibilisation Environnementale à son
+                      ouverture). Se corrige tout seul dès qu'un programme réel
+                      est rattaché au domaine, sans nouvelle modification. */}
+                  {relatedPrograms.length > 0 ? (
+                    <div className="mt-6 pt-4 border-t border-border/50 flex items-center gap-2 text-xs font-semibold text-primary">
+                      <CheckCircle2 className="size-3.5" />
+                      <span>Déploiement en cours</span>
+                    </div>
+                  ) : (
+                    <div className="mt-6 pt-4 border-t border-border/50 flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                      <Clock className="size-3.5" />
+                      <span>Déploiement bientôt</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

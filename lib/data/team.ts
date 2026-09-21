@@ -174,7 +174,7 @@ export const teamMembers: TeamMember[] = [
 
     {
     id: 'ndeye-sire-sagna',
-    nom: 'Ndeye Sire Sagna',
+    nom: 'Ndeye Siré Sagna',
     fonction: 'Membre Commission scientifique',
     categorie: 'commission_scientifique',
     image: '/assets/team/ndeye-ciré-sagna.jpeg',
@@ -188,7 +188,7 @@ export const teamMembers: TeamMember[] = [
     region: 'Ziguinchor',
     telephone: '+221 78 125 06 08',
     categorie: 'coordination_regionale',
-    image: '/assets/team/adama-sankhare.jpg',
+    image: '/assets/team/adama-sankhare.jpeg',
     ordre: 1,
   },
   {

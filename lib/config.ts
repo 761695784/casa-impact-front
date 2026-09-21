@@ -14,7 +14,12 @@ export const siteConfig = {
 } as const
 
 export const contactInfo = {
-  email: 'casaimpactF0rt@gmail.com',
+  // Adresse pro remplaçant l'ancienne gmail comme email public affiché sur
+  // le site (footer, page contact, données structurées SEO) — accord du
+  // 2026-09-21. L'ancienne adresse casaimpactF0rt@gmail.com reste active en
+  // coulisses (transfert bidirectionnel configuré côté Gmail/Hostinger),
+  // elle n'est simplement plus affichée publiquement.
+  email: 'contact@casaimpact.org',
   phone: '78 103 30 63',
   phoneHref: 'tel:+221781033063',
   whatsapp: '221781033063',

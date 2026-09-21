@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Image from "next/image"
 import Link from "next/link"
@@ -18,6 +18,7 @@ import {
   Flame,
   Award,
   Rocket,
+  Leaf,
 } from "lucide-react"
 import { Section, SectionHeading } from "@/components/layout/section"
 import { BaobabMark } from "@/components/brand/baobab-mark"
@@ -215,6 +216,7 @@ const domainIcons = [
   { icon: Trophy, color: "text-forest", bg: "bg-forest/10", border: "hover:border-forest/50" },
   { icon: Compass, color: "text-accent-foreground", bg: "bg-accent/20", border: "hover:border-accent" },
   { icon: Globe2, color: "text-earth", bg: "bg-earth/10", border: "hover:border-earth/50" },
+  { icon: Leaf, color: "text-forest", bg: "bg-forest/10", border: "hover:border-forest/50" },
 ]
 
 export function HomeDomains() {
@@ -223,7 +225,7 @@ export function HomeDomains() {
       <div className="flex flex-wrap items-end justify-between gap-6">
         <SectionHeading
           eyebrow="Domaines d'intervention"
-          title="Six leviers stratégiques pour transformer la Casamance"
+          title="Sept leviers stratégiques pour transformer la Casamance"
           description="De la formation des jeunes à la mobilisation de la diaspora, nos actions s'articulent autour de piliers concrets et porteurs d'avenir."
           className="mb-0"
         />

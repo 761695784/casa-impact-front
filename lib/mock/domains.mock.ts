@@ -1,13 +1,10 @@
-// DEMO ONLY — replace with API data
-import type { Domain } from "@/types/models"
-import { domainesIntervention } from "@/lib/institution"
+﻿import type { Domain } from "@/types/models"
 
 /**
- * Données de DÉMONSTRATION dérivées des 6 domaines d'intervention officiels de Casa Impact.
+ * Données de DÉMONSTRATION dérivées des 7 domaines d'intervention officiels de Casa Impact.
  * La nomenclature institutionnelle ne doit jamais être modifiée.
  */
 export const mockDomains: Domain[] = [
-  // DEMO ONLY — replace with API data
   {
     id: 1,
     nom: "Jeunesse et leadership",
@@ -91,5 +88,19 @@ export const mockDomains: Domain[] = [
     programmes_count: 0,
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2026-01-25T11:00:00Z",
+  },
+  {
+    id: 7,
+    nom: "Sensibilisation environnementale",
+    slug: "sensibilisation-environnementale",
+    resume:
+      "Protéger la biodiversité, reboiser la Casamance et éveiller les consciences écologiques citoyennes.",
+    description:
+      "Sensibiliser les jeunes et les communautés à la préservation des écosystèmes exceptionnels de la Casamance (mangroves, forêts, fleuves), promouvoir le reboisement et les pratiques éco-responsables durables.",
+    statut: "actif",
+    ordre: 7,
+    programmes_count: 1,
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2026-03-01T10:00:00Z",
   },
 ]

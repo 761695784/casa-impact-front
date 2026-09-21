@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+﻿import type { Metadata } from "next"
 import { DomainsHero } from "@/components/domains/domains-hero"
 import { DomainsList } from "@/components/domains/domains-list"
 import { DomainsCrossImpact } from "@/components/domains/domains-cross-impact"
@@ -7,9 +7,9 @@ import { CtaBand } from "@/components/layout/cta-band"
 
 export const metadata: Metadata = {
   alternates: { canonical: "/domaines" },
-  title: "Domaines d'Intervention — Les 6 Piliers Stratégiques de Casa Impact",
+  title: "Domaines d'Intervention — Les 7 Piliers Stratégiques de Casa Impact",
   description:
-    "Découvrez les 6 domaines d'action de Casa Impact : jeunesse & leadership, entrepreneuriat & innovation, culture, sport, tourisme et investissement diaspora en Casamance.",
+    "Découvrez les 7 domaines d'action de Casa Impact : jeunesse & leadership, entrepreneuriat & innovation, culture, sport, tourisme, investissement diaspora et sensibilisation environnementale en Casamance.",
 }
 
 export default function DomainesPage() {
@@ -23,15 +23,16 @@ export default function DomainesPage() {
         ]}
       />
 
-      {/* Grille des 6 Domaines d'Intervention */}
+      {/* Grille des 7 Domaines d'Intervention */}
       <Section id="domaines-grid" className="py-16 md:py-24">
         <SectionHeading
           eyebrow="Nos piliers d'action"
-          title="Six Leviers pour Libérer le Potentiel de la Casamance"
+          title="Sept Leviers pour Libérer le Potentiel de la Casamance"
           description="Chaque domaine concentre des programmes, des experts et des ressources dédiées au service de la jeunesse et des terroirs."
           align="center"
+          className="mb-12"
         />
-        <div className="mt-12">
+        <div className="mt-8">
           <DomainsList />
         </div>
       </Section>

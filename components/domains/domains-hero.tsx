@@ -1,8 +1,8 @@
-"use client"
+﻿"use client"
 
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, Sparkles, Layers, Compass, CheckCircle2, ArrowRight } from "lucide-react"
+import { ChevronRight, Layers, Compass, CheckCircle2 } from "lucide-react"
 import { BaobabMark } from "@/components/brand/baobab-mark"
 
 interface Crumb {
@@ -71,12 +71,6 @@ export function DomainsHero({
           </nav>
         )}
 
-        {/* Eyebrow badge */}
-        {/* <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/95 backdrop-blur-md">
-          <Sparkles className="size-3 text-accent" />
-          <span>6 Piliers Stratégiques pour le Territoire</span>
-        </div> */}
-
         {/* Title */}
         <h1 className="mt-5 max-w-3xl text-balance font-display text-4xl font-bold leading-[1.05] text-white sm:text-5xl lg:text-6xl drop-shadow-sm">
           Nos Domaines{" "}
@@ -88,7 +82,7 @@ export function DomainsHero({
 
         {/* Description */}
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/90 sm:text-xl font-normal drop-shadow">
-          Casa Impact agit sur <strong>six domaines complémentaires</strong> pour libérer le potentiel de la Casamance, créer des opportunités pérennes pour la jeunesse et fédérer <strong>Ziguinchor</strong>, <strong>Kolda</strong> et <strong>Sédhiou</strong>.
+          Casa Impact agit sur <strong>sept domaines complémentaires</strong> pour libérer le potentiel de la Casamance, protéger ses écosystèmes, créer des opportunités pérennes pour la jeunesse et fédérer <strong>Ziguinchor</strong>, <strong>Kolda</strong> et <strong>Sédhiou</strong>.
         </p>
 
         {/* Quick Highlights */}
@@ -105,7 +99,7 @@ export function DomainsHero({
 
           <div className="flex items-center gap-1.5 rounded-lg bg-black/25 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm border border-white/10">
             <CheckCircle2 className="size-3.5 text-accent" />
-            <span>Impact Économique, Humain & Culturel</span>
+            <span>Impact Économique, Humain & Écologique</span>
           </div>
         </div>
       </div>

@@ -1,10 +1,9 @@
-"use client"
+﻿"use client"
 
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, Sparkles, MapPin, Users, Target, Compass } from "lucide-react"
+import { ChevronRight, MapPin, Users, Target } from "lucide-react"
 import { BaobabMark } from "@/components/brand/baobab-mark"
-import { siteConfig } from "@/lib/config"
 
 interface Crumb {
   label: string
@@ -72,12 +71,6 @@ export function AboutHero({
           </nav>
         )}
 
-        {/* Eyebrow badge */}
-        {/* <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/95 backdrop-blur-md">
-          <Sparkles className="size-3 text-accent" />
-          <span>Histoire & Identité</span>
-        </div> */}
-
         {/* Title */}
         <h1 className="mt-5 max-w-3xl text-balance font-display text-4xl font-bold leading-[1.05] text-white sm:text-5xl lg:text-6xl drop-shadow-sm">
           Trois régions, une vision,{" "}
@@ -101,7 +94,7 @@ export function AboutHero({
 
           <div className="flex items-center gap-1.5 rounded-lg bg-black/25 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm border border-white/10">
             <Target className="size-3.5 text-accent" />
-            <span>6 Domaines d'Intervention</span>
+            <span>7 Domaines d'Intervention</span>
           </div>
 
           <div className="flex items-center gap-1.5 rounded-lg bg-black/25 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm border border-white/10">

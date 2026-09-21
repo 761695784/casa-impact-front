@@ -1,10 +1,11 @@
-import {
+﻿import {
   Users,
   Rocket,
   Landmark,
   Trophy,
   Palmtree,
   HandCoins,
+  Leaf,
   type LucideIcon,
   Sparkles,
   Target,
@@ -18,12 +19,8 @@ export interface DomainMetadata {
   accentColor: string
   badgeTone: string
   /**
-   * Phrase de vision courte (1 phrase) affichée dans le bloc "Pourquoi ce
-   * domaine est crucial pour la Casamance" de la page de détail. Volontairement
-   * distincte du contenu des `axes` ci-dessous : elle ne doit PAS reciter les
-   * intitulés des 4 axes (ceux-ci sont déjà cités dans le chapeau du hero et
-   * détaillés un par un dans les 4 cartes "Axes Stratégiques"), sous peine de
-   * répéter trois fois la même information sur une seule page.
+   * Phrase de vision courte affichée dans le bloc "Pourquoi ce
+   * domaine est crucial pour la Casamance" de la page de détail.
    */
   pitch: string
   axes: { title: string; desc: string }[]
@@ -36,6 +33,7 @@ export const domainVisuals: Record<string, LucideIcon> = {
   "sport-et-promotion-des-talents": Trophy,
   "tourisme-et-attractivite-territoriale": Palmtree,
   "investissement-et-diaspora": HandCoins,
+  "sensibilisation-environnementale": Leaf,
 }
 
 export const domainDetailsMetadata: Record<string, DomainMetadata> = {
@@ -192,6 +190,32 @@ export const domainDetailsMetadata: Record<string, DomainMetadata> = {
       {
         title: "Fonds d'Impact Territorial",
         desc: "Création d'instruments financiers innovants pour canaliser l'épargne vers des projets à fort impact social.",
+      },
+    ],
+  },
+  "sensibilisation-environnementale": {
+    icon: Leaf,
+    image: "/assets/hero/casamance-landscape.png",
+    accentColor: "from-emerald-700/90 to-teal-900/80",
+    badgeTone: "bg-forest text-white",
+    pitch:
+      "Préserver le sanctuaire écologique exceptionnel de la Casamance à travers l'éducation citoyenne, la régénération active des mangroves, le reboisement massif et la promotion des énergies propres pour un développement durable de nos terroirs.",
+    axes: [
+      {
+        title: "Régénération des Mangroves & Forêts",
+        desc: "Organisation de campagnes citoyennes de reboisement massif et restauration des écosystèmes fragiles à Ziguinchor, Sédhiou et Kolda.",
+      },
+      {
+        title: "Éducation & Éco-Citoyenneté",
+        desc: "Ateliers scolaires, caravanes de sensibilisation environnementale et formations aux bonnes pratiques de gestion et valorisation des déchets.",
+      },
+      {
+        title: "Agroécologie & Énergies Vertes",
+        desc: "Promotion des techniques de culture respectueuses des sols, du compostage organique et des solutions solaires adaptées aux terroirs.",
+      },
+      {
+        title: "Brigades Vertes & Protection de la Biodiversité",
+        desc: "Mobilisation de jeunes volontaires pour la veille écologique, la préservation des cours d'eau, de la faune et de la flore locales.",
       },
     ],
   },

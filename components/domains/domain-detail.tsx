@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Image from "next/image"
 import Link from "next/link"
@@ -6,13 +6,9 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
-  Sparkles,
   ChevronRight,
   CheckCircle2,
   MapPin,
-  Rocket,
-  ShieldCheck,
-  Award,
   Layers,
 } from "lucide-react"
 import { useDomain, useDomains, usePrograms } from "@/hooks/use-content"
@@ -24,13 +20,6 @@ import { Button } from "@/components/ui/button"
 import { RegionBadge } from "@/components/cards/region-badge"
 import { BaobabMark } from "@/components/brand/baobab-mark"
 
-/**
- * Liste les intitulés des axes sous forme de phrase ("A, B, C et D"), pour
- * le chapeau du hero. Volontairement dérivé de `meta.axes` (déjà utilisé
- * plus bas pour les 4 cartes détaillées) plutôt que d'un texte séparé, pour
- * qu'il ne puisse jamais être désynchronisé des axes réellement affichés
- * sur la page.
- */
 function formatAxesTitles(axes: { title: string }[]): string {
   const titles = axes.map((axis) => axis.title)
   if (titles.length <= 1) return titles.join("")
@@ -78,7 +67,7 @@ export function DomainDetail({ slug }: { slug: string }) {
   return (
     <article className="overflow-hidden">
       {/* 1. Immersive Hero Section */}
-      <section className="relative isolate overflow-hidden bg-forest text-forest-foreground min-h-[500px] sm:min-h-[540px] flex items-center">
+      <section className="relative isolate overflow-hidden bg-forest text-forest-foreground min-h-[440px] sm:min-h-[480px] flex items-center">
         {/* Background Image with Ken Burns */}
         <div className="absolute inset-0 -z-20 overflow-hidden">
           <div className="relative h-full w-full animate-ken-burns">
@@ -110,7 +99,7 @@ export function DomainDetail({ slug }: { slug: string }) {
           className="pointer-events-none absolute -bottom-24 -right-20 hidden opacity-[0.08] lg:block"
         />
 
-        <div className="relative mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 md:py-20 lg:px-8">
+        <div className="relative mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 md:py-16 lg:px-8">
           {/* Breadcrumbs & Back Link */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <Link
@@ -152,26 +141,22 @@ export function DomainDetail({ slug }: { slug: string }) {
               <Icon className="size-8" />
             </div>
             <div>
-              {/* <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-accent backdrop-blur-md mb-2">
-                <Sparkles className="size-3" />
-                <span>Domaine d'Action Officiel</span>
-              </div> */}
-              <h1 className="text-balance font-display text-xs font-bold text-accent leading-tight sm:text-4xl lg:text-5xl drop-shadow-sm">
+              <h1 className="text-balance font-display text-2xl font-bold text-accent leading-tight sm:text-4xl lg:text-5xl drop-shadow-sm">
                 {domain.nom}
               </h1>
             </div>
           </div>
 
-          {/* Lead Summary — liste courte des axes, pas la description complète */}
+          {/* Lead Summary */}
           {meta.axes.length > 0 && (
-            <p className="mt-6 max-w-3xl text-lg sm:text-xl leading-relaxed text-white/90 font-normal drop-shadow">
+            <p className="mt-5 max-w-3xl text-base sm:text-lg leading-relaxed text-white/90 font-normal drop-shadow">
               Ce domaine s'articule autour de {meta.axes.length} axes stratégiques : {formatAxesTitles(meta.axes)}.
             </p>
           )}
         </div>
       </section>
 
-      {/* 2. Main Content & 4 Action Axes */}
+      {/* 2. Main Content & Action Axes */}
       <Section className="py-16 md:py-24">
         <div className="mx-auto max-w-6xl space-y-16">
           
@@ -182,13 +167,13 @@ export function DomainDetail({ slug }: { slug: string }) {
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
                 Vision et Enjeux
               </div>
-              <h2 className="mt-4 font-display text-3xl font-bold text-foreground sm:text-4xl">
+              <h2 className="mt-4 font-display text-2xl sm:text-3xl font-bold text-foreground sm:text-4xl">
                 Pourquoi ce domaine est crucial pour la Casamance
               </h2>
-              <p className="mt-6 text-base sm:text-lg leading-relaxed text-foreground/90 font-normal">
+              <p className="mt-5 text-base sm:text-lg leading-relaxed text-foreground/90 font-normal">
                 {meta.pitch}
               </p>
-              <div className="mt-8 flex items-center gap-3">
+              <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Button asChild size="lg" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
                   <Link href="/adherer" className="flex items-center gap-2">
                     <span>Participer à ce pôle</span>
@@ -201,8 +186,7 @@ export function DomainDetail({ slug }: { slug: string }) {
               </div>
             </div>
 
-            {/* Visual Cover inside Content */}
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border border-border bg-secondary shadow-xl">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border border-border shadow-xl">
               <Image
                 src={meta.image}
                 alt={domain.nom}
@@ -220,9 +204,10 @@ export function DomainDetail({ slug }: { slug: string }) {
               title="Les 4 Axes Stratégiques d'Intervention"
               description="Des actions concrètes menées sur le terrain pour des résultats mesurables et durables."
               align="center"
+              className="mb-12"
             />
 
-            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {meta.axes.map((axis, i) => (
                 <div
                   key={i}
@@ -293,9 +278,10 @@ export function DomainDetail({ slug }: { slug: string }) {
             title={`Initiatives en cours dans le domaine ${domain.nom}`}
             description="Découvrez les cohortes et ateliers spécifiques à ce secteur d'action."
             align="center"
+            className="mb-12"
           />
 
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {relatedPrograms.map((p) => (
               <Link
                 key={p.id}
@@ -327,12 +313,13 @@ export function DomainDetail({ slug }: { slug: string }) {
         <Section className="py-20 border-t border-border">
           <SectionHeading
             eyebrow="Explorer les autres piliers"
-            title="Les 5 Autres Domaines d'Intervention"
+            title="Les Autres Domaines d'Intervention"
             description="Découvrez les autres leviers stratégiques déployés par Casa Impact."
             align="center"
+            className="mb-12"
           />
 
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {otherDomains.slice(0, 3).map((d) => {
               const otherMeta = getDomainMetadata(d.slug)
               const OtherIcon = otherMeta.icon
@@ -362,7 +349,7 @@ export function DomainDetail({ slug }: { slug: string }) {
             <Button asChild variant="outline" className="rounded-full px-6">
               <Link href="/domaines" className="flex items-center gap-2">
                 <Layers className="size-4" />
-                <span>Voir la liste complète des 6 domaines</span>
+                <span>Voir la liste complète des domaines</span>
               </Link>
             </Button>
           </div>

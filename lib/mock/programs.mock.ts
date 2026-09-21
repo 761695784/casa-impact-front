@@ -1,12 +1,10 @@
-// DEMO ONLY — replace with API data
-import type { Program, ProgramType } from "@/types/models"
+﻿import type { Program, ProgramType } from "@/types/models"
 import { mockDomains } from "./domains.mock"
 
 /**
  * Données de DÉMONSTRATION pour les Types de programme.
  */
 export const mockProgramTypes: ProgramType[] = [
-  // DEMO ONLY — replace with API data
   {
     id: 1,
     nom: "Formation & Renforcement",
@@ -14,7 +12,7 @@ export const mockProgramTypes: ProgramType[] = [
     description: "Parcours pédagogiques, masterclasses et ateliers pratiques pour l'acquisition de compétences clés.",
     statut: "actif",
     ordre: 1,
-    programmes_count: 2,
+    programmes_count: 3,
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2026-01-10T12:00:00Z",
   },
@@ -57,7 +55,6 @@ export const mockProgramTypes: ProgramType[] = [
  * Données de DÉMONSTRATION pour les Programmes officiels.
  */
 export const mockPrograms: Program[] = [
-  // DEMO ONLY — replace with API data
   {
     id: 1,
     titre: "Académie du Leadership Jeune",
@@ -195,5 +192,28 @@ export const mockPrograms: Program[] = [
     image: "/assets/hero/DSC08011%20copie.jpg",
     created_at: "2025-04-10T08:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
+  },
+  {
+    id: 7,
+    titre: "Brigades Vertes & Sauvegarde des Mangroves",
+    slug: "brigades-vertes-sauvegarde-mangroves",
+    resume:
+      "Mobilisation citoyenne et reboisement communautaire des mangroves et forêts de la Casamance.",
+    description:
+      "Un programme territorial d'action écologique alliant sensibilisation en milieu scolaire, reboisement massif de la mangrove dans le delta du fleuve Casamance et formation aux pratiques éco-responsables.",
+    domaine_id: 7,
+    domaine: mockDomains[6],
+    type_id: 1,
+    type: mockProgramTypes[0],
+    region: "ziguinchor",
+    localisation: "Ziguinchor, Bignona & Goudomp",
+    date_debut: "2026-04-01",
+    date_fin: "2026-11-30",
+    statut: "publie",
+    appels_count: 1,
+    beneficiaires_count: 85,
+    image: "/assets/hero/casamance-landscape.png",
+    created_at: "2026-03-01T09:00:00Z",
+    updated_at: "2026-03-10T11:00:00Z",
   },
 ]

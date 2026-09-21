@@ -1,4 +1,4 @@
-import {
+﻿import {
   GraduationCap,
   Users,
   Rocket,
@@ -17,6 +17,7 @@ import {
   Briefcase,
   Layers,
   HeartHandshake,
+  Leaf,
 } from "lucide-react"
 
 export interface ProgramModule {
@@ -589,6 +590,95 @@ export const programDetailsMetadata: Record<string, ProgramMetadata> = {
       "Reporting financier et opérationnel en temps réel",
       "Réseau mondial de networking de haut niveau",
       "Impact direct mesurable sur la vie des familles en Casamance",
+    ],
+  },
+  "brigades-vertes-sauvegarde-mangroves": {
+    icon: Leaf,
+    image: "/assets/hero/casamance-landscape.png",
+    accentColor: "from-emerald-700 via-forest to-teal-900",
+    badgeTone: "bg-forest text-white",
+    tagline: "Mobiliser la jeunesse pour la régénération des mangroves, le reboisement et la transition écologique en Casamance.",
+    highlights: [
+      { label: "Bénéficiaires mobilisés", value: "+85 Éco-volontaires" },
+      { label: "Arbres & propagules", value: "+50 000 Plantés" },
+      { label: "Territoire d'action", value: "Delta & Estuaire" },
+      { label: "Impact", value: "100% Écologique" },
+    ],
+    targetAudience: {
+      title: "À qui s'adresse ce programme ?",
+      description: "Aux jeunes engagés, associations écologistes, scolaires, étudiants et communautés locales riveraines des fleuves et forêts.",
+      criteria: [
+        "Résider dans les départements de Ziguinchor, Bignona, Oussouye, Sédhiou ou Kolda",
+        "Sensibilité forte aux enjeux climatiques, environnementaux et maritimes",
+        "Volonté d'agir sur le terrain lors des chantiers communautaires",
+        "Disponibilité pour les sessions de formation et caravanes scolaires",
+      ],
+    },
+    modules: [
+      {
+        number: "01",
+        title: "Écologie des Mangroves & Forêts de Casamance",
+        desc: "Comprendre le rôle vital du biome estuarien, la séquestration carbone et les menaces pesant sur la biodiversité locale.",
+        deliverable: "Diagnostic écologique participatif",
+      },
+      {
+        number: "02",
+        title: "Techniques de Repiquage & Pépinières Communautaires",
+        desc: "Apprentissage des protocoles de collecte de propagules de Rhizophora, mise en pépinière et plantation à haute densité.",
+        deliverable: "Gestion autonome d'une pépinière de 5 000 plants",
+      },
+      {
+        number: "03",
+        title: "Éco-Citoyenneté & Gestion des Déchets",
+        desc: "Conception et animation d'ateliers de sensibilisation au tri, au recyclage plastique et au compostage organique.",
+        deliverable: "Kit pédagogique d'animation scolaire",
+      },
+      {
+        number: "04",
+        title: "Agroécologie & Ceintures Vertes de Proximité",
+        desc: "Mise en place de haies vives bocagères et de parcelles agroécologiques pour lutter contre l'érosion des sols.",
+        deliverable: "Plan d'aménagement d'une micro-forêt villageoise",
+      },
+    ],
+    phases: [
+      {
+        step: "Phase 1",
+        title: "Campagne de Mobilisation & Recrutement",
+        duration: "Avril - Mai",
+        desc: "Sélection des éco-volontaires et immersion théorique aux enjeux du delta du fleuve Casamance.",
+      },
+      {
+        step: "Phase 2",
+        title: "Chantiers de Reboisement de la Mangrove",
+        duration: "Juin - Août",
+        desc: "Plantations intensives de propagules dans les bolongs et zones côtières dégradées.",
+      },
+      {
+        step: "Phase 3",
+        title: "Caravanes Vertes dans les Écoles & Marchés",
+        duration: "Septembre - Octobre",
+        desc: "Sensibilisation citoyenne itinérante auprès des élèves, commerçants et familles.",
+      },
+      {
+        step: "Phase 4",
+        title: "Suivi Écologique & Pérennisation",
+        duration: "Novembre - Décembre",
+        desc: "Mesure des taux de reprise des plants et création de comités villageois de surveillance.",
+      },
+    ],
+    alumni: {
+      name: "Mariama Sané",
+      role: "Responsable Brigade Verte & Volontaire Éco-Citoyenne",
+      city: "Goudomp / Ziguinchor",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80",
+      quote: "Grâce aux Brigades Vertes de Casa Impact, nous avons redonné vie à plus de 10 hectares de mangrove dans notre commune. Voir nos jeunes se lever pour protéger notre fleuve est une fierté immense.",
+      promotion: "Cohorte Éco-Sentinelles 2026",
+    },
+    keyBenefits: [
+      "Contribution directe à la régénération de la biodiversité de la Casamance",
+      "Attestation certifiante en éducation environnementale et agroécologie",
+      "Immersion terrain solidaire et développement de compétences de gestion de projets",
+      "Réseau actif d'acteurs de la transition écologique au Sénégal",
     ],
   },
 }

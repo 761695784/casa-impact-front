@@ -24,6 +24,16 @@ export default function DomainesListPage() {
     statut,
   })
 
+  // Total RÉEL et NON filtré des domaines — utilisé uniquement pour les
+  // textes institutionnels ("Les X piliers...", "Rechercher parmi les X
+  // domaines...") : `domains` ci-dessus est la liste FILTRÉE par la
+  // recherche/le statut, donc inutilisable pour ce chiffre (une recherche
+  // sans résultat afficherait sinon "Les 0 piliers stratégiques...",
+  // accord du 2026-09-21 : ce nombre ne doit plus jamais être codé en dur
+  // ni dépendre des filtres actifs).
+  const { data: allDomains } = useDomains()
+  const domainesTotal = allDomains?.length || 7
+
   const updateMutation = useUpdateDomain()
 
   const handleResetFilters = () => {
@@ -45,7 +55,7 @@ export default function DomainesListPage() {
             Domaines d'Intervention
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-            Les 6 piliers stratégiques de Casa Impact pour la transformation et l'attractivité de la Casamance.
+            Les {domainesTotal} piliers stratégiques de Casa Impact pour la transformation et l'attractivité de la Casamance.
           </p>
         </div>
       </div>
@@ -57,7 +67,7 @@ export default function DomainesListPage() {
         onSearchChange={setSearch}
         onStatutChange={setStatut}
         onReset={handleResetFilters}
-        totalCount={domains.length}
+        totalCount={domainesTotal}
       />
 
       {/* 3. Contenu : Loading / Error / Empty / Grid */}
@@ -99,7 +109,7 @@ export default function DomainesListPage() {
           <p className="mt-1 max-w-sm text-xs text-muted-foreground">
             {search || statut !== "all"
               ? "Aucun domaine ne correspond à vos critères de recherche."
-              : "Les 6 domaines institutionnels ne sont pas encore configurés."}
+              : `Les ${domainesTotal} domaines institutionnels ne sont pas encore configurés.`}
           </p>
         </div>
       ) : (

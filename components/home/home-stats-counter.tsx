@@ -67,12 +67,19 @@ export function HomeStatsCounter() {
     return 3
   })()
 
+  // Correctif du 2026-09-21 : ce chiffre vient de l'indicateur d'impact
+  // "Domaines" (id 4), un compteur administrable indépendamment de la
+  // table `domains` réelle — ajouter un domaine (ex. Sensibilisation
+  // Environnementale) ne le met donc PAS à jour automatiquement. Le repli
+  // ("7") sert seulement tant qu'aucune valeur n'est configurée côté admin
+  // Impact ; pense à mettre à jour cet indicateur dans l'admin si le
+  // nombre de domaines change à nouveau.
   const domainesCount = (() => {
     const ind = indicators?.find((i) => i.id === 4)
     if (ind && ind.values && ind.values.length > 0) {
-      return ind.values[ind.values.length - 1].valeur || 6
+      return ind.values[ind.values.length - 1].valeur || 7
     }
-    return 6
+    return 7
   })()
 
   const stats = [
@@ -114,7 +121,7 @@ export function HomeStatsCounter() {
       value: domainesCount,
       suffix: "",
       label: "Domaines d'Intervention",
-      description: "Leadership, Entrepreneuriat, Culture, Sport,Tourisme et Diaspora",
+      description: "Leadership, Entrepreneuriat, Culture, Sport, Tourisme, Diaspora et Environnement",
       icon: Compass,
       iconColor: "text-accent",
       iconBg: "bg-accent/20 border-accent/30",
@@ -214,7 +221,7 @@ export function HomeStatsCounter() {
                       ) : (
                         <AnimatedCounter
                           value={item.value}
-                          duration={2000}
+                          duration={7000}
                           suffix={item.suffix}
                         />
                       )}

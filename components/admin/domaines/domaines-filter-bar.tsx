@@ -58,7 +58,7 @@ export function DomainesFilterBar({
           <Input
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
-            placeholder="Rechercher parmi les 6 domaines d'intervention..."
+            placeholder={`Rechercher parmi les ${totalCount || 7} domaines d'intervention...`}
             className="h-10 rounded-full pl-9 pr-9 text-xs sm:text-sm bg-background"
           />
           {localSearch && (

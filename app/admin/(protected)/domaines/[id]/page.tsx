@@ -16,7 +16,8 @@ import {
   ShieldCheck,
   CheckCircle2,
 } from "lucide-react"
-import { useDomain, useUpdateDomain } from "@/hooks/use-domains"
+import { useDomain, useDomains, useUpdateDomain } from "@/hooks/use-domains"
+import { usePrograms } from "@/hooks/use-programs"
 import { StatusBadge } from "@/components/admin/ui/status-badge"
 import { DomaineEditDialog } from "@/components/admin/domaines/domaine-edit-dialog"
 import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog"
@@ -24,7 +25,6 @@ import { ErrorState } from "@/components/admin/ui/error-state"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDate } from "@/lib/format"
-import { mockPrograms } from "@/lib/mock/programs.mock"
 
 export default function DomaineDetailPage() {
   const params = useParams()
@@ -36,6 +36,19 @@ export default function DomaineDetailPage() {
 
   const { data: domain, isLoading, isError, error, refetch } = useDomain(id)
   const updateMutation = useUpdateDomain()
+
+  // Total réel des domaines (pour "Position n°X sur N" et le texte
+  // institutionnel ci-dessous — accord du 2026-09-21 : ne plus jamais
+  // coder ce chiffre en dur, il doit toujours refléter la base réelle).
+  const { data: allDomains } = useDomains()
+  const domainesTotal = allDomains?.length ?? domain?.ordre ?? 7
+
+  // Programmes RÉELS rattachés à ce domaine (accord du 2026-09-21 : ne
+  // jamais afficher de programme fictif ici — cette page servait
+  // auparavant `mockPrograms`, un jeu de données de démonstration, sans
+  // rapport avec ce qui existe vraiment en base). Filtré côté serveur via
+  // `domaine_id`, comme le reste de l'admin Programmes.
+  const { data: programsData } = usePrograms({ domaine_id: domain?.id })
 
   if (isLoading) {
     return (
@@ -76,8 +89,11 @@ export default function DomaineDetailPage() {
     )
   }
 
-  // Related programs matching this domain
-  const associatedPrograms = mockPrograms.filter(
+  // Programmes réels rattachés à ce domaine (voir usePrograms ci-dessus) —
+  // le filtre est déjà fait côté serveur via `domaine_id`, mais on
+  // resécurise ici par id/slug au cas où l'API renverrait un jour un
+  // résultat plus large.
+  const associatedPrograms = (programsData?.data ?? []).filter(
     (p) => p.domaine?.id === domain.id || p.domaine?.slug === domain.slug
   )
 
@@ -282,7 +298,7 @@ export default function DomaineDetailPage() {
                   Ordre d'Affichage
                 </span>
                 <span className="font-bold text-sm text-foreground mt-0.5 block">
-                  Position n°{domain.ordre || domain.id} sur 6
+                  Position n°{domain.ordre || domain.id} sur {domainesTotal}
                 </span>
               </div>
 
@@ -315,7 +331,7 @@ export default function DomaineDetailPage() {
               <span>Nomenclature Fixe</span>
             </div>
             <p className="text-xs text-foreground/80 leading-relaxed">
-              Les 6 domaines d'intervention sont les piliers statutaires et institutionnels de Casa Impact. Ils ne peuvent être ni supprimés ni renommés arbitrairement.
+              Les {domainesTotal} domaines d'intervention sont les piliers statutaires et institutionnels de Casa Impact. Ils ne peuvent être ni supprimés ni renommés arbitrairement.
             </p>
           </div>
 

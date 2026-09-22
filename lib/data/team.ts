@@ -198,7 +198,7 @@ export const teamMembers: TeamMember[] = [
     region: 'Sédhiou',
     telephone: '+221 78 416 17 00',
     categorie: 'coordination_regionale',
-    image: '/assets/team/abdou-khadre-djitte.jpg',
+    image: '/assets/team/abdou-khadre-djitte.jpeg',
     ordre: 2,
   },
   {

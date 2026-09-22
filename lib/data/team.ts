@@ -70,7 +70,7 @@ export const teamMembers: TeamMember[] = [
     nom: 'Ibrahima Badiane',
     fonction: 'Trésorier Général',
     categorie: 'administration',
-    image: '/assets/team/ibrahima-badiane.jpeg',
+    image: '/assets/team/ibrahima-badiane.png',
     ordre: 2,
   },
   {

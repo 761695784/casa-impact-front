@@ -82,7 +82,14 @@ export function SiteFooter() {
           </p>
           
           <p className="text-center">
-            Made by{" "}
+            {/* Accès discret au panneau admin — accord du 2026-09-22
+                ("sans trace... pas de soulignement ni changement de
+                couleur"). Aucune classe visuelle : `text-inherit
+                no-underline` neutralise le style par défaut d'un lien pour
+                que "Made by" reste indiscernable d'un texte normal. */}
+            <Link href="/admin/login" className="text-inherit no-underline hover:text-inherit hover:no-underline">
+              Made by
+            </Link>{" "}
             <a
               href="https://majeliconnect.com"
               target="_blank"

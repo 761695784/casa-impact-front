@@ -158,7 +158,7 @@ export const teamMembers: TeamMember[] = [
     fonction: 'Responsable Logistique & Opérations',
     pole: 'Logistique & Opérations',
     categorie: 'pole_support',
-    image: '/assets/team/abdoulaye-bodiang.jpg',
+    image: '/assets/team/abdoulaye-bodiang.jpeg',
     ordre: 2,
   },
   // Commission scientifique

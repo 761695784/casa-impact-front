@@ -131,6 +131,8 @@ export function TestimonialSubmissionModal({
       newErrors.citation = "Le texte de votre témoignage est obligatoire."
     } else if (formData.citation.trim().length < 15) {
       newErrors.citation = "Votre témoignage doit comporter au moins 15 caractères pour être significatif."
+    } else if (formData.citation.trim().length > 150) {
+      newErrors.citation = "Votre témoignage ne doit pas dépasser 150 caractères."
     }
 
     setErrors(newErrors)
@@ -467,6 +469,7 @@ export function TestimonialSubmissionModal({
                   id="author-citation"
                   placeholder="Racontez votre expérience, ce que ce programme vous a apporté et son impact sur votre projet ou votre région..."
                   rows={4}
+                  maxLength={150}
                   value={formData.citation}
                   onChange={(e) => {
                     setFormData({ ...formData, citation: e.target.value })
@@ -478,6 +481,16 @@ export function TestimonialSubmissionModal({
                     errors.citation ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
                   )}
                 />
+                {/* Compteur — accord du 2026-09-23 ("les témoignages sont
+                    trop longs... 150 caractères max"). */}
+                <p
+                  className={cn(
+                    "text-right text-[11px]",
+                    formData.citation.length > 150 ? "text-destructive font-semibold" : "text-muted-foreground"
+                  )}
+                >
+                  {formData.citation.length}/150
+                </p>
                 <FormFieldError error={errors.citation} />
               </div>
             </form>

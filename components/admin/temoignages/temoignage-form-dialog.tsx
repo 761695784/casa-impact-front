@@ -142,6 +142,8 @@ export function TemoignageFormDialog({
       newErrors.citation = "Le texte du témoignage / retour d'expérience est obligatoire."
     } else if (citation.trim().length < 10) {
       newErrors.citation = "Le témoignage doit comporter au moins 10 caractères."
+    } else if (citation.trim().length > 150) {
+      newErrors.citation = "Le témoignage ne doit pas dépasser 150 caractères."
     }
 
     setErrors(newErrors)
@@ -422,6 +424,7 @@ export function TemoignageFormDialog({
                 <Textarea
                   id="temoin-citation"
                   rows={4}
+                  maxLength={150}
                   value={citation}
                   onChange={(e) => {
                     setCitation(e.target.value)
@@ -434,6 +437,18 @@ export function TemoignageFormDialog({
                     errors.citation ? "border-destructive focus-visible:ring-destructive/30 bg-destructive/5" : ""
                   )}
                 />
+                {/* Compteur — accord du 2026-09-23 ("les témoignages sont
+                    trop longs... 150 caractères max") : les cartes de la
+                    grille /temoignages n'étaient pas prévues pour de longs
+                    paragraphes. */}
+                <p
+                  className={cn(
+                    "mt-1 text-right text-[11px]",
+                    citation.length > 150 ? "text-destructive font-semibold" : "text-muted-foreground"
+                  )}
+                >
+                  {citation.length}/150
+                </p>
                 <FormFieldError error={errors.citation} />
               </div>
 

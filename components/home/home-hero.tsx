@@ -174,7 +174,7 @@ export function HomeHero() {
           </h1>
 
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/90 sm:text-xl font-normal drop-shadow">
-            Casa Impact fédère les énergies de <strong>Ziguinchor</strong>, <strong>Sédhiou</strong> et <strong>Kolda</strong> pour former les talents, encourager l'entrepreneuriat et accélérer la transformation durable de notre territoire.
+            Casa Impact fédère les énergies positives de <strong>Ziguinchor</strong>, <strong>Sédhiou</strong> et <strong>Kolda</strong> pour former les talents, encourager l'entrepreneuriat et accélérer la transformation durable de notre territoire.
           </p>
 
           {/* <p className="mt-4 text-xs font-semibold uppercase tracking-[0.24em] text-accent/90">

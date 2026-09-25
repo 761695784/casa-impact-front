@@ -82,7 +82,8 @@ export function AboutHero({
 
         {/* Description */}
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/90 sm:text-xl font-normal drop-shadow">
-          Casa Impact fédère les énergies positives de <strong>Ziguinchor</strong>, <strong>Kolda</strong> et <strong>Sédhiou</strong> pour faire de la jeunesse et des terroirs le moteur incontournable du développement de la Casamance.
+          {/* Casa Impact fédère les énergies positives de <strong>Ziguinchor</strong>, <strong>Kolda</strong> et <strong>Sédhiou</strong> pour faire de la jeunesse et des terroirs le moteur incontournable du développement de la Casamance. */}
+          En fédérant les énergies positives des <strong>trois régions</strong>,<strong>Casa Impact</strong> ambitionne de faire de la jeunesse et des territoires, les moteurs incontournables du développement de la Casamance.
         </p>
 
         {/* Quick Regional & Pillar Indicators */}

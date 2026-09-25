@@ -121,7 +121,7 @@ export function HomeStatsCounter() {
       value: domainesCount,
       suffix: "",
       label: "Domaines d'Intervention",
-      description: "Leadership, Entrepreneuriat, Culture, Sport, Tourisme, Diaspora et Environnement",
+      description: "Leadership, Entrepreneuriat, Culture, Sport, Tourisme, Environnement et Diaspora",
       icon: Compass,
       iconColor: "text-accent",
       iconBg: "bg-accent/20 border-accent/30",

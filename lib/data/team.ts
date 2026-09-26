@@ -85,7 +85,7 @@ export const teamMembers: TeamMember[] = [
   {
     id: 'felicite-binette-coly',
     nom: 'Félicité Binette Coly',
-    fonction: 'Responsable Capital Humain',
+    fonction: 'Responsable Jeunesse & leadership',
     pole: 'Volet Jeunesse & Leadership',
     categorie: 'pole_capital_humain',
     image: '/assets/team/felicite-binette-coly.jpg',
@@ -95,7 +95,7 @@ export const teamMembers: TeamMember[] = [
   {
     id: 'khalifa-ababacar-sane',
     nom: 'Khalifa Ababacar Sane',
-    fonction: 'Responsable Capital humain',
+    fonction: 'Responsable Sport & Développement',
     pole: 'Volet Sport & Développement',
     categorie: 'pole_capital_humain',
     image: '/assets/team/khalifa-ababacar-sane.jpeg',
@@ -107,7 +107,7 @@ export const teamMembers: TeamMember[] = [
   {
     id: 'mansa-signate',
     nom: 'Papa Mamadou Lamine Mansa Signaté',
-    fonction: 'Responsable Pôle Économie',
+    fonction: 'Responsable Tourisme & Attractivité',
     pole: 'Volet Tourisme & Attractivité',
     categorie: 'pole_economie',
     image: '/assets/team/mansa-signate.jpg',
@@ -116,7 +116,7 @@ export const teamMembers: TeamMember[] = [
   {
     id: 'samsidine-diatta',
     nom: 'Samsidine Diatta',
-    fonction: 'Responsable Pôle Économie',
+    fonction: 'Responsable Entrepreneuriat, Investissement & Innovation',
     pole: 'Volet Entrepreneuriat, Investissement & Innovation',
     categorie: 'pole_economie',
     image: '/assets/team/samsidine-diatta.jpeg',
@@ -176,6 +176,7 @@ export const teamMembers: TeamMember[] = [
     id: 'ndeye-sire-sagna',
     nom: 'Ndeye Siré Sagna',
     fonction: 'Membre Commission scientifique',
+    pole: 'commission scientifique',
     categorie: 'commission_scientifique',
     image: '/assets/team/ndeye-ciré-sagna.jpeg',
     ordre: 2,
